@@ -1,0 +1,18 @@
+<idea-plugin url="https://git.oschina.net/lrucase/intellij-gitosc" version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <id>org.jetbrains.gitosc</id>
+    <vendor email="yuyouchow@gmail.com">Yuyou Chow</vendor>
+    <depends>com.intellij.modules.lang</depends>
+    <name>GitOSC</name>
+    <description>GitOSC plugin</description>
+    <change-notes>
+    </change-notes>
+
+    <depends optional="true" config-file="gitosc-tracker.xml">com.intellij.modules.java</depends>
+    <depends optional="true">com.intellij.copyright</depends>
+
+    <xi:include href="GitOSCPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+        <xi:fallback>
+            <xi:include href="/META-INF/GitOSCPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+        </xi:fallback>
+    </xi:include>
+</idea-plugin>
