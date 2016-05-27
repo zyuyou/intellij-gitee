@@ -1,5 +1,5 @@
 <idea-plugin version="2">
     <extensions defaultExtensionNs="com.intellij">
-        <tasks.repositoryType implementation="org.jetbrains.gitosc.tasks.GitOSCRepositoryType"/>
+        <tasks.repositoryType implementation="org.intellij.gitosc.tasks.GitOSCRepositoryType"/>
     </extensions>
 </idea-plugin>

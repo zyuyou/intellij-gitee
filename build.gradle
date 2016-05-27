@@ -22,7 +22,7 @@ allprojects {
   apply plugin: 'org.jetbrains.intellij'
   intellij {
     version ideaVersion
-    plugins 'copyright'
+    plugins 'tasks','git4idea'
     downloadSources Boolean.valueOf(sources)
     sameSinceUntilBuild Boolean.valueOf(isEAP)
   }

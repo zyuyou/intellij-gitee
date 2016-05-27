@@ -2,17 +2,19 @@
     <id>org.jetbrains.gitosc</id>
     <vendor email="yuyouchow@gmail.com">Yuyou Chow</vendor>
     <depends>com.intellij.modules.lang</depends>
+    <depends>Git4Idea</depends>
     <name>GitOSC</name>
     <description>GitOSC plugin</description>
     <change-notes>
     </change-notes>
 
-    <depends optional="true" config-file="gitosc-tracker.xml">com.intellij.modules.java</depends>
-    <depends optional="true">com.intellij.copyright</depends>
+    <depends>Git4Idea</depends>
+    <!--<depends optional="true" config-file="gitosc-tracker.xml">com.intellij.tasks</depends>-->
+    <!--<depends optional="true">com.intellij.copyright</depends>-->
 
-    <xi:include href="GitOSCPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:include href="GitoscPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
         <xi:fallback>
-            <xi:include href="/META-INF/GitOSCPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+            <xi:include href="/META-INF/GitoscPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
         </xi:fallback>
     </xi:include>
 </idea-plugin>

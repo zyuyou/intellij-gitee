@@ -1,2 +1,32 @@
 <idea-plugin version="2">
+    <extensions defaultExtensionNs="com.intellij">
+        <checkoutProvider implementation="org.intellij.gitosc.extensions.GitoscCheckoutProvider"/>
+        <applicationService serviceInterface="org.intellij.gitosc.util.GitoscSettings"
+                            serviceImplementation="org.intellij.gitosc.util.GitoscSettings" />
+        <vcsAnnotationGutterActionProvider implementation="org.intellij.gitosc.extensions.GitoscAnnotationGutterActionProvider" />
+        <vcsConfigurableProvider implementation="org.intellij.gitosc.ui.GitoscSettingsConfigurable"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="Git4Idea">
+        <GitHttpAuthDataProvider implementation="org.intellij.gitosc.extensions.GitoscHttpAuthDataProvider" />
+    </extensions>
+
+    <actions>
+        <action id="GitOSC.Share" class="org.intellij.gitosc.actions.GitoscShareAction">
+            <add-to-group group-id="Vcs.Import"/>
+        </action>
+
+        <action id="Gitosc.Open.In.Browser" class="org.intellij.gitosc.actions.GitoscOpenInBrowserAction">
+            <add-to-group group-id="EditorPopupMenu"/>
+            <add-to-group group-id="ProjectViewPopupMenu"/>
+            <add-to-group group-id="EditorTabPopupMenu"/>
+        </action>
+        <action id="Gitosc.Open.Commit.In.Browser" class="org.intellij.gitosc.actions.GitoscShowCommitInBrowserFromLogAction">
+            <add-to-group group-id="Git.LogContextMenu" />
+            <add-to-group group-id="Vcs.Log.ContextMenu" />
+        </action>
+        <action id="Gitosc.Open.History.Commit.In.Browser" class="org.intellij.gitosc.actions.GitoscShowCommitInBrowserFromHistoryAction">
+            <add-to-group group-id="VcsHistoryActionsGroup"/>
+        </action>
+    </actions>
 </idea-plugin>
