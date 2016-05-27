@@ -1,10 +1,10 @@
 <idea-plugin url="https://git.oschina.net/lrucase/intellij-gitosc" version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <id>org.jetbrains.gitosc</id>
+    <id>org.intellij.gitosc</id>
     <vendor email="yuyouchow@gmail.com">Yuyou Chow</vendor>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
-    <name>GitOSC</name>
-    <description>GitOSC plugin</description>
+    <name>intellij-gitosc</name>
+    <description>intellij-gitosc plugin</description>
     <change-notes>
     </change-notes>
 
