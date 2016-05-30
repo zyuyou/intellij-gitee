@@ -234,9 +234,7 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 				assert sessionAuth != null;
 				setLogin(sessionAuth.getLogin());
 				setPassword(sessionAuth.getPassword(), rememberPassword);
-				if(sessionAuth.getAccessToken() != null){
-					setAccessToken(sessionAuth.getAccessToken(), rememberPassword);
-				}
+				setAccessToken(sessionAuth.getAccessToken() == null ? "":sessionAuth.getAccessToken(), rememberPassword);
 				break;
 			case ANONYMOUS:
 				setLogin(null);
