@@ -3,8 +3,12 @@
     <vendor email="yuyouchow@gmail.com">Yuyou Chow</vendor>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
-    <name>intellij-gitosc</name>
-    <description>intellij-gitosc plugin</description>
+    <name>GitOSC</name>
+    <description>
+      <![CDATA[
+        Allows working with <a href="http://git.oschina.net/">GitOSC</a>.
+      ]]>
+    </description>
     <change-notes>
     </change-notes>
 
