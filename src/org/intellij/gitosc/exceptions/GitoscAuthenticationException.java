@@ -3,7 +3,7 @@ package org.intellij.gitosc.exceptions;
 import java.io.IOException;
 
 /**
- * Created by zyuyou on 16/5/25.
+ * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/exceptions/GithubAuthenticationException.java
  */
 public class GitoscAuthenticationException extends IOException {
 	public GitoscAuthenticationException() {

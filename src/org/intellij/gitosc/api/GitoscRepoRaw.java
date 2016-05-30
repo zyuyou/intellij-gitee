@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.gitosc.api;
 
 import com.google.gson.annotations.SerializedName;
@@ -6,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
+/**
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubRepoRaw.java
+ */
 @SuppressWarnings("UnusedDeclaration")
 class GitoscRepoRaw implements DataConstructor {
 	@Nullable
@@ -63,24 +81,25 @@ class GitoscRepoRaw implements DataConstructor {
 	@Nullable
 	public String parentPathWithNamespace;
 
+
+	/**
+	 * todo status和message 是创建远程项目失败的时候的返回;
+	 * 目前Share on GitOSC的逻辑处理流程优先判断远程仓库是否存在,所以这两个字段暂时无用, 考虑是否要删除?
+	 * */
+	@Nullable
+	public Integer status;
+	@Nullable
+	public String message;
+
 	@SuppressWarnings("ConstantConditions")
 	@NotNull
 	public GitoscRepo createRepo() {
 		return new GitoscRepo(name, description, isPublic, isFork, path, pathWithNamespace, defaultBranch, owner.createUser());
 	}
 
-//	@SuppressWarnings("ConstantConditions")
-//	@NotNull
-//	public GitoscRepoOrg createRepoOrg() {
-//		return new GitoscRepoOrg(name, description, isPublic, isFork, "", "", defaultBranch, owner.createUser(), permissions.create());
-//	}
-
 	@SuppressWarnings("ConstantConditions")
 	@NotNull
 	public GitoscRepoDetailed createRepoDetailed() {
-//		GitoscRepo parent = this.parent == null ? null : this.parent.createRepo();
-//		GitoscRepo source = this.source == null ? null : this.source.createRepo();
-//		return new GitoscRepoDetailed(name, description, isPublic, isFork, "", "", defaultBranch, owner.createUser(), parent, source);
 		return new GitoscRepoDetailed(name, description, isPublic, isFork, path, pathWithNamespace, defaultBranch, owner.createUser(), parentId);
 	}
 
@@ -91,9 +110,6 @@ class GitoscRepoRaw implements DataConstructor {
 		if (resultClass == GitoscRepo.class) {
 			return (T) createRepo();
 		}
-//		if (resultClass == GitoscRepoOrg.class) {
-//			return (T) createRepoOrg();
-//		}
 		if (resultClass == GitoscRepoDetailed.class) {
 			return (T) createRepoDetailed();
 		}

@@ -22,7 +22,7 @@ import org.intellij.gitosc.actions.GitoscShowCommitInBrowserFromAnnotateAction;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Kirill Likhodedov
+ * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/extensions/GithubAnnotationGutterActionProvider.java
  */
 public class GitoscAnnotationGutterActionProvider implements AnnotationGutterActionProvider {
 

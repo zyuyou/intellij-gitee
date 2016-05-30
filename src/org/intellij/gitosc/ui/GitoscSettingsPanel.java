@@ -16,7 +16,6 @@
 package org.intellij.gitosc.ui;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -27,6 +26,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
+import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscUser;
 import org.intellij.gitosc.exceptions.GitoscAuthenticationException;
 import org.intellij.gitosc.util.*;
@@ -45,16 +45,15 @@ import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
 
+import static org.intellij.gitosc.GitoscConstants.LOG;
+
 /**
- * @author oleg
- * @date 10/20/10
+ * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSettingsPanel.java
  */
 public class GitoscSettingsPanel {
   private static final String DEFAULT_PASSWORD_TEXT = "************";
   private static final String AUTH_PASSWORD = "Password";
   private static final String AUTH_TOKEN = "Token";
-
-  private static final Logger LOG = GitoscUtil.LOG;
 
   private final GitoscSettings mySettings;
 
@@ -96,7 +95,7 @@ public class GitoscSettingsPanel {
     myTestButton.addActionListener(e -> {
       try {
         final GitoscAuthData auth = getAuthData();
-        GitoscUser user = GitoscUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
+        GitoscUser user = GitoscUtil.computeValueInModalIO(project, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator ->
           GitoscUtil.checkAuthData(project, new GitoscAuthDataHolder(auth), indicator));
 
         if (GitoscAuthData.AuthType.TOKEN.equals(getAuthType())) {
@@ -113,18 +112,6 @@ public class GitoscSettingsPanel {
         GitoscNotifications.showErrorDialog(myPane, "Login Failure", "Can't login: ", ex);
       }
     });
-
-//    myCreateTokenButton.addActionListener(e -> {
-//      try {
-//        String newToken = GitoscUtil.computeValueInModalIO(project, "Access to Gitosc", indicator ->
-//          GitoscUtil.runTaskWithBasicAuthForHost(project, GitoscAuthDataHolder.createFromSettings(), indicator, getHost(), connection ->
-//            GitoscApiUtil.getMasterToken(connection, "IntelliJ plugin")));
-//        myPasswordField.setText(newToken);
-//      }
-//      catch (IOException ex) {
-//        GitoscNotifications.showErrorDialog(myPane, "Can't Create API Token", ex);
-//      }
-//    });
 
     myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -221,11 +208,8 @@ public class GitoscSettingsPanel {
 
   public void setAuthType(@NotNull final GitoscAuthData.AuthType type) {
     switch (type) {
-      case BASIC:
+      case SESSION:
         myAuthTypeComboBox.setSelectedItem(AUTH_PASSWORD);
-        break;
-      case TOKEN:
-        myAuthTypeComboBox.setSelectedItem(AUTH_TOKEN);
         break;
       case ANONYMOUS:
       default:
@@ -240,9 +224,7 @@ public class GitoscSettingsPanel {
     }
     Object selected = myAuthTypeComboBox.getSelectedItem();
 
-    if(AUTH_PASSWORD.equals(selected)) return GitoscAuthData.createSessionAuth(getHost(), getLogin(), getPassword(), "");
-//    if (AUTH_PASSWORD.equals(selected)) return GitoscAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
-//    if (AUTH_TOKEN.equals(selected)) return GitoscAuthData.createTokenAuth(getHost(), StringUtil.trim(getPassword()));
+    if(AUTH_PASSWORD.equals(selected)) return GitoscAuthData.createSessionAuth(getHost(), getLogin(), getPassword());
     LOG.error("GitoscSettingsPanel: illegal selection: anonymous AuthData created", selected.toString());
     return GitoscAuthData.createAnonymous(getHost());
   }

@@ -1,28 +1,37 @@
+/*
+ * Copyright 2013-2016 Yuyou Chow
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.gitosc.api;
 
 import com.google.gson.*;
-import com.intellij.openapi.diagnostic.Logger;
-import org.apache.http.Header;
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
 import org.intellij.gitosc.exceptions.GitoscConfusingException;
 import org.intellij.gitosc.exceptions.GitoscJsonException;
-import org.intellij.gitosc.exceptions.GitoscStatusCodeException;
 import org.intellij.gitosc.util.GitoscAuthData;
-import org.intellij.gitosc.util.GitoscUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import static org.intellij.gitosc.GitoscConstants.JOINER;
+
+/**
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiUtil.java
+ */
 public class GitoscApiUtil {
-	private static final Logger LOG = GitoscUtil.LOG;
-
-	public static final String DEFAULT_GITOSC_HOST = "git.oschina.net";
-
 	@NotNull private static final Gson gson = initGson();
 
 	private static Gson initGson(){
@@ -73,9 +82,14 @@ public class GitoscApiUtil {
 
 	@NotNull
 	public static List<GitoscRepo> getAvailableRepos(@NotNull GitoscConnection connection) throws IOException {
-		List<GitoscRepo> repos = new ArrayList<GitoscRepo>();
-		repos.addAll(getUserRepos(connection));
-		return repos;
+		try{
+			List<GitoscRepo> repos = new ArrayList<GitoscRepo>();
+			repos.addAll(getUserRepos(connection));
+			return repos;
+		}catch (GitoscConfusingException e){
+			e.setDetails("Can't get available repositories");
+			throw e;
+		}
 	}
 
 	@NotNull
@@ -85,7 +99,7 @@ public class GitoscApiUtil {
 			GitoscAuthData.SessionAuth sessionAuth = authData.getSessionAuth();
 
 			if(sessionAuth != null){
-				requestBody = GitoscUtil.JOINER.join("email=" + sessionAuth.getLogin(), "password=" + sessionAuth.getPassword());
+				requestBody = JOINER.join("email=" + sessionAuth.getLogin(), "password=" + sessionAuth.getPassword());
 			}else{
 				requestBody = null;
 			}
@@ -136,7 +150,7 @@ public class GitoscApiUtil {
 
 		try {
 			String path = "/projects";
-			String requestBody = GitoscUtil.JOINER.join("name=" + name, "description=" + description, "private=" + (isPrivate? 1 : 0));
+			String requestBody = JOINER.join("name=" + name, "description=" + description, "private=" + (isPrivate? 1 : 0));
 			return createDataFromRaw(fromJson(connection.postRequest(path, requestBody), GitoscRepoRaw.class), GitoscRepo.class);
 		}
 		catch (GitoscConfusingException e) {

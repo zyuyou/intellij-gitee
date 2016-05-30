@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2013-2016 Yuyou Chow
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Kirill Likhodedov
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShowCommitInBrowserFromAnnotateAction.java
  */
 public class GitoscShowCommitInBrowserFromAnnotateAction extends GitoscShowCommitInBrowserAction implements UpToDateLineNumberListener {
 

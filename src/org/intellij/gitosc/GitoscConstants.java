@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2013-2016 Yuyou Chow
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.gitosc.api;
 
-import org.jetbrains.annotations.NotNull;
+package org.intellij.gitosc;
 
-/**
- * @author Aleksey Pivovarov
- */
-public class GitoscOrg {
-	@NotNull
-	private final String myLogin;
+import com.google.common.base.Joiner;
+import com.intellij.openapi.diagnostic.Logger;
 
-	public GitoscOrg(@NotNull String login) {
-		myLogin = login;
-	}
+public class GitoscConstants {
+	// Logger
+	public static final Logger LOG = Logger.getInstance("gitosc");
 
-	@NotNull
-	public String getLogin() {
-		return myLogin;
-	}
+	// Utils
+	public static final Joiner JOINER = Joiner.on("&").skipNulls();
+
+	// String
+	public static final String TITLE_ACCESS_TO_GITOSC = "Access to GitOSC";
+
+	public static final String DEFAULT_GITOSC_HOST = "git.oschina.net";
 }

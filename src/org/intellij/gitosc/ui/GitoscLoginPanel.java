@@ -24,7 +24,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.intellij.gitosc.util.GitoscAuthData;
-import org.intellij.gitosc.util.GitoscUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +36,10 @@ import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.intellij.gitosc.GitoscConstants.LOG;
+
 /**
- * @author oleg
- * @date 10/20/10
+ * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubLoginPanel.java
  */
 public class GitoscLoginPanel {
   private JPanel myPane;
@@ -123,25 +123,12 @@ public class GitoscLoginPanel {
 
   public void setAuthType(@NotNull GitoscAuthData.AuthType type) {
     switch (type) {
-      case BASIC:
+      case SESSION:
         myAuthTypeComboBox.setSelectedItem(AUTH_PASSWORD);
-        break;
-      case TOKEN:
-        myAuthTypeComboBox.setSelectedItem(AUTH_TOKEN);
         break;
       case ANONYMOUS:
         myAuthTypeComboBox.setSelectedItem(AUTH_PASSWORD);
     }
-  }
-
-  public void lockAuthType(@NotNull GitoscAuthData.AuthType type) {
-    setAuthType(type);
-    myAuthTypeComboBox.setEnabled(false);
-  }
-
-  public void lockHost(@NotNull String host) {
-    setHost(host);
-    myHostTextField.setEnabled(false);
   }
 
   public void setSavePasswordSelected(boolean savePassword) {
@@ -180,10 +167,8 @@ public class GitoscLoginPanel {
   public GitoscAuthData getAuthData() {
     Object selected = myAuthTypeComboBox.getSelectedItem();
 
-    if(AUTH_PASSWORD.equals(selected)) return GitoscAuthData.createSessionAuth(getHost(), getLogin(), getPassword(), "");
-//    if (AUTH_PASSWORD.equals(selected)) return GitoscAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
-//    if (AUTH_TOKEN.equals(selected)) return GitoscAuthData.createTokenAuth(getHost(), getPassword());
-    GitoscUtil.LOG.error("GitoscLoginPanel illegal selection: anonymous AuthData created", selected.toString());
+    if(AUTH_PASSWORD.equals(selected)) return GitoscAuthData.createSessionAuth(getHost(), getLogin(), getPassword());
+    LOG.error("GitoscLoginPanel illegal selection: anonymous AuthData created", selected.toString());
     return GitoscAuthData.createAnonymous(getHost());
   }
 
@@ -202,4 +187,3 @@ public class GitoscLoginPanel {
     }
   }
 }
-

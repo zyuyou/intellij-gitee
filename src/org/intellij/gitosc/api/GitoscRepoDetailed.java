@@ -19,31 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Aleksey Pivovarov
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubRepoDetailed.java
  */
 public class GitoscRepoDetailed extends GitoscRepo {
   @Nullable
   private final Long myParentId;
-
-//	@Nullable
-//  private final GitoscRepo myParent;
-//  @Nullable
-//  private final GitoscRepo mySource;
-
-//  public GitoscRepoDetailed(@NotNull String name,
-//                            @Nullable String description,
-//                            boolean isPrivate,
-//                            boolean isFork,
-//                            @NotNull String htmlUrl,
-//                            @NotNull String cloneUrl,
-//                            @Nullable String defaultBranch,
-//                            @NotNull GitoscUser owner,
-//                            @Nullable GitoscRepo parent,
-//                            @Nullable GitoscRepo source) {
-//    super(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner);
-//    myParent = parent;
-//    mySource = source;
-//  }
 
 	public GitoscRepoDetailed(@NotNull String name,
 	                          @Nullable String description,
@@ -57,19 +37,6 @@ public class GitoscRepoDetailed extends GitoscRepo {
 		super(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner);
 		myParentId = parentId;
 	}
-
-
-
-//	@Nullable
-//  public GitoscRepo getParent() {
-//    return myParent;
-//  }
-//
-//  @Nullable
-//  public GitoscRepo getSource() {
-//    return mySource;
-//  }
-
 
 	@Nullable
 	public Long getParentId() {

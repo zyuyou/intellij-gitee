@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * @author oleg
+ * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSettingsConfigurable.java
  */
 public class GitoscSettingsConfigurable implements SearchableConfigurable, VcsConfigurableProvider {
   private GitoscSettingsPanel mySettingsPane;
@@ -26,7 +26,7 @@ public class GitoscSettingsConfigurable implements SearchableConfigurable, VcsCo
 
   @NotNull
   public String getHelpTopic() {
-    return "settings.github";
+    return "settings.gitosc";
   }
 
   @NotNull

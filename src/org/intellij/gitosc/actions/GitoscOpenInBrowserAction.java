@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2013-2016 Yuyou Chow
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,15 +46,12 @@ import org.intellij.gitosc.util.GitoscUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static org.intellij.gitosc.util.GitoscUtil.LOG;
+import static org.intellij.gitosc.GitoscConstants.LOG;
 import static org.intellij.gitosc.util.GitoscUtil.setVisibleEnabled;
 
 
 /**
- * Created by IntelliJ IDEA.
- *
- * @author oleg
- * @date 12/10/10
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubOpenInBrowserAction.java
  */
 public class GitoscOpenInBrowserAction extends DumbAwareAction {
 	public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";

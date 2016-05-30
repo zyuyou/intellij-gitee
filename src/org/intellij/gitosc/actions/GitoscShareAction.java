@@ -1,10 +1,24 @@
+/*
+ * Copyright 2013-2016 Yuyou Chow
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.gitosc.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -35,7 +49,10 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
 import org.apache.http.HttpStatus;
-import org.intellij.gitosc.api.*;
+import org.intellij.gitosc.api.GitoscApiUtil;
+import org.intellij.gitosc.api.GitoscFullPath;
+import org.intellij.gitosc.api.GitoscRepo;
+import org.intellij.gitosc.api.GitoscUserDetailed;
 import org.intellij.gitosc.exceptions.GitoscStatusCodeException;
 import org.intellij.gitosc.icons.GitoscIcons;
 import org.intellij.gitosc.ui.GitoscShareDialog;
@@ -50,13 +67,12 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
+import static org.intellij.gitosc.GitoscConstants.LOG;
 
 /**
- * Created by zyuyou on 16/5/27.
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShareAction.java
  */
 public class GitoscShareAction extends DumbAwareAction {
-	private static final Logger LOG = GitoscUtil.LOG;
-
 	public GitoscShareAction() {
 		super("Share Project on GitOSC", "Easily share project on GitOSC", GitoscIcons.GITOSC_SMALL);
 	}

@@ -1,12 +1,27 @@
+/*
+ * Copyright 2013-2016 Yuyou Chow
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.gitosc.util;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.intellij.gitosc.api.GitoscApiUtil;
+import org.intellij.gitosc.GitoscConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by zyuyou on 16/5/25.
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GithubAuthData.java
  */
 public class GitoscAuthData {
 	public enum AuthType {
@@ -78,33 +93,18 @@ public class GitoscAuthData {
 	}
 
 	public static GitoscAuthData createAnonymous(){
-		return createAnonymous(GitoscApiUtil.DEFAULT_GITOSC_HOST);
+		return createAnonymous(GitoscConstants.DEFAULT_GITOSC_HOST);
 	}
 
 	public static GitoscAuthData createAnonymous(@NotNull String host){
 		return new GitoscAuthData(AuthType.ANONYMOUS, host, null, null, null, true);
 	}
 
-	public static GitoscAuthData createBasicAuth(@NotNull String host, @NotNull String login, @NotNull String password) {
-		return new GitoscAuthData(AuthType.BASIC, host, new BasicAuth(login, password), null, null, true);
+	public static GitoscAuthData createSessionAuth(@NotNull String host, @NotNull String login, @NotNull String password) {
+		return new GitoscAuthData(AuthType.SESSION, host, null, null, new SessionAuth(login, password, null), true);
 	}
 
-	public static GitoscAuthData createBasicAuthTF(@NotNull String host,
-	                                               @NotNull String login,
-	                                               @NotNull String password,
-	                                               @NotNull String code) {
-		return new GitoscAuthData(AuthType.BASIC, host, new BasicAuth(login, password, code), null, null, true);
-	}
-
-	public static GitoscAuthData createTokenAuth(@NotNull String host, @NotNull String token) {
-		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), null, true);
-	}
-
-	public static GitoscAuthData createTokenAuth(@NotNull String host, @NotNull String token, boolean useProxy) {
-		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), null, useProxy);
-	}
-
-	public static GitoscAuthData createSessionAuth(@NotNull String host, @NotNull String login, @NotNull String password, @NotNull String accessToken) {
+	public static GitoscAuthData createSessionAuth(@NotNull String host, @NotNull String login, @NotNull String password, @Nullable String accessToken) {
 		return new GitoscAuthData(AuthType.SESSION, host, null, null, new SessionAuth(login, password, accessToken), true);
 	}
 
@@ -160,9 +160,11 @@ public class GitoscAuthData {
 		@NotNull private final String myLogin;
 		@NotNull private final String myPassword;
 
-		@NotNull private String myAccessToken;
+		@Nullable private String myAccessToken;
 
-		private SessionAuth(@NotNull String login, @NotNull String password, @NotNull String accessToken) {
+		@NotNull private boolean myTryGetNewAccessToken = true;
+
+		private SessionAuth(@NotNull String login, @NotNull String password, @Nullable String accessToken) {
 			myLogin = login;
 			myPassword = password;
 			myAccessToken = accessToken;
@@ -178,7 +180,7 @@ public class GitoscAuthData {
 			return myPassword;
 		}
 
-		@NotNull
+		@Nullable
 		public String getAccessToken() {
 			return myAccessToken;
 		}
@@ -186,7 +188,14 @@ public class GitoscAuthData {
 		private void setAccessToken(@NotNull String myAccessToken) {
 			this.myAccessToken = myAccessToken;
 		}
+
+		@NotNull
+		public boolean isTryGetNewAccessToken() {
+			return StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword) && myTryGetNewAccessToken;
+		}
+
+		public void setTryGetNewAccessToken(@NotNull boolean myTryGetNewAccessToken) {
+			this.myTryGetNewAccessToken = myTryGetNewAccessToken;
+		}
 	}
-
-
 }

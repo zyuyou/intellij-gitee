@@ -4,7 +4,7 @@ import org.intellij.gitosc.api.GitoscErrorMessage;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by zyuyou on 16/5/25.
+ * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/exceptions/GithubStatusCodeException.java
  */
 public class GitoscStatusCodeException extends GitoscConfusingException {
 	private final int myStatusCode;

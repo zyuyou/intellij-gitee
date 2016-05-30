@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2013-2016 Yuyou Chow
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ import org.intellij.gitosc.util.GitoscNotifications;
 import org.intellij.gitosc.util.GitoscUrlUtil;
 import org.intellij.gitosc.util.GitoscUtil;
 
+import static com.intellij.diff.merge.TextMergeTool.LOG;
+
 /**
- * @author Kirill Likhodedov
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShowCommitInBrowserAction.java
  */
 abstract class GitoscShowCommitInBrowserAction extends DumbAwareAction {
 
@@ -38,7 +40,7 @@ abstract class GitoscShowCommitInBrowserAction extends DumbAwareAction {
   protected static void openInBrowser(Project project, GitRepository repository, String revisionHash) {
     String url = GitoscUtil.findGitoscRemoteUrl(repository);
     if (url == null) {
-      GitoscUtil.LOG.info(String.format("Repository is not under GitOSC. Root: %s, Remotes: %s", repository.getRoot(),
+      LOG.info(String.format("Repository is not under GitOSC. Root: %s, Remotes: %s", repository.getRoot(),
                                            GitUtil.getPrintableRemotes(repository.getRemotes())));
       return;
     }

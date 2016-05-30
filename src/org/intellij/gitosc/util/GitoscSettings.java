@@ -1,3 +1,18 @@
+/*
+ * Copyright 2013-2016 Yuyou Chow
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.gitosc.util;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
@@ -8,16 +23,20 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import org.intellij.gitosc.api.GitoscApiUtil;
+import org.intellij.gitosc.GitoscConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static org.intellij.gitosc.GitoscConstants.LOG;
+
+/**
+ * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GithubSettings.java
+ */
 @SuppressWarnings("MethodMayBeStatic")
 @State(name = "GitoscSettings", storages = @Storage("gitosc_settings.xml"))
 public class GitoscSettings implements PersistentStateComponent<GitoscSettings.State> {
-	private static final Logger LOG = GitoscUtil.LOG;
+
 	private static final String GITOSC_SETTINGS_PASSWORD_KEY = "GITOSC_SETTINGS_PASSWORD_KEY";
 	private static final String GITOSC_SETTINGS_ACCESS_TOKEN_KEY = "GITOSC_SETTINGS_ACCESS_TOKEN_KEY";
 
@@ -39,7 +58,7 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 	}
 
 	public static class State {
-		@NotNull public String HOST = GitoscApiUtil.DEFAULT_GITOSC_HOST;
+		@NotNull public String HOST = GitoscConstants.DEFAULT_GITOSC_HOST;
 		@Nullable public String LOGIN = null;
 		@NotNull public GitoscAuthData.AuthType AUTH_TYPE = GitoscAuthData.AuthType.ANONYMOUS;
 
@@ -56,7 +75,7 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 	}
 
 	private void setHost(@NotNull String host) {
-		myState.HOST = StringUtil.notNullize(host, GitoscApiUtil.DEFAULT_GITOSC_HOST);
+		myState.HOST = StringUtil.notNullize(host, GitoscConstants.DEFAULT_GITOSC_HOST);
 	}
 
 	@Nullable
@@ -184,11 +203,6 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 		switch (auth.getAuthType()) {
 			case SESSION:
 				return true;
-			case BASIC:
-//				assert auth.getBasicAuth() != null;
-//				return auth.getBasicAuth().getCode() == null;
-			case TOKEN:
-//				return true;
 			case ANONYMOUS:
 				return false;
 			default:
@@ -201,11 +215,6 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 		switch (getAuthType()) {
 			case SESSION:
 				return GitoscAuthData.createSessionAuth(getHost(), getLogin(), getPassword(), getAccessToken());
-			case BASIC:
-				//noinspection ConstantConditions
-				return GitoscAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
-			case TOKEN:
-				return GitoscAuthData.createTokenAuth(getHost(), getPassword());
 			case ANONYMOUS:
 				return GitoscAuthData.createAnonymous();
 			default:
@@ -221,20 +230,13 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 
 		switch (auth.getAuthType()) {
 			case SESSION:
-				assert auth.getSessionAuth() != null;
-				setLogin(auth.getSessionAuth().getLogin());
-				setPassword(auth.getSessionAuth().getPassword(), rememberPassword);
-				setAccessToken(auth.getSessionAuth().getAccessToken(), rememberPassword);
-				break;
-			case BASIC:
-				assert auth.getBasicAuth() != null;
-				setLogin(auth.getBasicAuth().getLogin());
-				setPassword(auth.getBasicAuth().getPassword(), rememberPassword);
-				break;
-			case TOKEN:
-				assert auth.getTokenAuth() != null;
-				setLogin(null);
-				setPassword(auth.getTokenAuth().getToken(), rememberPassword);
+				GitoscAuthData.SessionAuth sessionAuth = auth.getSessionAuth();
+				assert sessionAuth != null;
+				setLogin(sessionAuth.getLogin());
+				setPassword(sessionAuth.getPassword(), rememberPassword);
+				if(sessionAuth.getAccessToken() != null){
+					setAccessToken(sessionAuth.getAccessToken(), rememberPassword);
+				}
 				break;
 			case ANONYMOUS:
 				setLogin(null);
@@ -244,5 +246,4 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 				throw new IllegalStateException("GitoscSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
 		}
 	}
-
 }

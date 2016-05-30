@@ -28,6 +28,9 @@ import git4idea.repo.GitRepository;
 import org.intellij.gitosc.util.GitoscUtil;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GitoscShowCommitInBrowserFromHistoryAction.java
+ */
 public class GitoscShowCommitInBrowserFromHistoryAction extends GitoscShowCommitInBrowserAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -39,8 +42,8 @@ public class GitoscShowCommitInBrowserFromHistoryAction extends GitoscShowCommit
       return;
     }
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath);
-    boolean isOnGithub = repository != null && GitoscUtil.isRepositoryOnGitosc(repository);
-    e.getPresentation().setEnabledAndVisible(isOnGithub && fileRevision instanceof GitFileRevision);
+    boolean isOnGitosc = repository != null && GitoscUtil.isRepositoryOnGitosc(repository);
+    e.getPresentation().setEnabledAndVisible(isOnGitosc && fileRevision instanceof GitFileRevision);
   }
 
   @Override

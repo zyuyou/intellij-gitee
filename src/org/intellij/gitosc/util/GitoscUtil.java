@@ -1,10 +1,23 @@
+/*
+ * Copyright 2013-2016 Yuyou Chow
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.gitosc.util;
 
-import com.google.common.base.Joiner;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -13,9 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.Convertor;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
@@ -26,6 +37,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscApiUtil;
 import org.intellij.gitosc.api.GitoscConnection;
 import org.intellij.gitosc.api.GitoscUserDetailed;
@@ -43,16 +55,12 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.intellij.gitosc.GitoscConstants.LOG;
+
 /**
- * Created by zyuyou on 16/5/25.
- *
  *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GithubUtil.java
  */
 public class GitoscUtil {
-	public static final Logger LOG = Logger.getInstance("gitosc");
-
-	public static final Joiner JOINER = Joiner.on("&").skipNulls();
-
 	public static boolean testGitExecutable(final Project project) {
 		final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
 		final String executable = settings.getPathToGit();
@@ -61,11 +69,14 @@ public class GitoscUtil {
 			version = GitVersion.identifyVersion(executable);
 		}
 		catch (Exception e) {
+			// Error Running Git
 			GitoscNotifications.showErrorDialog(project, GitBundle.getString("find.git.error.title"), e);
 			return false;
 		}
 
 		if (!version.isSupported()) {
+			// 1 -> <html><tt>{0}</tt><br>This version is unsupported, and some plugin functionality could fail to work.<br>The minimal supported version is <em>{1}</em>.</html>
+			// 2 -> Git executed successfully
 			GitoscNotifications.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
 				GitBundle.getString("find.git.success.title"));
 			return false;
@@ -73,6 +84,9 @@ public class GitoscUtil {
 		return true;
 	}
 
+	/**
+	 * Open in browser action event set visible and enabled.
+	 * */
 	public static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
 		e.getPresentation().setVisible(visible);
 		e.getPresentation().setEnabled(enabled);
@@ -81,6 +95,10 @@ public class GitoscUtil {
 	//====================================================================================
 	// gitosc repo
 	//====================================================================================
+
+	/**
+	 * 判断是否有关联GitOSC的远程仓库
+	 * */
 	public static boolean isRepositoryOnGitosc(@NotNull GitRepository repository) {
 		return findGitoscRemoteUrl(repository) != null;
 	}
@@ -97,6 +115,7 @@ public class GitoscUtil {
 	@Nullable
 	public static Pair<GitRemote, String> findGitoscRemote(@NotNull GitRepository repository) {
 		Pair<GitRemote, String> gitoscRemote = null;
+
 		for (GitRemote gitRemote : repository.getRemotes()) {
 			for (String remoteUrl : gitRemote.getUrls()) {
 				if (GitoscUrlUtil.isGitoscUrl(remoteUrl)) {
@@ -113,7 +132,6 @@ public class GitoscUtil {
 		}
 		return gitoscRemote;
 	}
-
 
 	@Nullable
 	public static GitRepository getGitRepository(@NotNull Project project, @Nullable VirtualFile file){
@@ -137,6 +155,9 @@ public class GitoscUtil {
 		return manager.getRepositoryForFile(project.getBaseDir());
 	}
 
+	/**
+	 * 添加GitOSC远程仓库地址
+	 * */
 	public static boolean addGitoscRemote(@NotNull Project project,
 	                                      @NotNull GitRepository repository,
 	                                      @NotNull String remote,
@@ -183,14 +204,61 @@ public class GitoscUtil {
 				if (future != null) future.cancel(true);
 			}
 		}
-//		catch (GitoscTwoFactorAuthenticationException e) {
-//			getTwoFactorAuthData(project, authHolder, indicator, auth);
-//			return runTask(project, authHolder, indicator, task);
-//		}
 		catch (GitoscAuthenticationException e) {
-			getValidAuthData(project, authHolder, indicator, auth);
+			getValidAuthData2(project, authHolder, indicator, auth);
 			return runTask(project, authHolder, indicator, task);
 		}
+	}
+
+	public static void getValidAuthData2(@NotNull final Project project,
+	                                    @NotNull final GitoscAuthDataHolder authHolder,
+	                                    @NotNull final ProgressIndicator indicator,
+	                                    @NotNull final GitoscAuthData oldAuth) throws GitoscOperationCanceledException {
+
+		authHolder.runTransaction(oldAuth, () -> {
+			final GitoscAuthData[] authData = new GitoscAuthData[1];
+			final boolean[] ok = new boolean[1];
+
+			ApplicationManager.getApplication().invokeAndWait(() -> {
+				GitoscAuthData.SessionAuth sessionAuth = oldAuth.getSessionAuth();
+				if(sessionAuth != null && sessionAuth.isTryGetNewAccessToken()){
+					// 尝试获取新private_token
+					final GitoscAuthDataHolder authDataHolder = new GitoscAuthDataHolder(oldAuth);
+					try{
+						GitoscUtil.computeValueInModalIO(project, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator2 ->
+							GitoscUtil.checkAuthData(project, authDataHolder, indicator2));
+
+						authData[0] = authDataHolder.getAuthData();
+
+						GitoscSettings.getInstance().setAuthData(authData[0], true);
+
+						ok[0] = true;
+					}catch(IOException ignore){
+						ignore.printStackTrace();
+
+						sessionAuth.setTryGetNewAccessToken(false);
+						authData[0] = oldAuth;
+					}
+				}else{
+					// 帐号密码为空或者已经尝试过重新获取private_token
+					final GitoscLoginDialog dialog = new GitoscLoginDialog(project, oldAuth);
+					DialogManager.show(dialog);
+					ok[0] = dialog.isOK();
+
+					if (ok[0]) {
+						authData[0] = dialog.getAuthData();
+						GitoscSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
+					}
+				}
+
+			}, indicator.getModalityState());
+
+			if (!ok[0]) {
+				throw new GitoscOperationCanceledException("Can't get valid credentials");
+			}
+
+			return authData[0];
+		});
 	}
 
 	public static void getValidAuthData(@NotNull final Project project,
@@ -210,6 +278,7 @@ public class GitoscUtil {
 					GitoscSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
 				}
 			}, indicator.getModalityState());
+
 			if (!ok[0]) {
 				throw new GitoscOperationCanceledException("Can't get valid credentials");
 			}
@@ -235,37 +304,6 @@ public class GitoscUtil {
 			@Override
 			protected T compute(@NotNull ProgressIndicator indicator) throws IOException {
 				return task.convert(indicator);
-			}
-		});
-	}
-
-	public static <T> T computeValueInModal(@NotNull Project project,
-	                                        @NotNull String caption,
-	                                        @NotNull final Convertor<ProgressIndicator, T> task) {
-		return computeValueInModal(project, caption, true, task);
-	}
-
-	public static <T> T computeValueInModal(@NotNull Project project,
-	                                        @NotNull String caption,
-	                                        boolean canBeCancelled,
-	                                        @NotNull final Convertor<ProgressIndicator, T> task) {
-		return ProgressManager.getInstance().run(new Task.WithResult<T, RuntimeException>(project, caption, canBeCancelled) {
-			@Override
-			protected T compute(@NotNull ProgressIndicator indicator) {
-				return task.convert(indicator);
-			}
-		});
-	}
-
-	public static void computeValueInModal(@NotNull Project project,
-	                                       @NotNull String caption,
-	                                       boolean canBeCancelled,
-	                                       @NotNull final Consumer<ProgressIndicator> task) {
-		ProgressManager.getInstance().run(new Task.WithResult<Void, RuntimeException>(project, caption, canBeCancelled) {
-			@Override
-			protected Void compute(@NotNull ProgressIndicator indicator) {
-				task.consume(indicator);
-				return null;
 			}
 		});
 	}
@@ -299,20 +337,6 @@ public class GitoscUtil {
 					throw new GitoscAuthenticationException("Empty login or password");
 				}
 				break;
-			case BASIC:
-				GitoscAuthData.BasicAuth basicAuth = auth.getBasicAuth();
-				assert basicAuth != null;
-				if (StringUtil.isEmptyOrSpaces(basicAuth.getLogin()) || StringUtil.isEmptyOrSpaces(basicAuth.getPassword())) {
-					throw new GitoscAuthenticationException("Empty login or password");
-				}
-				break;
-			case TOKEN:
-				GitoscAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
-				assert tokenAuth != null;
-				if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
-					throw new GitoscAuthenticationException("Empty token");
-				}
-				break;
 			case ANONYMOUS:
 				throw new GitoscAuthenticationException("Anonymous connection not allowed");
 		}
@@ -331,6 +355,8 @@ public class GitoscUtil {
 
 		try {
 			future = addCancellationListener(indicator, connection);
+
+			// get private_token after logined.
 			GitoscUserDetailed userDetailed = GitoscApiUtil.getCurrentUserDetailed(connection, auth);
 			auth.setAccessToken(userDetailed.getPrivateToken());
 			return userDetailed;
@@ -356,14 +382,4 @@ public class GitoscUtil {
 			if (indicator.isCanceled()) connection.abort();
 		});
 	}
-
-	@NotNull
-	private static ScheduledFuture<?> addCancellationListener(@NotNull final ProgressIndicator indicator,
-	                                                          @NotNull final Thread thread) {
-		return addCancellationListener(() -> {
-			if (indicator.isCanceled()) thread.interrupt();
-		});
-	}
-
-
 }
