@@ -27,6 +27,7 @@ allprojects {
         sameSinceUntilBuild Boolean.valueOf(isEAP)
         pluginName 'intellij-gitosc'
         publish {
+            pluginId '8373'
             username publishUser
             password publishPassword
         }
