@@ -49,6 +49,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
 import org.apache.http.HttpStatus;
+import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.api.GitoscApiUtil;
 import org.intellij.gitosc.api.GitoscFullPath;
 import org.intellij.gitosc.api.GitoscRepo;
@@ -78,7 +79,7 @@ import static org.intellij.gitosc.GitoscConstants.LOG;
  */
 public class GitoscShareAction extends DumbAwareAction {
 	public GitoscShareAction() {
-		super("Share Project on GitOSC", "Easily share project on GitOSC", GitoscIcons.GITOSC_SMALL);
+		super(GitoscBundle.message2("gitosc.share.project.title"), GitoscBundle.message2("gitosc.share.project.desc"), GitoscIcons.GITOSC_SMALL);
 	}
 
 	@Override

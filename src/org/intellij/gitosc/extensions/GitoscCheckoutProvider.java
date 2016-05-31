@@ -24,6 +24,7 @@ import git4idea.actions.BasicAction;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.checkout.GitCloneDialog;
 import git4idea.commands.Git;
+import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscApiUtil;
 import org.intellij.gitosc.api.GitoscRepo;
@@ -96,6 +97,6 @@ public class GitoscCheckoutProvider implements CheckoutProvider {
 
 	@Override
 	public String getVcsName() {
-		return "Git_OSC";
+		return GitoscBundle.message2("gitosc.name2");
 	}
 }

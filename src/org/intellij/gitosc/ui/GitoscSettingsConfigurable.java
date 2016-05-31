@@ -5,6 +5,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
+import org.intellij.gitosc.GitoscBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ public class GitoscSettingsConfigurable implements SearchableConfigurable, VcsCo
 
   @NotNull
   public String getDisplayName() {
-    return "GitOSC";
+    return GitoscBundle.message2("gitosc.name");
   }
 
   @NotNull

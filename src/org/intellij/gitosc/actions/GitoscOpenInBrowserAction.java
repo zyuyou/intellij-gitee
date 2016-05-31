@@ -39,6 +39,7 @@ import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.icons.GitoscIcons;
 import org.intellij.gitosc.util.GitoscNotifications;
 import org.intellij.gitosc.util.GitoscUrlUtil;
@@ -62,7 +63,7 @@ public class GitoscOpenInBrowserAction extends DumbAwareAction {
 	public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
 
 	protected GitoscOpenInBrowserAction() {
-		super("Open on GitOSC", "Open corresponding link in browser", GitoscIcons.GITOSC_SMALL);
+		super(GitoscBundle.message2("gitosc.open.in.browser.title"), GitoscBundle.message2("gitosc.open.in.browser.desc"), GitoscIcons.GITOSC_SMALL);
 	}
 
 	@Override
