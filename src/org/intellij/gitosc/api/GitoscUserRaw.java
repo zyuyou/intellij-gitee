@@ -21,7 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Date;
 
 /**
- *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubUserRaw.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubUserRaw.java
+ * @author JetBrains s.r.o.
+ * @author Kirill Likhodedov
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GitoscUserRaw implements DataConstructor {

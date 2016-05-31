@@ -29,7 +29,10 @@ import org.intellij.gitosc.util.GitoscUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GitoscShowCommitInBrowserFromHistoryAction.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GitoscShowCommitInBrowserFromHistoryAction.java
+ * @author JetBrains s.r.o.
  */
 public class GitoscShowCommitInBrowserFromHistoryAction extends GitoscShowCommitInBrowserAction {
   @Override

@@ -19,7 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubRepoDetailed.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubRepoDetailed.java
+ * @author JetBrains s.r.o.
+ * @author Aleksey Pivovarov
  */
 public class GitoscRepoDetailed extends GitoscRepo {
   @Nullable

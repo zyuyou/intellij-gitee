@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Yuyou Chow
+ * Copyright 2016 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,11 @@ import java.util.*;
 import static org.intellij.gitosc.GitoscConstants.LOG;
 
 /**
- *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShareAction.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShareAction.java
+ * @author JetBrains s.r.o.
+ * @author oleg
  */
 public class GitoscShareAction extends DumbAwareAction {
 	public GitoscShareAction() {

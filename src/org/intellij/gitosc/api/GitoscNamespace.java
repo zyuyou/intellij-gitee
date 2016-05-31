@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Yuyou Chow
+ * Copyright 2016 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,5 +15,10 @@
  */
 package org.intellij.gitosc.api;
 
+
+/**
+ * @author Yuyou Chow
+ *
+ */
 public class GitoscNamespace {
 }

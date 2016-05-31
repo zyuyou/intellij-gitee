@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Yuyou Chow
+ * Copyright 2016 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ import java.util.List;
 import static org.intellij.gitosc.GitoscConstants.JOINER;
 
 /**
- *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiUtil.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiUtil.java
+ * @author JetBrains s.r.o.
  */
 public class GitoscApiUtil {
 	@NotNull private static final Gson gson = initGson();

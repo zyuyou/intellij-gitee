@@ -39,7 +39,12 @@ import java.util.List;
 import static org.intellij.gitosc.GitoscConstants.LOG;
 
 /**
- * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubLoginPanel.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubLoginPanel.java
+ * @author JetBrains s.r.o.
+ * @author oleg
+ * @date 10/20/10
  */
 public class GitoscLoginPanel {
   private JPanel myPane;

@@ -19,7 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *  https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubUser.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubUser.java
+ * @author JetBrains s.r.o.
+ * @author Aleksey Pivovarov
  */
 public class GitoscUser {
 	@NotNull private final String myLogin;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Yuyou Chow
+ * Copyright 2016 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
+/**
+ * @author Yuyou Chow
+ *
+ */
 public interface GitoscIcons {
 	Icon GITOSC_SMALL = IconLoader.getIcon("/icons/gitosc-16.png");
 	Icon GITOSC = IconLoader.getIcon("/icons/gitosc-32.png");

@@ -21,7 +21,12 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 /**
- * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSharePanel.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSharePanel.java
+ * @author JetBrains s.r.o.
+ * @author oleg
+ * @date 10/22/10
  */
 public class GitoscSharePanel {
   private JPanel myPanel;

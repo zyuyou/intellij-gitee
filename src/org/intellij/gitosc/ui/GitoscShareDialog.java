@@ -26,7 +26,12 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubShareDialog.java
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubShareDialog.java
+ * @author JetBrains s.r.o.
+ * @author oleg
+ * @date 10/22/10
  */
 public class GitoscShareDialog extends DialogWrapper {
 	private static final Pattern GITOSC_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+");
