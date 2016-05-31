@@ -1,5 +1,8 @@
 ## Change log
 
+### Version 0.1.2
+* Bug Fixes
+
 ### Version 0.1.1
 * Git@OSC application setting
 * Login to Git@OSC

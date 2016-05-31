@@ -10,11 +10,15 @@
       ]]>
     </description>
     <change-notes>
+      <![CDATA[
+        <h1>v0.1.2</h1>
+        <ul>
+          <li><p>Bug Fixes</p></li>
+        </ul>
+      ]]>
     </change-notes>
 
     <depends>Git4Idea</depends>
-    <!--<depends optional="true" config-file="gitosc-tracker.xml">com.intellij.tasks</depends>-->
-    <!--<depends optional="true">com.intellij.copyright</depends>-->
 
     <xi:include href="GitoscPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
         <xi:fallback>
