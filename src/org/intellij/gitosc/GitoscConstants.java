@@ -30,7 +30,7 @@ public class GitoscConstants {
 	public static final Joiner JOINER = Joiner.on("&").skipNulls();
 
 	// String
-	public static final String TITLE_ACCESS_TO_GITOSC = "Access to GitOSC";
+	public static final String TITLE_ACCESS_TO_GITOSC = GitoscBundle.message2("gitosc.access.dialog.title");
 
 	public static final String DEFAULT_GITOSC_HOST = "git.oschina.net";
 }

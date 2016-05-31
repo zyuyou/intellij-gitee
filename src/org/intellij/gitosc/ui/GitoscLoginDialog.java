@@ -17,6 +17,7 @@ package org.intellij.gitosc.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.util.GitoscAuthData;
 import org.intellij.gitosc.util.GitoscAuthDataHolder;
@@ -68,7 +69,7 @@ public class GitoscLoginDialog extends DialogWrapper {
 			myGitoscLoginPanel.setSavePasswordVisibleEnabled(false);
 		}
 
-		setTitle("Login to GitOSC");
+		setTitle(GitoscBundle.message2("gitosc.login.dialog.title"));
 		setOKButtonText("Login");
 
 		init();
