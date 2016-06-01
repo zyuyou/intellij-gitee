@@ -176,7 +176,7 @@ public class GitoscConnection {
 	@NotNull
 	private static Collection<? extends Header> createHeaders(@NotNull GitoscAuthData auth) {
 		List<Header> headers = new ArrayList<Header>();
-		headers.add(new BasicHeader("User-Agent", "GitExt/1.0-JB." + PlatformUtils.getPlatformPrefix()));
+		headers.add(new BasicHeader("User-Agent", "CC/1.0-JB." + PlatformUtils.getPlatformPrefix()));
 		return headers;
 	}
 

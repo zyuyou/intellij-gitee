@@ -1,5 +1,8 @@
 ## Change log
 
+### Version 0.1.4
+* Fix Linux compatible
+
 ### Version 0.1.3
 * Change some text ( GitOSC -> 码云 )
 
