@@ -1,5 +1,8 @@
 ## Change log
 
+### Version 0.6.0
+* Stable version bump
+
 ### Version 0.1.4
 * Fix Linux compatible
 

@@ -1,34 +1,19 @@
-<idea-plugin url="https://git.oschina.net/lrucase/intellij-gitosc" version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin url="https://git.oschina.net/oschina/intellij-gitosc" version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
     <id>org.intellij.gitosc</id>
-    <vendor email="yuyouchow@gmail.com">Yuyou Chow</vendor>
-    <depends>com.intellij.modules.lang</depends>
-    <depends>Git4Idea</depends>
+    <vendor email="likui@oschina.cn">码云</vendor>
     <name>GitOSC</name>
     <description>
       <![CDATA[
-        Allows working with <a href="http://git.oschina.net/">GitOSC</a>.
+        Allows working with <a href="http://git.oschina.net/" >码云 - GitOSC</a>
       ]]>
     </description>
     <change-notes>
       <![CDATA[
-        <h1>v0.1.4</h1>
-        <ul>
-          <li><p>Fix Linux compatible</p></li>
-        </ul>
-        <hr/>
-        <h1>v0.1.3</h1>
-        <ul>
-          <li><p>Change some text ( GitOSC -> 码云 )</p></li>
-        </ul>
-        <hr/>
-        <h1>v0.1.2</h1>
-        <ul>
-          <li><p>Bug Fixes</p></li>
-        </ul>
       ]]>
     </change-notes>
 
     <depends>Git4Idea</depends>
+    <depends>com.intellij.modules.lang</depends>
 
     <xi:include href="GitoscPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
         <xi:fallback>
