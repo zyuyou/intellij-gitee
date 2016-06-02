@@ -18,6 +18,7 @@ package org.intellij.gitosc.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.gitosc.GitoscBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -45,8 +46,10 @@ public class GitoscShareDialog extends DialogWrapper {
 		myAvailableRemotes = availableRemotes;
 		myGitoscSharePanel = new GitoscSharePanel(this);
 		init();
-		setTitle("Share Project On GitOSC");
-		setOKButtonText("Share");
+		setTitle(GitoscBundle.message2("gitosc.share.project.title"));
+		setOKButtonText(GitoscBundle.message2("gitosc.dialog.share.button.text"));
+		setCancelButtonText(GitoscBundle.message2("gitosc.dialog.cancel.button.text"));
+		getHelpAction().putValue(Action.NAME, GitoscBundle.message2("gitosc.dialog.help.button.text"));
 		myGitoscSharePanel.setRepositoryName(project.getName());
 		myGitoscSharePanel.setRemoteName(availableRemotes.isEmpty() ? "origin" : "gitosc");
 		myGitoscSharePanel.setPrivateRepoAvailable(privateRepoAllowed);

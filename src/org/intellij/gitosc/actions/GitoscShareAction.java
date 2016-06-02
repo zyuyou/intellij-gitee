@@ -50,6 +50,7 @@ import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
 import org.apache.http.HttpStatus;
 import org.intellij.gitosc.GitoscBundle;
+import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscApiUtil;
 import org.intellij.gitosc.api.GitoscFullPath;
 import org.intellij.gitosc.api.GitoscRepo;
@@ -183,7 +184,7 @@ public class GitoscShareAction extends DumbAwareAction {
 					return;
 				}
 
-				GitoscNotifications.showInfoURL(project, "Successfully shared project on GitOSC", name, url);
+				GitoscNotifications.showInfoURL(project, GitoscBundle.message2("gitosc.share.project.success.notify"), name, url);
 			}
 		}.queue();
 	}
@@ -228,20 +229,20 @@ public class GitoscShareAction extends DumbAwareAction {
 		final GitoscFullPath path = GitoscUrlUtil.getUserAndRepositoryFromRemoteUrl(remote);
 		if(path == null){
 			return GitoscNotifications.showYesNoDialog(project,
-				"Project Is Already on GitOSC",
+				GitoscBundle.message2("gitosc.project.is.already.on.text"),
 				"Can't connect to repository from configured remote. You could want to check .git config.\n" +
 					"Do you want to proceed anyway?");
 		}
 
 		try{
-			GitoscRepo repo = GitoscUtil.computeValueInModalIO(project, "Access to GitOSC", indicator ->
+			GitoscRepo repo = GitoscUtil.computeValueInModalIO(project, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator ->
 				GitoscUtil.runTask(project, authHolder, indicator, connection ->
 					GitoscApiUtil.getDetailedRepoInfo(connection, path.getUser(), path.getRepository())));
 
 			int result = Messages.showDialog(project,
 				"Successfully connected to " + repo.getHtmlUrl() + ".\n" +
 					"Do you want to proceed anyway?",
-				"Project Is Already on GitOSC",
+				GitoscBundle.message2("gitosc.project.is.already.on.text"),
 				new String[]{"Continue", "Open in Browser", Messages.CANCEL_BUTTON}, 2, Messages.getQuestionIcon());
 
 			if(result == 0) return true;
@@ -254,16 +255,16 @@ public class GitoscShareAction extends DumbAwareAction {
 		catch (GitoscStatusCodeException e) {
 			if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				return GitoscNotifications.showYesNoDialog(project,
-					"Project Is Already on GitOSC",
+					GitoscBundle.message2("gitosc.project.is.already.on.text"),
 					"Can't connect to repository from configured remote. You could want to check .git config.\n" +
 						"Do you want to proceed anyway?");
 			}
 
-			GitoscNotifications.showErrorDialog(project, "Failed to Connect to GitOSC", e);
+			GitoscNotifications.showErrorDialog(project, GitoscBundle.message2("gitosc.access.fail.dialog.title"), e);
 			return false;
 		}
 		catch (IOException e) {
-			GitoscNotifications.showErrorDialog(project, "Failed to Connect to GitOSC", e);
+			GitoscNotifications.showErrorDialog(project, GitoscBundle.message2("gitosc.access.fail.dialog.title"), e);
 			return false;
 		}
 	}
@@ -308,7 +309,7 @@ public class GitoscShareAction extends DumbAwareAction {
 
 			final Collection<VirtualFile> files2commit = dialog.getSelectedFiles();
 			if (!dialog.isOK() || files2commit.isEmpty()) {
-				GitoscNotifications.showInfoURL(project, "Successfully created empty repository on GitOSC", name, url);
+				GitoscNotifications.showInfoURL(project, GitoscBundle.message2("gitosc.create.empty.repository"), name, url);
 				return false;
 			}
 
@@ -374,7 +375,7 @@ public class GitoscShareAction extends DumbAwareAction {
 	@Nullable
 	private static GitoscInfo loadGitoscInfoWithModal(@NotNull final GitoscAuthDataHolder authHolder, @NotNull final Project project) {
 		try {
-			return GitoscUtil.computeValueInModalIO(project, "Access to GitOSC", indicator -> {
+			return GitoscUtil.computeValueInModalIO(project, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator -> {
 				// get existing gitosc repos (network) and validate auth data
 				return GitoscUtil.runTask(project, authHolder, indicator, connection -> {
 					// check access to private repos (network)
@@ -389,7 +390,7 @@ public class GitoscShareAction extends DumbAwareAction {
 			});
 		}
 		catch (IOException e) {
-			GitoscNotifications.showErrorDialog(project, "Failed to Connect to GitOSC", e);
+			GitoscNotifications.showErrorDialog(project, GitoscBundle.message2("gitosc.access.fail.dialog.title"), e);
 			return null;
 		}
 	}

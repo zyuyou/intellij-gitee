@@ -24,26 +24,19 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.net.IdeHttpClientHelpers;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HttpContext;
 import org.intellij.gitosc.exceptions.*;
 import org.intellij.gitosc.util.GitoscAuthData;
 import org.intellij.gitosc.util.GitoscSettings;
 import org.intellij.gitosc.util.GitoscUrlUtil;
-import org.intellij.gitosc.util.GitoscUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -180,6 +173,11 @@ public class GitoscConnection {
 		return headers;
 	}
 
+	@NotNull
+	private static StringEntity createEntity(String requestBody){
+		return new StringEntity(requestBody, ContentType.create("application/x-www-form-urlencoded", "UTF-8"));
+	}
+
 	//======================================================================
 	// Request functions
 	//======================================================================
@@ -292,13 +290,13 @@ public class GitoscConnection {
 			case POST:
 				request = new HttpPost(uri);
 				if (requestBody != null) {
-					((HttpPost)request).setEntity(new StringEntity(requestBody, ContentType.APPLICATION_FORM_URLENCODED));
+					((HttpPost)request).setEntity(createEntity(requestBody));
 				}
 				break;
 			case PATCH:
 				request = new HttpPatch(uri);
 				if (requestBody != null) {
-					((HttpPatch)request).setEntity(new StringEntity(requestBody, ContentType.APPLICATION_FORM_URLENCODED));
+					((HttpPatch)request).setEntity(createEntity(requestBody));
 				}
 				break;
 			case GET:
