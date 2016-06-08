@@ -20,13 +20,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
+import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscFullPath;
 import org.intellij.gitosc.icons.GitoscIcons;
 import org.intellij.gitosc.util.GitoscNotifications;
 import org.intellij.gitosc.util.GitoscUrlUtil;
 import org.intellij.gitosc.util.GitoscUtil;
-
-import static com.intellij.diff.merge.TextMergeTool.LOG;
 
 /**
  * @author Yuyou Chow
@@ -44,7 +43,7 @@ abstract class GitoscShowCommitInBrowserAction extends DumbAwareAction {
   protected static void openInBrowser(Project project, GitRepository repository, String revisionHash) {
     String url = GitoscUtil.findGitoscRemoteUrl(repository);
     if (url == null) {
-      LOG.info(String.format("Repository is not under GitOSC. Root: %s, Remotes: %s", repository.getRoot(),
+      GitoscConstants.LOG.info(String.format("Repository is not under GitOSC. Root: %s, Remotes: %s", repository.getRoot(),
                                            GitUtil.getPrintableRemotes(repository.getRemotes())));
       return;
     }
