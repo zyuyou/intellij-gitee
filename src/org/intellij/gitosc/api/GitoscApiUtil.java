@@ -39,7 +39,7 @@ public class GitoscApiUtil {
 
 	private static Gson initGson(){
 		GsonBuilder builder = new GsonBuilder();
-		builder.setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		builder.setDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		builder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
 		return builder.create();
 	}
