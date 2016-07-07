@@ -6,6 +6,9 @@ Allow works with [码云 - Git@OSC](https://git.oschina.net)
 
 * [Intellij Plugins Home](https://plugins.jetbrains.com/plugin/8383)
 
+## Extra Usage
+* [码云平台IDEA系列的插件使用](http://git.mydoc.io/?t=94587)
+
 ## Contirbuting
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
