@@ -27,6 +27,7 @@ allprojects {
         plugins 'tasks', 'git4idea'
         downloadSources Boolean.valueOf(sources)
         sameSinceUntilBuild Boolean.valueOf(isEAP)
+        intellij.updateSinceUntilBuild false
         pluginName 'intellij-gitosc'
         publish {
             username publishUser
