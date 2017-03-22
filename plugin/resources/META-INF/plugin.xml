@@ -12,7 +12,7 @@
       ]]>
     </change-notes>
 
-    <idea-version since-build="145.258.11" until-build="162.9999"/>
+    <idea-version since-build="163.258.11" until-build="163.*"/>
     <depends>Git4Idea</depends>
     <depends>com.intellij.modules.lang</depends>
 

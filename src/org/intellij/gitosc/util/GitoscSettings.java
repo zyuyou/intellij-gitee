@@ -16,9 +16,6 @@
 package org.intellij.gitosc.util;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -27,8 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.gitosc.GitoscConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static org.intellij.gitosc.GitoscConstants.LOG;
 
 /**
  * @author Yuyou Chow
@@ -113,8 +108,7 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 	}
 
 	public boolean isSavePasswordMakesSense() {
-		final PasswordSafeImpl passwordSafe = (PasswordSafeImpl) PasswordSafe.getInstance();
-		return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+		return !PasswordSafe.getInstance().isMemoryOnly();
 	}
 
 	public boolean isValidGitAuth() {
@@ -143,64 +137,22 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 
 	@NotNull
 	private String getPassword() {
-		String password;
-		try {
-			password = PasswordSafe.getInstance().getPassword(null, GitoscSettings.class, GITOSC_SETTINGS_PASSWORD_KEY);
-		}
-		catch (PasswordSafeException e) {
-			LOG.info("Couldn't get password for key [" + GITOSC_SETTINGS_PASSWORD_KEY + "]", e);
-			password = "";
-		}
-
-		return StringUtil.notNullize(password);
+		return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(GitoscSettings.class, GITOSC_SETTINGS_PASSWORD_KEY));
 	}
 
 	private void setPassword(@NotNull String password, boolean rememberPassword) {
-		try {
-			if (rememberPassword) {
-				PasswordSafe.getInstance().storePassword(null, GitoscSettings.class, GITOSC_SETTINGS_PASSWORD_KEY, password);
-			}
-			else {
-				final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-				if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
-					passwordSafe.getMemoryProvider().storePassword(null, GitoscSettings.class, GITOSC_SETTINGS_PASSWORD_KEY, password);
-				}
-			}
-		}
-		catch (PasswordSafeException e) {
-			LOG.info("Couldn't set password for key [" + GITOSC_SETTINGS_PASSWORD_KEY + "]", e);
-		}
+		if (!rememberPassword) return;
+		PasswordSafe.getInstance().setPassword(GitoscSettings.class, GITOSC_SETTINGS_PASSWORD_KEY, password);
 	}
 
 	@NotNull
 	private String getAccessToken() {
-		String accessToken;
-		try {
-			accessToken = PasswordSafe.getInstance().getPassword(null, GitoscSettings.class, GITOSC_SETTINGS_ACCESS_TOKEN_KEY);
-		}
-		catch (PasswordSafeException e) {
-			LOG.info("Couldn't get access token for key [" + GITOSC_SETTINGS_ACCESS_TOKEN_KEY + "]", e);
-			accessToken = "";
-		}
-
-		return StringUtil.notNullize(accessToken);
+		return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(GitoscSettings.class, GITOSC_SETTINGS_ACCESS_TOKEN_KEY));
 	}
 
 	private void setAccessToken(@NotNull String accessToken, boolean rememberPassword) {
-		try {
-			if (rememberPassword) {
-				PasswordSafe.getInstance().storePassword(null, GitoscSettings.class, GITOSC_SETTINGS_ACCESS_TOKEN_KEY, accessToken);
-			}
-			else {
-				final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-				if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
-					passwordSafe.getMemoryProvider().storePassword(null, GitoscSettings.class, GITOSC_SETTINGS_ACCESS_TOKEN_KEY, accessToken);
-				}
-			}
-		}
-		catch (PasswordSafeException e) {
-			LOG.info("Couldn't set access token for key [" + GITOSC_SETTINGS_ACCESS_TOKEN_KEY + "]", e);
-		}
+		if (!rememberPassword) return;
+		PasswordSafe.getInstance().setPassword(GitoscSettings.class, GITOSC_SETTINGS_ACCESS_TOKEN_KEY, accessToken);
 	}
 
 	private static boolean isValidGitAuth(@NotNull GitoscAuthData auth) {
