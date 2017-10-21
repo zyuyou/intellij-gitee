@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.actions;
 
@@ -53,8 +54,8 @@ import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscApiUtil;
 import org.intellij.gitosc.api.GitoscFullPath;
-import org.intellij.gitosc.api.GitoscRepo;
-import org.intellij.gitosc.api.GitoscUserDetailed;
+import org.intellij.gitosc.api.data.GitoscRepo;
+import org.intellij.gitosc.api.data.GitoscUserDetailed;
 import org.intellij.gitosc.exceptions.GitoscStatusCodeException;
 import org.intellij.gitosc.icons.GitoscIcons;
 import org.intellij.gitosc.ui.GitoscShareDialog;
@@ -132,7 +133,6 @@ public class GitoscShareAction extends DumbAwareAction {
 		final String name = shareDialog.getRepositoryName();
 		final String description = shareDialog.getDescription();
 		final String remoteName = shareDialog.getRemoteName();
-
 
 		new Task.Backgroundable(project, "Sharing Project on GitOSC...") {
 			@Override
@@ -379,7 +379,7 @@ public class GitoscShareAction extends DumbAwareAction {
 				// get existing gitosc repos (network) and validate auth data
 				return GitoscUtil.runTask(project, authHolder, indicator, connection -> {
 					// check access to private repos (network)
-					GitoscUserDetailed userInfo = GitoscApiUtil.getCurrentUserDetailed(connection, authHolder.getAuthData());
+					GitoscUserDetailed userInfo = GitoscApiUtil.getCurrentUserDetailed(connection);
 
 					HashSet<String> names = new HashSet<String>();
 					for (GitoscRepo info : GitoscApiUtil.getUserRepos(connection)) {

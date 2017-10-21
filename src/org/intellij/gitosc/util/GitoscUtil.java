@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.util;
 
@@ -40,7 +41,8 @@ import git4idea.repo.GitRepositoryManager;
 import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscApiUtil;
 import org.intellij.gitosc.api.GitoscConnection;
-import org.intellij.gitosc.api.GitoscUserDetailed;
+import org.intellij.gitosc.api.data.GitoscAuthorization;
+import org.intellij.gitosc.api.data.GitoscUserDetailed;
 import org.intellij.gitosc.exceptions.GitoscAuthenticationException;
 import org.intellij.gitosc.exceptions.GitoscOperationCanceledException;
 import org.intellij.gitosc.ui.GitoscLoginDialog;
@@ -54,8 +56,6 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import static org.intellij.gitosc.GitoscConstants.LOG;
 
 /**
  * @author Yuyou Chow
@@ -196,8 +196,21 @@ public class GitoscUtil {
 	                            @NotNull GitoscAuthDataHolder authHolder,
 	                            @NotNull final ProgressIndicator indicator,
 	                            @NotNull ThrowableConvertor<GitoscConnection, T, IOException> task) throws IOException {
+		return runTask(project, authHolder, indicator, AuthLevel.LOGGED, task);
+	}
+
+	public static <T> T runTask(@NotNull Project project,
+	                            @NotNull GitoscAuthDataHolder authHolder,
+	                            @NotNull final ProgressIndicator indicator,
+	                            @NotNull AuthLevel authLevel,
+	                            @NotNull ThrowableConvertor<GitoscConnection, T, IOException> task) throws IOException {
+
 		GitoscAuthData auth = authHolder.getAuthData();
 		try {
+			if (!authLevel.accepts(auth)) {
+				throw new GitoscAuthenticationException("Expected other authentication type: " + authLevel);
+			}
+
 			final GitoscConnection connection = new GitoscConnection(auth, true);
 			ScheduledFuture<?> future = null;
 
@@ -211,14 +224,15 @@ public class GitoscUtil {
 			}
 		}
 		catch (GitoscAuthenticationException e) {
-			getValidAuthData2(project, authHolder, indicator, auth);
+			getValidAuthData(project, authHolder, indicator, authLevel, auth);
 			return runTask(project, authHolder, indicator, task);
 		}
 	}
 
-	public static void getValidAuthData2(@NotNull final Project project,
+	private static void getValidAuthData2(@NotNull final Project project,
 	                                    @NotNull final GitoscAuthDataHolder authHolder,
 	                                    @NotNull final ProgressIndicator indicator,
+	                                     @NotNull final AuthLevel authLevel,
 	                                    @NotNull final GitoscAuthData oldAuth) throws GitoscOperationCanceledException {
 
 		authHolder.runTransaction(oldAuth, () -> {
@@ -247,7 +261,7 @@ public class GitoscUtil {
 					}
 				}else{
 					// 帐号密码为空或者已经尝试过重新获取private_token
-					final GitoscLoginDialog dialog = new GitoscLoginDialog(project, oldAuth);
+					final GitoscLoginDialog dialog = new GitoscLoginDialog(project, oldAuth, authLevel);
 					DialogManager.show(dialog);
 					ok[0] = dialog.isOK();
 
@@ -267,27 +281,27 @@ public class GitoscUtil {
 		});
 	}
 
-	public static void getValidAuthData(@NotNull final Project project,
-	                                    @NotNull final GitoscAuthDataHolder authHolder,
-	                                    @NotNull final ProgressIndicator indicator,
-	                                    @NotNull final GitoscAuthData oldAuth) throws GitoscOperationCanceledException {
+	private static void getValidAuthData(@NotNull final Project project,
+	                                     @NotNull final GitoscAuthDataHolder authHolder,
+	                                     @NotNull final ProgressIndicator indicator,
+	                                     @NotNull final AuthLevel authLevel,
+	                                     @NotNull final GitoscAuthData oldAuth) throws GitoscOperationCanceledException {
 		authHolder.runTransaction(oldAuth, () -> {
 			final GitoscAuthData[] authData = new GitoscAuthData[1];
-			final boolean[] ok = new boolean[1];
 			ApplicationManager.getApplication().invokeAndWait(() -> {
-				final GitoscLoginDialog dialog = new GitoscLoginDialog(project, oldAuth);
+				GitoscLoginDialog dialog = new GitoscLoginDialog(project, oldAuth, authLevel);
 				DialogManager.show(dialog);
-				ok[0] = dialog.isOK();
 
-				if (ok[0]) {
+				if (dialog.isOK()) {
 					authData[0] = dialog.getAuthData();
-					GitoscSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
+
+					if (!authLevel.isOnetime()) {
+						GitoscSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
+					}
 				}
 			}, indicator.getModalityState());
 
-			if (!ok[0]) {
-				throw new GitoscOperationCanceledException("Can't get valid credentials");
-			}
+			if (authData[0] == null) throw new GitoscOperationCanceledException("Can't get valid credentials");
 			return authData[0];
 		});
 	}
@@ -318,6 +332,84 @@ public class GitoscUtil {
 	// Auth
 	//====================================================================================
 	@NotNull
+	public static GitoscAuthDataHolder getValidAuthDataHolderFromConfig(@NotNull Project project,
+	                                                                    @NotNull AuthLevel authLevel,
+	                                                                    @NotNull ProgressIndicator indicator) throws IOException {
+		GitoscAuthData auth = GitoscAuthData.createFromSettings();
+		GitoscAuthDataHolder authHolder = new GitoscAuthDataHolder(auth);
+
+		try {
+			if (!authLevel.accepts(auth)) throw new GitoscAuthenticationException("Expected other authentication type: " + authLevel);
+			checkAuthData(project, authHolder, indicator);
+			return authHolder;
+		}
+		catch (GitoscAuthenticationException e) {
+			getValidAuthData(project, authHolder, indicator, authLevel, auth);
+			return authHolder;
+		}
+	}
+
+	@NotNull
+	public static GitoscAuthorization loginAuthData(@NotNull Project project,
+	                                                @NotNull GitoscAuthDataHolder authHolder,
+	                                                @NotNull ProgressIndicator indicator) throws IOException {
+
+		GitoscAuthData auth = authHolder.getAuthData();
+
+		if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
+			throw new GitoscAuthenticationException("Target host not defined");
+		}
+
+		try {
+			new URI(auth.getHost());
+		}
+		catch (URISyntaxException e) {
+			throw new GitoscAuthenticationException("Invalid host URL");
+		}
+
+		switch (auth.getAuthType()) {
+			case SESSION:
+				GitoscAuthData.SessionAuth sessionAuth = auth.getSessionAuth();
+				assert sessionAuth != null;
+				if(StringUtil.isEmptyOrSpaces(sessionAuth.getLogin()) || StringUtil.isEmptyOrSpaces(sessionAuth.getPassword())){
+					throw new GitoscAuthenticationException("Empty login or password");
+				}
+				break;
+			case TOKEN:
+				GitoscAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+				assert tokenAuth != null;
+				if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
+					throw new GitoscAuthenticationException("Empty token");
+				}
+				break;
+			default:
+				throw new GitoscAuthenticationException(auth.getAuthType() + " connection not allowed");
+		}
+
+		return testLogin(project, authHolder, indicator);
+	}
+
+	@NotNull
+	private static GitoscAuthorization testLogin(@NotNull Project project,
+	                                                 @NotNull GitoscAuthDataHolder authHolder,
+	                                                 @NotNull final ProgressIndicator indicator) throws IOException {
+		GitoscAuthData auth = authHolder.getAuthData();
+
+		final GitoscConnection connection = new GitoscConnection(auth, true);
+		ScheduledFuture<?> future = null;
+
+		try {
+			future = addCancellationListener(indicator, connection);
+			return GitoscApiUtil.getAuthorization(connection);
+		}
+		finally {
+			connection.close();
+			if (future != null) future.cancel(true);
+		}
+	}
+
+
+	@NotNull
 	public static GitoscUserDetailed checkAuthData(@NotNull Project project,
 	                                               @NotNull GitoscAuthDataHolder authHolder,
 	                                               @NotNull ProgressIndicator indicator) throws IOException {
@@ -343,6 +435,13 @@ public class GitoscUtil {
 					throw new GitoscAuthenticationException("Empty login or password");
 				}
 				break;
+			case TOKEN:
+				GitoscAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+				assert tokenAuth != null;
+				if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
+					throw new GitoscAuthenticationException("Empty token");
+				}
+				break;
 			case ANONYMOUS:
 				throw new GitoscAuthenticationException("Anonymous connection not allowed");
 		}
@@ -361,11 +460,7 @@ public class GitoscUtil {
 
 		try {
 			future = addCancellationListener(indicator, connection);
-
-			// get private_token after logined.
-			GitoscUserDetailed userDetailed = GitoscApiUtil.getCurrentUserDetailed(connection, auth);
-			auth.setAccessToken(userDetailed.getPrivateToken());
-			return userDetailed;
+			return GitoscApiUtil.getCurrentUserDetailed(connection);
 		}
 		finally {
 			connection.close();

@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <tasks.repositoryType implementation="org.intellij.gitosc.tasks.GitoscRepositoryType"/>
+  </extensions>
+</idea-plugin>

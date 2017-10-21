@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.util;
 
@@ -62,6 +63,11 @@ public class GitoscUrlUtil {
 	@NotNull
 	public static String getApiUrl(@NotNull String urlFromSettings) {
 		return getApiProtocolFromUrl(urlFromSettings) + getApiUrlWithoutProtocol(urlFromSettings);
+	}
+
+	@NotNull
+	public static String getApiUrl(@NotNull GitoscAuthData auth) {
+		return getApiProtocolFromUrl(auth.getHost()) + getApiUrlWithoutProtocol(auth);
 	}
 
 	@NotNull
@@ -118,6 +124,24 @@ public class GitoscUrlUtil {
 		String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings.toLowerCase()));
 
 		final String API_SUFFIX = "/api/v3";
+
+		if (url.equals(GitoscConstants.DEFAULT_GITOSC_HOST)) {
+			return url + API_SUFFIX;
+		}
+		else if (url.equals(GitoscConstants.DEFAULT_GITOSC_HOST + API_SUFFIX)) {
+			return url;
+		}
+		else{
+			// have no custom GitOSC url yet.
+			return GitoscConstants.DEFAULT_GITOSC_HOST + API_SUFFIX;
+		}
+	}
+
+	@NotNull
+	public static String getApiUrlWithoutProtocol(@NotNull GitoscAuthData auth) {
+		String url = removeTrailingSlash(removeProtocolPrefix(auth.getHost().toLowerCase()));
+
+		final String API_SUFFIX = auth.getTokenAuth() == null ? "" : "/api/v5";
 
 		if (url.equals(GitoscConstants.DEFAULT_GITOSC_HOST)) {
 			return url + API_SUFFIX;

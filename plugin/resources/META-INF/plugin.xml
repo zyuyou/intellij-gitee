@@ -11,10 +11,11 @@
       <![CDATA[
       ]]>
     </change-notes>
-
+    
     <idea-version since-build="172.3317.76" until-build="172.*"/>
-    <depends>Git4Idea</depends>
     <depends>com.intellij.modules.lang</depends>
+    <depends>Git4Idea</depends>
+    <depends optional="true" config-file="GitoscTracker.xml">com.intellij.tasks</depends>
 
     <xi:include href="GitoscPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
         <xi:fallback>

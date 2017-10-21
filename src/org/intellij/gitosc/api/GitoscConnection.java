@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.api;
 
@@ -20,22 +21,17 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.net.IdeHttpClientHelpers;
-import com.intellij.util.net.ssl.CertificateManager;
-import org.apache.http.*;
-import org.apache.http.client.config.RequestConfig;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.*;
-import org.apache.http.config.ConnectionConfig;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
+import org.intellij.gitosc.api.data.GitoscErrorMessage;
 import org.intellij.gitosc.exceptions.*;
 import org.intellij.gitosc.util.GitoscAuthData;
-import org.intellij.gitosc.util.GitoscSettings;
 import org.intellij.gitosc.util.GitoscUrlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +51,7 @@ import java.util.List;
 
 import static org.intellij.gitosc.GitoscConstants.JOINER;
 import static org.intellij.gitosc.GitoscConstants.LOG;
+import static org.intellij.gitosc.api.GitoscApiUtil.fromJson;
 
 /**
  * @author Yuyou Chow
@@ -64,12 +61,11 @@ import static org.intellij.gitosc.GitoscConstants.LOG;
  */
 public class GitoscConnection {
 	@NotNull
-	private final String myHost;
-	@Nullable
-	private final String myAccessToken;
+	private final String myApiURL;
+	@NotNull
+	private final GitoscAuthData myAuth;
 	@NotNull
 	private final CloseableHttpClient myClient;
-
 	private final boolean myReusable;
 
 	private volatile HttpUriRequest myRequest;
@@ -85,30 +81,35 @@ public class GitoscConnection {
 	}
 
 	public GitoscConnection(@NotNull GitoscAuthData auth, boolean reusable) {
-		myHost = auth.getHost();
-
-		GitoscAuthData.SessionAuth sessionAuth = auth.getSessionAuth();
-		if(sessionAuth != null){
-			myAccessToken = sessionAuth.getAccessToken();
-		}else {
-			myAccessToken = null;
-		}
-
-		myClient = createClient(auth);
+		myApiURL = GitoscUrlUtil.getApiUrl(auth);
+		myAuth = auth;
+		myClient = new GithubConnectionBuilder(auth, myApiURL).createClient();
 		myReusable = reusable;
 	}
 
 	@NotNull
-	public String getHost() {
-		return myHost;
+	public String getApiUrl() {
+		return myApiURL;
+	}
+
+	@NotNull
+	public GitoscAuthData getAuth(){
+		return myAuth;
 	}
 
 	@Nullable
 	private String getAccessToken() {
-		if(myAccessToken != null){
-			return "private_token=" + myAccessToken;
-		}else{
-			return null;
+		switch (myAuth.getAuthType()){
+			case SESSION:
+				GitoscAuthData.SessionAuth sessionAuth = myAuth.getSessionAuth();
+				assert sessionAuth != null;
+				return "private_token=" + sessionAuth.getAccessToken();
+			case TOKEN:
+				GitoscAuthData.TokenAuth tokenAuth = myAuth.getTokenAuth();
+				assert tokenAuth != null;
+				return "access_token=" + tokenAuth.getToken();
+			default:
+				return null;
 		}
 	}
 
@@ -128,54 +129,17 @@ public class GitoscConnection {
 	// client creation
 	//======================================================================
 	@NotNull
-	private static CloseableHttpClient createClient(@NotNull GitoscAuthData auth){
-		HttpClientBuilder builder = HttpClients.custom();
-
-		return builder
-			.setDefaultRequestConfig(createRequestConfig(auth))
-			.setDefaultConnectionConfig(createConnectionConfig(auth))
-//			.setDefaultCredentialsProvider(createCredentialsProvider(auth))
-			.setDefaultHeaders(createHeaders(auth))
-//			.addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
-			.setSslcontext(CertificateManager.getInstance().getSslContext())
-//			HostNameVerifier
-			.build();
-	}
-
-	@NotNull
-	private static RequestConfig createRequestConfig(@NotNull GitoscAuthData auth){
-		RequestConfig.Builder builder = RequestConfig.custom();
-
-		int timeout = GitoscSettings.getInstance().getConnectionTimeout();
-
-		builder
-			.setConnectTimeout(timeout)
-			.setSocketTimeout(timeout);
-
-		if(auth.isUseProxy()){
-			IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(builder, auth.getHost());
-		}
-
-		return builder.build();
-	}
-
-	@NotNull
-	private static ConnectionConfig createConnectionConfig(@NotNull GitoscAuthData auth) {
-		return ConnectionConfig.custom()
-			.setCharset(Consts.UTF_8)
-			.build();
-	}
-
-	@NotNull
-	private static Collection<? extends Header> createHeaders(@NotNull GitoscAuthData auth) {
-		List<Header> headers = new ArrayList<Header>();
-		headers.add(new BasicHeader("User-Agent", "CC/1.0-JB." + PlatformUtils.getPlatformPrefix()));
-		return headers;
-	}
-
-	@NotNull
 	private static StringEntity createEntity(String requestBody){
 		return new StringEntity(requestBody, ContentType.create("application/x-www-form-urlencoded", "UTF-8"));
+	}
+
+	private static StringEntity createEntity(String requestBody, @NotNull GitoscAuthData.AuthType authType){
+		switch (authType){
+			case TOKEN:
+				return new StringEntity(requestBody, ContentType.APPLICATION_JSON);
+			default:
+				return new StringEntity(requestBody, ContentType.create("application/x-www-form-urlencoded", "UTF-8"));
+		}
 	}
 
 	//======================================================================
@@ -218,12 +182,12 @@ public class GitoscConnection {
 	                             @Nullable String requestBody,
 	                             @NotNull Collection<Header> headers,
 	                             @NotNull HttpVerb verb) throws IOException {
-		return doRequest(getRequestUrl(myHost, path + "?" + getAccessToken()), requestBody, headers, verb);
+		return doRequest(getRequestUrl(myApiURL, path + "?" + getAccessToken()), requestBody, headers, verb);
 	}
 
 	@NotNull
-	private static String getRequestUrl(@NotNull String host, @NotNull String path) {
-		return GitoscUrlUtil.getApiUrl(host) + path;
+	private static String getRequestUrl(@NotNull String ApiUrl, @NotNull String path) {
+		return ApiUrl + path;
 	}
 
 	@NotNull
@@ -290,13 +254,13 @@ public class GitoscConnection {
 			case POST:
 				request = new HttpPost(uri);
 				if (requestBody != null) {
-					((HttpPost)request).setEntity(createEntity(requestBody));
+					((HttpPost)request).setEntity(createEntity(requestBody, this.getAuth().getAuthType()));
 				}
 				break;
 			case PATCH:
 				request = new HttpPatch(uri);
 				if (requestBody != null) {
-					((HttpPatch)request).setEntity(createEntity(requestBody));
+					((HttpPatch)request).setEntity(createEntity(requestBody, this.getAuth().getAuthType()));
 				}
 				break;
 			case GET:
@@ -357,7 +321,7 @@ public class GitoscConnection {
 		try {
 			HttpEntity entity = response.getEntity();
 			if (entity != null) {
-				GitoscErrorMessage error = GitoscApiUtil.fromJson(parseResponse(entity.getContent()), GitoscErrorMessage.class);
+				GitoscErrorMessage error = fromJson(parseResponse(entity.getContent()), GitoscErrorMessage.class);
 				String message = statusLine.getReasonPhrase() + " - " + error.getMessage();
 				return new GitoscStatusCodeException(message, error, statusLine.getStatusCode());
 			}
@@ -370,15 +334,10 @@ public class GitoscConnection {
 
 	@NotNull
 	private static JsonElement parseResponse(@NotNull InputStream gitoscResponse) throws IOException {
-		Reader reader = new InputStreamReader(gitoscResponse, CharsetToolkit.UTF8_CHARSET);
-		try {
+		try (Reader reader = new InputStreamReader(gitoscResponse, CharsetToolkit.UTF8_CHARSET)) {
 			return new JsonParser().parse(reader);
-		}
-		catch (JsonParseException jse) {
+		} catch (JsonParseException jse) {
 			throw new GitoscJsonException("Couldn't parse GitOSC response", jse);
-		}
-		finally {
-			reader.close();
 		}
 	}
 
@@ -393,67 +352,6 @@ public class GitoscConnection {
 		if (myAborted) throw new GitoscOperationCanceledException();
 
 		return new ResponsePage(ret, path, response.getAllHeaders());
-	}
-
-
-	public static class PagedRequest<T> {
-		@NotNull private String myPath;
-		@NotNull private final Collection<Header> myHeaders;
-		@NotNull private final Class<T> myResult;
-		@NotNull private final Class<? extends DataConstructor[]> myRawArray;
-
-		private int myNextPage = 1;
-
-		public PagedRequest(@NotNull String path,
-		                    @NotNull Class<T> result,
-		                    @NotNull Class<? extends DataConstructor[]> rawArray,
-		                    @NotNull Header... headers) {
-			myPath = path;
-			myResult = result;
-			myRawArray = rawArray;
-			myHeaders = Arrays.asList(headers);
-		}
-
-		@NotNull
-		public List<T> next(@NotNull GitoscConnection connection) throws IOException {
-			String url = getRequestUrl(connection.getHost(), myPath + "?" + JOINER.join("page=" + myNextPage, connection.getAccessToken()));
-
-			ResponsePage response = connection.doRequest(url, null, myHeaders, HttpVerb.GET);
-
-			if (response.getJsonElement() == null) {
-				throw new GitoscConfusingException("Empty response");
-			}
-
-			if (!response.getJsonElement().isJsonArray()) {
-				throw new GitoscJsonException("Wrong json type: expected JsonArray", new Exception(response.getJsonElement().toString()));
-			}
-
-			List<T> result = new ArrayList<T>();
-
-			DataConstructor[] rawList = GitoscApiUtil.fromJson(response.getJsonElement().getAsJsonArray(), myRawArray);
-			if(rawList.length > 0){
-				for (DataConstructor raw : rawList) {
-					result.add(GitoscApiUtil.createDataFromRaw(raw, myResult));
-				}
-				myNextPage += 1;
-			}else{
-				myNextPage = 0;
-			}
-			return result;
-		}
-
-		public boolean hasNext() {
-			return myNextPage > 0;
-		}
-
-		@NotNull
-		public List<T> getAll(@NotNull GitoscConnection connection) throws IOException {
-			List<T> result = new ArrayList<T>();
-			while (hasNext()) {
-				result.addAll(next(connection));
-			}
-			return result;
-		}
 	}
 
 	private static class ResponsePage {
@@ -481,5 +379,86 @@ public class GitoscConnection {
 		public Header[] getHeaders() {
 			return myHeaders;
 		}
+	}
+
+	public static abstract class PagedRequestBase<T> implements PagedRequest<T> {
+		@NotNull private String myPath;
+		@NotNull private final Collection<Header> myHeaders;
+
+		private int myNextPage = 1;
+
+		public PagedRequestBase(@NotNull String path, @NotNull Header... headers){
+			myPath = path;
+			myHeaders = Arrays.asList(headers);
+		}
+
+		@NotNull
+		public List<T> next(@NotNull GitoscConnection connection) throws IOException {
+			String url = getRequestUrl(connection.getApiUrl(), myPath + JOINER.join("&page=" + myNextPage, connection.getAccessToken()));
+
+			ResponsePage response = connection.doRequest(url, null, myHeaders, HttpVerb.GET);
+
+			if(response.getJsonElement() == null){
+				throw new GitoscConfusingException("Empty response");
+			}
+
+			if (!response.getJsonElement().isJsonArray()) {
+				throw new GitoscJsonException("Wrong json type: expected JsonArray", new Exception(response.getJsonElement().toString()));
+			}
+
+			List<T> result = parse(response.getJsonElement());
+			if(result.size() > 0){
+				myNextPage += 1;
+			}else{
+				myNextPage = 0;
+			}
+
+			return result;
+		}
+
+		public boolean hasNext() {
+			return myNextPage > 0;
+		}
+
+		protected abstract List<T> parse(@NotNull JsonElement response) throws IOException;
+
+	}
+
+	public static class ArrayPagedRequest<T> extends PagedRequestBase<T> {
+		@NotNull private final Class<? extends T[]> myTypeArray;
+
+		public ArrayPagedRequest(@NotNull String path,
+		                         @NotNull Class<? extends T[]> typeArray,
+		                         @NotNull Header... headers) {
+			super(path, headers);
+			myTypeArray = typeArray;
+		}
+
+		@Override
+		protected List<T> parse(@NotNull JsonElement response) throws IOException {
+			if (!response.isJsonArray()) {
+				throw new GitoscJsonException("Wrong json type: expected JsonArray", new Exception(response.toString()));
+			}
+
+			T[] result = fromJson(response.getAsJsonArray(), myTypeArray);
+			return Arrays.asList(result);
+		}
+	}
+
+	public interface PagedRequest<T> {
+		@NotNull
+		List<T> next(@NotNull GitoscConnection connection) throws IOException;
+
+		boolean hasNext();
+
+		@NotNull
+		default List<T> getAll(@NotNull GitoscConnection connection) throws IOException {
+			List<T> result = new ArrayList<>();
+			while(hasNext()){
+				result.addAll(next(connection));
+			}
+			return result;
+		}
+
 	}
 }

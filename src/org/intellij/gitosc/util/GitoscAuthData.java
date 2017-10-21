@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.util;
 
@@ -110,6 +111,14 @@ public class GitoscAuthData {
 
 	public static GitoscAuthData createSessionAuth(@NotNull String host, @NotNull String login, @NotNull String password, @Nullable String accessToken) {
 		return new GitoscAuthData(AuthType.SESSION, host, null, null, new SessionAuth(login, password, accessToken), true);
+	}
+
+	public static GitoscAuthData createTokenAuth(@NotNull String host, @NotNull String token) {
+		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), null,true);
+	}
+
+	public static GitoscAuthData createTokenAuth(@NotNull String host, @NotNull String token, boolean useProxy) {
+		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), null, useProxy);
 	}
 
 	//============================================================

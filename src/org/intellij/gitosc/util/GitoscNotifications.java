@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.util;
 
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsNotifier;
+import org.apache.http.client.ClientProtocolException;
 import org.intellij.gitosc.exceptions.GitoscOperationCanceledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +48,8 @@ public class GitoscNotifications {
 	public static String getErrorTextFromException(@NotNull Exception e) {
 		if (e instanceof UnknownHostException) {
 			return "Unknown host: " + e.getMessage();
+		}else if(e instanceof ClientProtocolException){
+			return e.getCause().getMessage();
 		}
 		return e.getMessage();
 	}

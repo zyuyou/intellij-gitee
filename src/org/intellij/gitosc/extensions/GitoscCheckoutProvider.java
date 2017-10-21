@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.extensions;
 
@@ -27,7 +28,7 @@ import git4idea.commands.Git;
 import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscApiUtil;
-import org.intellij.gitosc.api.GitoscRepo;
+import org.intellij.gitosc.api.data.GitoscRepo;
 import org.intellij.gitosc.util.GitoscAuthDataHolder;
 import org.intellij.gitosc.util.GitoscNotifications;
 import org.intellij.gitosc.util.GitoscUrlUtil;
@@ -60,6 +61,8 @@ public class GitoscCheckoutProvider implements CheckoutProvider {
 		try{
 			availableRepos = GitoscUtil.computeValueInModalIO(project, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator ->
 				GitoscUtil.runTask(project, GitoscAuthDataHolder.createFromSettings(), indicator, GitoscApiUtil::getAvailableRepos));
+
+
 		}catch (IOException e){
 			GitoscNotifications.showError(project, "Couldn't get the list of GitOSC repositories", e);
 			return;

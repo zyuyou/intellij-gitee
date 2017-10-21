@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.GitoscConstants;
-import org.intellij.gitosc.util.GitoscAuthData;
-import org.intellij.gitosc.util.GitoscAuthDataHolder;
-import org.intellij.gitosc.util.GitoscSettings;
-import org.intellij.gitosc.util.GitoscUtil;
+import org.intellij.gitosc.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,34 +39,36 @@ import static org.intellij.gitosc.GitoscConstants.LOG;
  * @date 10/20/10
  */
 public class GitoscLoginDialog extends DialogWrapper {
-	protected final GitoscLoginPanel myGitoscLoginPanel;
-	protected final GitoscSettings mySettings;
+	private static final Logger LOG = GitoscConstants.LOG;
 
-	protected final Project myProject;
+	private final GitoscCredentialsPanel myCredentialsPanel;
 
-	protected GitoscAuthData myAuthData;
+	@NotNull private final Project myProject;
+	@NotNull private final AuthLevel myAuthLevel;
 
-	public GitoscLoginDialog(@Nullable Project project, @NotNull GitoscAuthData oldAuthData) {
+	private GitoscAuthData myAuthData;
+	private boolean mySavePassword;
+
+	public GitoscLoginDialog(@NotNull Project project, @NotNull GitoscAuthData oldAuthData, @NotNull AuthLevel authLevel) {
 		super(project, true);
-
 		myProject = project;
+		myAuthLevel = authLevel;
 
-		myGitoscLoginPanel = new GitoscLoginPanel(this);
+		myCredentialsPanel = new GitoscCredentialsPanel(project);
+		myCredentialsPanel.setTestButtonVisible(false);
 
-		myGitoscLoginPanel.setHost(oldAuthData.getHost());
-		myGitoscLoginPanel.setAuthType(oldAuthData.getAuthType());
+		myCredentialsPanel.setHost(oldAuthData.getHost());
+		myCredentialsPanel.setAuthType(oldAuthData.getAuthType());
 
 		GitoscAuthData.SessionAuth sessionAuth = oldAuthData.getSessionAuth();
 		if(sessionAuth != null){
-			myGitoscLoginPanel.setLogin(sessionAuth.getLogin());
+			myCredentialsPanel.setLogin(sessionAuth.getLogin());
 		}
 
-		mySettings = GitoscSettings.getInstance();
-		if(mySettings.isSavePasswordMakesSense()){
-			myGitoscLoginPanel.setSavePasswordSelected(mySettings.isSavePassword());
-		}else{
-			myGitoscLoginPanel.setSavePasswordVisibleEnabled(false);
-		}
+		if (authLevel.getHost() != null) myCredentialsPanel.lockHost(authLevel.getHost());
+		if (authLevel.getAuthType() != null) myCredentialsPanel.lockAuthType(authLevel.getAuthType());
+
+		if (!authLevel.isOnetime()) setDoNotAskOption(new MyRememberPasswordOption());
 
 		setTitle(GitoscBundle.message2("gitosc.login.dialog.title"));
 		setOKButtonText("Login");
@@ -87,7 +88,7 @@ public class GitoscLoginDialog extends DialogWrapper {
 	@Nullable
 	@Override
 	protected JComponent createCenterPanel() {
-		return myGitoscLoginPanel.getPanel();
+		return myCredentialsPanel;
 	}
 
 	@Nullable
@@ -96,33 +97,31 @@ public class GitoscLoginDialog extends DialogWrapper {
 		return "login_to_gitosc";
 	}
 
-	@Nullable
-	@Override
-	public JComponent getPreferredFocusedComponent() {
-		return myGitoscLoginPanel.getPreferableFocusComponent();
-	}
-
 	@Override
 	protected void doOKAction() {
-		final GitoscAuthDataHolder authDataHolder = new GitoscAuthDataHolder(myGitoscLoginPanel.getAuthData());
-		try{
-			GitoscUtil.computeValueInModalIO(myProject, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator ->
-				GitoscUtil.checkAuthData(myProject, authDataHolder, indicator));
-
-			myAuthData = authDataHolder.getAuthData();
-
-			if(mySettings.isSavePasswordMakesSense()){
-				mySettings.setSavePassword(myGitoscLoginPanel.isSavePasswordSelected());
+		GitoscAuthDataHolder authHolder = new GitoscAuthDataHolder(myCredentialsPanel.getAuthData());
+		try {
+			if(authHolder.getAuthData().getAuthType() == GitoscAuthData.AuthType.SESSION){
+				// Session for login
+				GitoscUtil.computeValueInModalIO(myProject, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator ->
+					GitoscUtil.loginAuthData(myProject, authHolder, indicator));
+			}else{
+				GitoscUtil.computeValueInModalIO(myProject, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator ->
+					GitoscUtil.checkAuthData(myProject, authHolder, indicator));
 			}
+
+			myAuthData = authHolder.getAuthData();
+
 			super.doOKAction();
-		}catch(IOException e){
+		}
+		catch (IOException e) {
 			LOG.info(e);
-			setErrorText("Can't login: " + GitoscUtil.getErrorTextFromException(e));
+			setErrorText("Can't login: " + GitoscUtil.getErrorTextFromException(e), myCredentialsPanel);
 		}
 	}
 
-	public boolean isSavePasswordSelected(){
-		return myGitoscLoginPanel.isSavePasswordSelected();
+	public boolean isSavePasswordSelected() {
+		return mySavePassword;
 	}
 
 	@NotNull
@@ -133,7 +132,32 @@ public class GitoscLoginDialog extends DialogWrapper {
 		return myAuthData;
 	}
 
-	public void clearErrors(){
-		setErrorText(null);
+	private class MyRememberPasswordOption implements DoNotAskOption {
+		@Override
+		public boolean isToBeShown() {
+			return !GitoscSettings.getInstance().isSavePassword();
+		}
+
+		@Override
+		public void setToBeShown(boolean toBeShown, int exitCode) {
+			mySavePassword = !toBeShown;
+			GitoscSettings.getInstance().setSavePassword(!toBeShown);
+		}
+
+		@Override
+		public boolean canBeHidden() {
+			return GitoscSettings.getInstance().isSavePasswordMakesSense();
+		}
+
+		@Override
+		public boolean shouldSaveOptionsOnCancel() {
+			return false;
+		}
+
+		@NotNull
+		@Override
+		public String getDoNotShowMessage() {
+			return "Save credentials";
+		}
 	}
 }

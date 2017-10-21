@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 码云
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.util;
 
@@ -24,6 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.gitosc.GitoscConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static org.intellij.gitosc.GitoscConstants.LOG;
 
 /**
  * @author Yuyou Chow
@@ -57,9 +60,13 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 	}
 
 	public static class State {
-		@NotNull public String HOST = GitoscConstants.DEFAULT_GITOSC_HOST;
 		@Nullable public String LOGIN = null;
+		@NotNull public String HOST = GitoscConstants.DEFAULT_GITOSC_HOST;
 		@NotNull public GitoscAuthData.AuthType AUTH_TYPE = GitoscAuthData.AuthType.ANONYMOUS;
+
+		public boolean ANONYMOUS_GIST = false;
+		public boolean OPEN_IN_BROWSER_GIST = true;
+		public boolean PRIVATE_GIST = true;
 
 		public boolean SAVE_PASSWORD = true;
 		public int CONNECTION_TIMEOUT = 5000;
@@ -95,12 +102,36 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 		myState.AUTH_TYPE = authType;
 	}
 
+	public boolean isAnonymousGist() {
+		return myState.ANONYMOUS_GIST;
+	}
+
+	public boolean isOpenInBrowserGist() {
+		return myState.OPEN_IN_BROWSER_GIST;
+	}
+
+	public boolean isPrivateGist() {
+		return myState.PRIVATE_GIST;
+	}
+
 	public boolean isAuthConfigured() {
 		return !myState.AUTH_TYPE.equals(GitoscAuthData.AuthType.ANONYMOUS);
 	}
 
 	public boolean isSavePassword() {
 		return myState.SAVE_PASSWORD;
+	}
+
+	public void setAnonymousGist(final boolean anonymousGist) {
+		myState.ANONYMOUS_GIST = anonymousGist;
+	}
+
+	public void setPrivateGist(final boolean privateGist) {
+		myState.PRIVATE_GIST = privateGist;
+	}
+
+	public void setOpenInBrowserGist(final boolean openInBrowserGist) {
+		myState.OPEN_IN_BROWSER_GIST = openInBrowserGist;
 	}
 
 	public void setSavePassword(final boolean savePassword) {
@@ -159,6 +190,8 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 		switch (auth.getAuthType()) {
 			case SESSION:
 				return true;
+			case TOKEN:
+				return true;
 			case ANONYMOUS:
 				return false;
 			default:
@@ -171,6 +204,8 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 		switch (getAuthType()) {
 			case SESSION:
 				return GitoscAuthData.createSessionAuth(getHost(), getLogin(), getPassword(), getAccessToken());
+			case TOKEN:
+				return GitoscAuthData.createTokenAuth(getHost(), getPassword());
 			case ANONYMOUS:
 				return GitoscAuthData.createAnonymous();
 			default:
@@ -192,11 +227,17 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 				setPassword(sessionAuth.getPassword(), rememberPassword);
 				setAccessToken(sessionAuth.getAccessToken() == null ? "":sessionAuth.getAccessToken(), rememberPassword);
 				break;
+			case TOKEN:
+				assert auth.getTokenAuth() != null;
+				setLogin(null);
+				setPassword(auth.getTokenAuth().getToken(), rememberPassword);
+				break;
 			case ANONYMOUS:
 				setLogin(null);
 				setPassword("", rememberPassword);
 				break;
 			default:
+				LOG.error("GitoscSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
 				throw new IllegalStateException("GitoscSettings: setAuthData - wrong AuthType: " + auth.getAuthType());
 		}
 	}

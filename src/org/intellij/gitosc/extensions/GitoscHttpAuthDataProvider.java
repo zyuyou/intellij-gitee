@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2016-2017 码云
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package org.intellij.gitosc.extensions;
 
@@ -59,8 +60,14 @@ public class GitoscHttpAuthDataProvider implements GitHttpAuthDataProvider {
 					return null;
 				}
 				return new AuthData(sessionAuth.getLogin(), sessionAuth.getPassword());
-			case BASIC:
 			case TOKEN:
+				GitoscAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+				assert tokenAuth != null;
+				if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
+					return null;
+				}
+				return new AuthData(tokenAuth.getToken(), "x-oauth-basic");
+			case BASIC:
 			default:
 				return null;
 		}
