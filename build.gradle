@@ -29,7 +29,7 @@ allprojects {
         sameSinceUntilBuild Boolean.valueOf(isEAP)
         intellij.updateSinceUntilBuild false
         pluginName 'intellij-gitosc'
-        publish {
+        publishPlugin {
             username publishUser
             password publishPassword
         }

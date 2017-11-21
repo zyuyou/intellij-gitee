@@ -77,6 +77,7 @@ public class AuthLevel {
   public boolean accepts(@NotNull GitoscAuthData auth) {
     if (myHost != null && !myHost.equals(auth.getHost())) return false;
     if (myAuthType != null && !myAuthType.equals(auth.getAuthType())) return false;
+    if (auth.getAuthType() == GitoscAuthData.AuthType.SESSION && auth.getSessionAuth() != null && "".equals(auth.getSessionAuth().getPassword())) return false;
 
     return true;
   }
