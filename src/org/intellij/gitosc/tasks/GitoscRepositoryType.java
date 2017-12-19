@@ -43,7 +43,7 @@ public class GitoscRepositoryType extends BaseRepositoryType<GitoscRepository> {
   @NotNull
   @Override
   public String getName() {
-    return "GitOSC";
+    return "Gitee";
   }
 
   @NotNull

@@ -1,10 +1,10 @@
-<idea-plugin url="https://git.oschina.net/oschina/intellij-gitosc" version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin url="https://gitee.com/oschina/intellij-gitosc" version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
     <id>org.intellij.gitosc</id>
     <vendor email="likui@oschina.cn">码云</vendor>
-    <name>GitOSC</name>
+    <name>Gitee</name>
     <description>
       <![CDATA[
-        Allows working with <a href="http://git.oschina.net/" >码云 - GitOSC</a>
+        Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
       ]]>
     </description>
     <change-notes>
@@ -12,7 +12,7 @@
       ]]>
     </change-notes>
     
-    <idea-version since-build="172.3317.76" until-build="172.*"/>
+    <idea-version since-build="173.3727.127" until-build="173.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GitoscTracker.xml">com.intellij.tasks</depends>

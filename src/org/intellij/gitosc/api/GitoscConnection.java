@@ -337,7 +337,7 @@ public class GitoscConnection {
 		try (Reader reader = new InputStreamReader(gitoscResponse, CharsetToolkit.UTF8_CHARSET)) {
 			return new JsonParser().parse(reader);
 		} catch (JsonParseException jse) {
-			throw new GitoscJsonException("Couldn't parse GitOSC response", jse);
+			throw new GitoscJsonException("Couldn't parse Gitee response", jse);
 		}
 	}
 

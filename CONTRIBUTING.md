@@ -1,5 +1,5 @@
 ## How to contribute
-To figure out how you can contribute, you may check out current [issues](https://git.oschina.net/lrucase/intellij-gitosc/issues).
+To figure out how you can contribute, you may check out current [issues](https://gitee.com/lrucase/intellij-gitosc/issues).
 Before submitting a pull request please make sure all tests run by **Tests** run configuration pass.
 
 ## Getting started with the plugin development

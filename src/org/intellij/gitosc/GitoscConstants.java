@@ -35,7 +35,7 @@ public class GitoscConstants {
 	// String
 	public static final String TITLE_ACCESS_TO_GITOSC = GitoscBundle.message2("gitosc.access.dialog.title");
 
-	public static final String DEFAULT_GITOSC_HOST = "git.oschina.net";
+	public static final String DEFAULT_GITOSC_HOST = "gitee.com";
 
 	public static final String AUTH_GRANT_TYPE = "grant_type=password";
 	public static final String AUTH_CLIENT_ID = "client_id=fc439d90cb2ffc20cffeb70a6a4039e69847485e0fa56cfa0d1bf006098e24dd";

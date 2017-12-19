@@ -70,7 +70,7 @@ public class GitoscCredentialsPanel extends JPanel {
     super(new BorderLayout());
     add(myPane, BorderLayout.CENTER);
 
-    mySignupTextField.setText("<html>Do not have an account at git.oschina.net? <a href=\"https://git.oschina.net\">" + "Sign up" + "</a></html>");
+    mySignupTextField.setText("<html>Do not have an account at gitee.com? <a href=\"https://gitee.com\">" + "Sign up" + "</a></html>");
     mySignupTextField.setBackground(UIUtil.TRANSPARENT_COLOR);
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
     mySignupTextField.setMargin(JBUI.insetsTop(5));

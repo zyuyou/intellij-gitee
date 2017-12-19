@@ -25,6 +25,6 @@ import javax.swing.*;
  *
  */
 public interface GitoscIcons {
-	Icon GITOSC_SMALL = IconLoader.getIcon("/icons/gitosc-16.png");
+	Icon GITOSC_SMALL = IconLoader.getIcon("/icons/gitee-16.png");
 	Icon GITOSC = IconLoader.getIcon("/icons/gitosc-32.png");
 }

@@ -159,7 +159,7 @@ public class GitoscOpenInBrowserAction extends DumbAwareAction {
 	protected static void openCommitInBrowser(@NotNull Project project, @NotNull GitRepository repository, @NotNull String revisionHash) {
 		String url = GitoscUtil.findGitoscRemoteUrl(repository);
 		if (url == null) {
-			GitoscConstants.LOG.info(String.format("Repository is not under GitOSC. Root: %s, Remotes: %s", repository.getRoot(),
+			GitoscConstants.LOG.info(String.format("Repository is not under Gitee. Root: %s, Remotes: %s", repository.getRoot(),
 				GitUtil.getPrintableRemotes(repository.getRemotes())));
 			return;
 		}

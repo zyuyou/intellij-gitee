@@ -64,7 +64,7 @@ public class GitoscCheckoutProvider implements CheckoutProvider {
 
 
 		}catch (IOException e){
-			GitoscNotifications.showError(project, "Couldn't get the list of GitOSC repositories", e);
+			GitoscNotifications.showError(project, "Couldn't get the list of Gitee repositories", e);
 			return;
 		}
 

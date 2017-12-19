@@ -53,7 +53,7 @@ public class GitoscUrlUtil {
 	}
 
 	/**
-	 * E.g.: https://git.oschina.net/api/v3
+	 * E.g.: https://gitee.com/api/v3
 	 */
 	@NotNull
 	public static String getApiUrl() {
@@ -86,7 +86,7 @@ public class GitoscUrlUtil {
 
 	/**
 	 * Returns the "host" part of Gitosc URLs.
-	 * E.g.: https://git.oschina.net
+	 * E.g.: https://gitee.com
 	 * Note: there is no trailing slash in the returned url.
 	 */
 	@NotNull
@@ -95,8 +95,8 @@ public class GitoscUrlUtil {
 	}
 
 	/**
-	 * E.g.: https://git.oschina.net/suffix/ -> git.oschina.net
-	 *       git.oschina.net:8080/ -> git.oschina.net
+	 * E.g.: https://gitee.com/suffix/ -> gitee.com
+	 *       gitee.com:8080/ -> gitee.com
 	 */
 	@NotNull
 	public static String getHostFromUrl(@NotNull String url) {
@@ -112,7 +112,7 @@ public class GitoscUrlUtil {
 
 
 	/**
-	 * E.g.: git.oschina.net
+	 * E.g.: gitee.com
 	 */
 	@NotNull
 	public static String getGitHostWithoutProtocol() {
@@ -172,7 +172,7 @@ public class GitoscUrlUtil {
 	/**
 	 * assumed isGitoscUrl(remoteUrl)
 	 *
-	 * git@git.oschina.net:user/repo.git -> user/repo
+	 * git@gitee.com:user/repo.git -> user/repo
 	 */
 	@Nullable
 	public static GitoscFullPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
@@ -207,7 +207,7 @@ public class GitoscUrlUtil {
 	/**
 	 * assumed isGitoscUrl(remoteUrl)
 	 *
-	 * git@git.oschina.net:user/repo -> https://git.oschina.net/user/repo
+	 * git@gitee.com:user/repo -> https://gitee.com/user/repo
 	 */
 	@Nullable
 	public static String makeGitoscRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {

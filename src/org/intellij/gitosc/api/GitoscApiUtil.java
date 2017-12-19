@@ -142,7 +142,7 @@ public class GitoscApiUtil {
 	}
 
 	//====================================================================================
-	// git.oschina.net/api/v5 - method calls
+	// gitee.com/api/v5 - method calls
 	//====================================================================================
 	public static void deleteGist(@NotNull GitoscConnection connection, @NotNull String id) throws IOException {
 		try {
@@ -377,7 +377,7 @@ public class GitoscApiUtil {
 	}
 
 	//====================================================================================
-	// git.oschina.net/api/v3 - method calls
+	// gitee.com/api/v3 - method calls
 	//====================================================================================
 
 	@NotNull

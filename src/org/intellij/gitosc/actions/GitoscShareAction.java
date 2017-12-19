@@ -134,12 +134,12 @@ public class GitoscShareAction extends DumbAwareAction {
 		final String description = shareDialog.getDescription();
 		final String remoteName = shareDialog.getRemoteName();
 
-		new Task.Backgroundable(project, "Sharing Project on GitOSC...") {
+		new Task.Backgroundable(project, "Sharing Project on Gitee...") {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
 				// create GitOSC repo
 				LOG.info("Creating GitOSC repository");
-				indicator.setText("Creating GitOSC repository...");
+				indicator.setText("Creating Gitee repository...");
 				final String url = createGitoscRepository(project, authDataHolder, indicator, name, description, isPrivate);
 				if (url == null) {
 					return;
@@ -159,15 +159,15 @@ public class GitoscShareAction extends DumbAwareAction {
 				GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
 				final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
 				if (repository == null) {
-					GitoscNotifications.showError(project, "Failed to create GitOSC Repository", "Can't find Git repository");
+					GitoscNotifications.showError(project, "Failed to create Gitee Repository", "Can't find Git repository");
 					return;
 				}
 
 				final String remoteUrl = GitoscUrlUtil.getCloneUrl(gitoscInfo.getUser().getLogin(), name);
 
-				//git remote add origin git@git.oschina.net:login/name.git
+				//git remote add origin git@gitee.com:login/name.git
 				LOG.info("Adding GitOSC as a remote host");
-				indicator.setText("Adding GitOSC as a remote host...");
+				indicator.setText("Adding Gitee as a remote host...");
 				if (!GitoscUtil.addGitoscRemote(project, repository, remoteName, remoteUrl)) {
 					return;
 				}
@@ -202,7 +202,7 @@ public class GitoscShareAction extends DumbAwareAction {
 				GitoscApiUtil.createRepo(connection, name, description, isPrivate)).getHtmlUrl();
 		}
 		catch (IOException e) {
-			GitoscNotifications.showError(project, "Failed to create GitOSC Repository", e);
+			GitoscNotifications.showError(project, "Failed to create Gitee Repository", e);
 			return null;
 		}
 	}
@@ -334,8 +334,8 @@ public class GitoscShareAction extends DumbAwareAction {
 		}
 		catch (VcsException e) {
 			LOG.warn(e);
-			GitoscNotifications.showErrorURL(project, "Can't finish GitOSC sharing process", "Successfully created project ", "'" + name + "'",
-				" on GitOSC, but initial commit failed:<br/>" + GitoscUtil.getErrorTextFromException(e), url);
+			GitoscNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'" + name + "'",
+				" on Gitee, but initial commit failed:<br/>" + GitoscUtil.getErrorTextFromException(e), url);
 			return false;
 		}
 		LOG.info("Successfully created initial commit");
@@ -359,14 +359,14 @@ public class GitoscShareAction extends DumbAwareAction {
 
 		GitLocalBranch currentBranch = repository.getCurrentBranch();
 		if (currentBranch == null) {
-			GitoscNotifications.showErrorURL(project, "Can't finish GitOSC sharing process", "Successfully created project ", "'" + name + "'",
-				" on GitOSC, but initial push failed: no current branch", url);
+			GitoscNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'" + name + "'",
+				" on Gitee, but initial push failed: no current branch", url);
 			return false;
 		}
 		GitCommandResult result = git.push(repository, remoteName, remoteUrl, currentBranch.getName(), true);
 		if (!result.success()) {
-			GitoscNotifications.showErrorURL(project, "Can't finish GitOSC sharing process", "Successfully created project ", "'" + name + "'",
-				" on GitOSC, but initial push failed:<br/>" + result.getErrorOutputAsHtmlString(), url);
+			GitoscNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'" + name + "'",
+				" on Gitee, but initial push failed:<br/>" + result.getErrorOutputAsHtmlString(), url);
 			return false;
 		}
 		return true;

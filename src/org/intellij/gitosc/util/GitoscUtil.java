@@ -175,7 +175,7 @@ public class GitoscUtil {
 			handler.addParameters("add", remote, url);
 			handler.run();
 			if (handler.getExitCode() != 0) {
-				GitoscNotifications.showError(project, "Can't add remote", "Failed to add GitOSC remote: '" + url + "'. " + handler.getStderr());
+				GitoscNotifications.showError(project, "Can't add remote", "Failed to add Gitee remote: '" + url + "'. " + handler.getStderr());
 				return false;
 			}
 			// catch newly added remote
