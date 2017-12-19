@@ -1,21 +1,23 @@
-## 码云 - Git@OSC plugin
+## 码云 - Gitee plugin
 
-Allow works with [码云 - Git@OSC](https://git.oschina.net)
+Allow works with [码云 - Gitee](https://gitee.com)
 
 ## Installation
 
 * [Intellij Plugins Home](https://plugins.jetbrains.com/plugin/8383)
 
 ## Extra Usage
-* [码云平台IDEA系列的插件使用](http://git.mydoc.io/?t=94587)
+
+* [码云平台IDEA系列的插件使用](http://git.mydoc.io/?t=153739)
 
 ## Contirbuting
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Vendor
-* Yuyou Chow - [GitOSC](https://git.oschina.net/youscape) - [GitHub](https://github.com/zyuyou)
+
+* Yuyou Chow - [Gitee](https://gitee.com/youscape) - [GitHub](https://github.com/zyuyou)
 
 ## Authors
-* 码云 - [GitOSC](https://git.oschina.net/oschina/intellij-gitosc)
-* [Li Kui](likui@oschina.cn)
+
+* 码云 - [Gitee](https://gitee.com/oschina/intellij-gitosc)
