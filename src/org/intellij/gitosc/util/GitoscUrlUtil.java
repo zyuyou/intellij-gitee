@@ -18,7 +18,6 @@ package org.intellij.gitosc.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.gitosc.GitoscConstants;
-import org.intellij.gitosc.api.GitoscApiUtil;
 import org.intellij.gitosc.api.GitoscFullPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,7 +224,8 @@ public class GitoscUrlUtil {
 
 	@NotNull
 	public static String getCloneUrl(@NotNull GitoscFullPath path) {
-		return getCloneUrl(path.getUser(), path.getRepository());
+		return StringUtil.isEmptyOrSpaces(path.getFullName()) ?
+			getCloneUrl(path.getUser(), path.getRepository()) : getCloneUrlFromFullName(path.getFullName());
 	}
 
 	@NotNull
@@ -235,6 +235,16 @@ public class GitoscUrlUtil {
 		}
 		else {
 			return getApiProtocol() + getGitHostWithoutProtocol() + "/" + user + "/" + repo + ".git";
+		}
+	}
+
+	@NotNull
+	private static String getCloneUrlFromFullName(@NotNull String fullName) {
+		if (GitoscSettings.getInstance().isCloneGitUsingSsh()) {
+			return "git@" + getGitHostWithoutProtocol() + ":" + fullName + ".git";
+		}
+		else {
+			return getApiProtocol() + getGitHostWithoutProtocol() + "/" + fullName + ".git";
 		}
 	}
 }

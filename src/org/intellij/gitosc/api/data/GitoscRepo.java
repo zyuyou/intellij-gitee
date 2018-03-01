@@ -137,12 +137,12 @@ public class GitoscRepo {
 
 	@NotNull
 	public String getFullName() {
-		return getUserName() + "/" + getName();
+		return StringUtil.isEmptyOrSpaces(fullName) ? getUserName() + "/" + getName() : fullName;
 	}
 
 	@NotNull
 	public GitoscFullPath getFullPath() {
-		return new GitoscFullPath(getUserName(), getName());
+		return new GitoscFullPath(getUserName(), getName(), getFullName());
 	}
 
 

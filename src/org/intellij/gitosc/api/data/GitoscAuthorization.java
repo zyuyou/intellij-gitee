@@ -16,14 +16,9 @@
  */
 package org.intellij.gitosc.api.data;
 
-import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
-
-import java.util.Date;
-import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -41,13 +36,18 @@ public class GitoscAuthorization {
   private String expiresIn;
 
   @Mandatory
-  private String refresh_token;
+  private String refreshToken;
   private String scope;
   private Integer createdAt;
 
   @NotNull
   public String getAccessToken() {
     return accessToken;
+  }
+
+  @NotNull
+  public String getRefreshToken() {
+    return refreshToken;
   }
 
   @NotNull

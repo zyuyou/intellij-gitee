@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -224,16 +225,75 @@ public class GitoscUtil {
 			}
 		}
 		catch (GitoscAuthenticationException e) {
-			getValidAuthData(project, authHolder, indicator, authLevel, auth);
+//			getValidAuthData(project, authHolder, indicator, authLevel, auth);
+			getRefreshTokenAuthData(project, authHolder, indicator, authLevel, auth);
 			return runTask(project, authHolder, indicator, task);
 		}
 	}
 
+	private static void getRefreshTokenAuthData(@NotNull final Project project,
+	                                            @NotNull final GitoscAuthDataHolder authHolder,
+	                                            @NotNull final ProgressIndicator indicator,
+	                                            @NotNull final AuthLevel authLevel,
+	                                            @NotNull final GitoscAuthData oldAuth) throws IOException {
+
+		authHolder.runTransaction(oldAuth, () -> {
+			final Ref<Boolean> ok = new Ref<>();
+			final Ref<GitoscAuthData> authData = new Ref<>();
+
+			ApplicationManager.getApplication().invokeAndWait(() -> {
+				GitoscAuthData.TokenAuth tokenAuth = oldAuth.getTokenAuth();
+
+				if(tokenAuth != null && tokenAuth.isTryRefreshAccessToken()){
+					// 尝试刷新access_token
+					final GitoscAuthDataHolder authDataHolder = new GitoscAuthDataHolder(GitoscAuthData.createSessionAuth(oldAuth.getHost(), "", "", tokenAuth.getRefreshToken()));
+
+					try{
+						GitoscAuthorization authorization = GitoscUtil.computeValueInModalIO(project, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator2 ->
+							GitoscUtil.refreshAuthData(project, authDataHolder, indicator2));
+
+//						GitoscAuthorization authorization = GitoscUtil.computeValueInModalIO(project, GitoscConstants.TITLE_ACCESS_TO_GITOSC, indicator2 ->
+//							GitoscUtil.runTask(project, authDataHolder, indicator, AuthLevel.basicOnetime(oldAuth.getHost()), GitoscApiUtil::getRefreshAccessToken));
+
+						// 设置刷新后的access_token
+						authData.set(GitoscAuthData.createTokenAuth(oldAuth.getHost(), authorization.getAccessToken(), authorization.getRefreshToken()));
+
+						GitoscSettings.getInstance().setAuthData(authData.get(), true);
+
+						ok.set(true);
+					}catch(IOException ignore){
+						ignore.printStackTrace();
+
+						tokenAuth.setTryRefreshAccessToken(false);
+						authData.set(oldAuth);
+					}
+				}else{
+					// refresh_token为空或者已经尝试过刷新access_token
+					final GitoscLoginDialog dialog = new GitoscLoginDialog(project, oldAuth, authLevel);
+					DialogManager.show(dialog);
+
+					ok.set(dialog.isOK());
+
+					if (ok.get()) {
+						authData.set(dialog.getAuthData());
+						GitoscSettings.getInstance().setAuthData(authData.get(), dialog.isSavePasswordSelected());
+					}
+				}
+			}, indicator.getModalityState());
+
+			if (!ok.get()) {
+				throw new GitoscOperationCanceledException("Can't get valid credentials");
+			}
+
+			return authData.get();
+		});
+	}
+
 	private static void getValidAuthData2(@NotNull final Project project,
-	                                    @NotNull final GitoscAuthDataHolder authHolder,
-	                                    @NotNull final ProgressIndicator indicator,
-	                                     @NotNull final AuthLevel authLevel,
-	                                    @NotNull final GitoscAuthData oldAuth) throws GitoscOperationCanceledException {
+	                                      @NotNull final GitoscAuthDataHolder authHolder,
+	                                      @NotNull final ProgressIndicator indicator,
+	                                      @NotNull final AuthLevel authLevel,
+	                                      @NotNull final GitoscAuthData oldAuth) throws GitoscOperationCanceledException {
 
 		authHolder.runTransaction(oldAuth, () -> {
 			final GitoscAuthData[] authData = new GitoscAuthData[1];
@@ -350,6 +410,58 @@ public class GitoscUtil {
 	}
 
 	@NotNull
+	public static GitoscAuthorization refreshAuthData(@NotNull Project project,
+	                                                  @NotNull GitoscAuthDataHolder authHolder,
+	                                                  @NotNull ProgressIndicator indicator) throws IOException {
+
+		GitoscAuthData auth = authHolder.getAuthData();
+
+		if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
+			throw new GitoscAuthenticationException("Target host not defined");
+		}
+
+		try {
+			new URI(auth.getHost());
+		}
+		catch (URISyntaxException e) {
+			throw new GitoscAuthenticationException("Invalid host URL");
+		}
+
+		switch (auth.getAuthType()) {
+			case SESSION:
+				GitoscAuthData.SessionAuth sessionAuth = auth.getSessionAuth();
+				assert sessionAuth != null;
+				if(StringUtil.isEmptyOrSpaces(sessionAuth.getAccessToken())){
+					throw new GitoscAuthenticationException("Empty Refresh Token");
+				}
+				break;
+			default:
+				throw new GitoscAuthenticationException(auth.getAuthType() + " connection not allowed");
+		}
+
+		return testRefreshAuth(project, authHolder, indicator);
+	}
+
+	@NotNull
+	private static GitoscAuthorization testRefreshAuth(@NotNull Project project,
+	                                                   @NotNull GitoscAuthDataHolder authHolder,
+	                                                   @NotNull final ProgressIndicator indicator) throws IOException {
+		GitoscAuthData auth = authHolder.getAuthData();
+
+		final GitoscConnection connection = new GitoscConnection(auth, true);
+		ScheduledFuture<?> future = null;
+
+		try {
+			future = addCancellationListener(indicator, connection);
+			return GitoscApiUtil.getRefreshAccessToken(connection);
+		}
+		finally {
+			connection.close();
+			if (future != null) future.cancel(true);
+		}
+	}
+
+	@NotNull
 	public static GitoscAuthorization loginAuthData(@NotNull Project project,
 	                                                @NotNull GitoscAuthDataHolder authHolder,
 	                                                @NotNull ProgressIndicator indicator) throws IOException {
@@ -391,8 +503,8 @@ public class GitoscUtil {
 
 	@NotNull
 	private static GitoscAuthorization testLogin(@NotNull Project project,
-	                                                 @NotNull GitoscAuthDataHolder authHolder,
-	                                                 @NotNull final ProgressIndicator indicator) throws IOException {
+	                                             @NotNull GitoscAuthDataHolder authHolder,
+	                                             @NotNull final ProgressIndicator indicator) throws IOException {
 		GitoscAuthData auth = authHolder.getAuthData();
 
 		final GitoscConnection connection = new GitoscConnection(auth, true);

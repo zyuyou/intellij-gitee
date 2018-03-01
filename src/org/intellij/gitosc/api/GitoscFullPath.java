@@ -30,10 +30,18 @@ import org.jetbrains.annotations.Nullable;
 public class GitoscFullPath {
 	@NotNull private final String myUserName;
 	@NotNull private final String myRepositoryName;
+	@NotNull private final String myFullName;
 
 	public GitoscFullPath(@NotNull String myUserName, @NotNull String myRepositoryName) {
 		this.myUserName = myUserName;
 		this.myRepositoryName = myRepositoryName;
+		this.myFullName = "";
+	}
+
+	public GitoscFullPath(@NotNull String myUserName, @NotNull String myRepositoryName, @NotNull String myFullName) {
+		this.myUserName = myUserName;
+		this.myRepositoryName = myRepositoryName;
+		this.myFullName = myFullName;
 	}
 
 	@NotNull
@@ -48,7 +56,7 @@ public class GitoscFullPath {
 
 	@NotNull
 	public String getFullName(){
-		return myUserName + "/" + myRepositoryName;
+		return StringUtil.isEmptyOrSpaces(myFullName) ? myUserName + "/" + myRepositoryName : myFullName;
 	}
 
 	@Override

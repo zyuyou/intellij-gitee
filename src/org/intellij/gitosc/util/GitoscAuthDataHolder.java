@@ -49,4 +49,8 @@ public class GitoscAuthDataHolder {
 	public static GitoscAuthDataHolder createFromSettings(){
 		return new GitoscAuthDataHolder(GitoscSettings.getInstance().getAuthData());
 	}
+
+	public static GitoscAuthDataHolder createForLogin() {
+		return new GitoscAuthDataHolder(GitoscAuthData.createAnonymous());
+	}
 }

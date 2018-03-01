@@ -182,7 +182,8 @@ public class GitoscConnection {
 	                             @Nullable String requestBody,
 	                             @NotNull Collection<Header> headers,
 	                             @NotNull HttpVerb verb) throws IOException {
-		return doRequest(getRequestUrl(myApiURL, path + "?" + getAccessToken()), requestBody, headers, verb);
+
+		return doRequest(getRequestUrl(myApiURL, path.equals("/oauth/token") ? path : path + "?" + getAccessToken()), requestBody, headers, verb);
 	}
 
 	@NotNull

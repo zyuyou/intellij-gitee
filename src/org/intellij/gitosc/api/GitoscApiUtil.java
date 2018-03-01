@@ -17,14 +17,13 @@
 package org.intellij.gitosc.api;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.intellij.gitosc.api.data.*;
-import org.intellij.gitosc.api.GitoscConnection.PagedRequest;
 import org.intellij.gitosc.api.GitoscConnection.ArrayPagedRequest;
+import org.intellij.gitosc.api.GitoscConnection.PagedRequest;
+import org.intellij.gitosc.api.data.*;
 import org.intellij.gitosc.api.requests.GitoscChangeIssueStateRequest;
 import org.intellij.gitosc.api.requests.GitoscGistRequest;
 import org.intellij.gitosc.api.requests.GitoscRepoRequest;
@@ -38,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static org.intellij.gitosc.GitoscConstants.*;
 
@@ -99,11 +101,76 @@ public class GitoscApiUtil {
 	}
 
 	@NotNull
+	public static GitoscAuthorization getRefreshAccessToken(@NotNull GitoscConnection connection) throws IOException {
+
+		try {
+			// transform refresh_token to SessionAuth's access_token
+			GitoscAuthData.SessionAuth sessionAuth = connection.getAuth().getSessionAuth();
+			assert sessionAuth != null && !"".equals(sessionAuth.getAccessToken());
+
+			String requestBody = JOINER.join(
+				REFRESH_AUTH_GRANT_TYPE,
+				"refresh_token=" + sessionAuth.getAccessToken()
+			);
+			return loadPost(connection, "/oauth/token", requestBody, GitoscAuthorization.class);
+		}
+		catch (GitoscConfusingException e) {
+			e.setDetails("Can't refresh token: " + e.getMessage());
+			throw e;
+		}
+	}
+
+	@NotNull
 	private static GitoscAuthorization getNewScopedToken(@NotNull GitoscConnection connection,
 	                                                     @NotNull Collection<String> scopes,
 	                                                     @NotNull String note)
 		throws IOException {
 
+		try {
+			GitoscAuthData.SessionAuth sessionAuth = connection.getAuth().getSessionAuth();
+			assert sessionAuth != null && !"".equals(sessionAuth.getPassword());
+
+			String requestBody = JOINER.join(
+				AUTH_GRANT_TYPE, AUTH_CLIENT_ID, AUTH_CLIENT_SECRET,
+				"scope=" + SPACE_JOINER.join(scopes),
+				"username=" + sessionAuth.getLogin(),
+				"password=" + sessionAuth.getPassword()
+			);
+			return loadPost(connection, "/oauth/token", requestBody, GitoscAuthorization.class);
+		}
+		catch (GitoscConfusingException e) {
+			e.setDetails("Can't create token: scopes - " + scopes + " - note " + note);
+			throw e;
+		}
+	}
+
+	@NotNull
+	public static GitoscAuthorization getMasterAuth(@NotNull GitoscConnection connection, @NotNull String note) throws IOException {
+		// "projects" - read/write access to public/private repositories
+		// "gists" - create/delete gists
+		List<String> scopes = Arrays.asList("projects", "gists", "user_info");
+
+		return getScopedAuth(connection, scopes, note);
+	}
+
+	@NotNull
+	public static GitoscAuthorization getScopedAuth(@NotNull GitoscConnection connection, @NotNull Collection<String> scopes, @NotNull String note)
+		throws IOException {
+		try {
+			return getNewScopedAuth(connection, scopes, note);
+		}
+		catch (GitoscStatusCodeException e) {
+			if (e.getError() != null) {
+				e.printStackTrace();
+			}
+			throw e;
+		}
+	}
+
+	@NotNull
+	private static GitoscAuthorization getNewScopedAuth(@NotNull GitoscConnection connection,
+	                                                    @NotNull Collection<String> scopes,
+	                                                    @NotNull String note) throws IOException {
 		try {
 			GitoscAuthData.SessionAuth sessionAuth = connection.getAuth().getSessionAuth();
 			assert sessionAuth != null && !"".equals(sessionAuth.getPassword());

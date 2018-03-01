@@ -84,12 +84,6 @@ public class GitoscAuthData {
 		return myUseProxy;
 	}
 
-	public void setAccessToken(String token){
-		if(mySessionAuth != null){
-			mySessionAuth.setAccessToken(token);
-		}
-	}
-
 	//============================================================
 	// create auths
 	//============================================================
@@ -117,8 +111,16 @@ public class GitoscAuthData {
 		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), null,true);
 	}
 
+	public static GitoscAuthData createTokenAuth(@NotNull String host, @NotNull String token, @NotNull String refreshToken) {
+		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token, refreshToken), null,true);
+	}
+
 	public static GitoscAuthData createTokenAuth(@NotNull String host, @NotNull String token, boolean useProxy) {
 		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), null, useProxy);
+	}
+
+	public static GitoscAuthData createTokenAuth(@NotNull String host, @NotNull String token, @NotNull String refreshToken, boolean useProxy) {
+		return new GitoscAuthData(AuthType.TOKEN, host, null, new TokenAuth(token, refreshToken), null, useProxy);
 	}
 
 	//============================================================
@@ -158,14 +160,37 @@ public class GitoscAuthData {
 
 	public static class TokenAuth {
 		@NotNull private final String myToken;
+		@NotNull private final String myRefreshToken;
+
+		@NotNull private boolean myTryRefreshAccessToken = true;
 
 		private TokenAuth(@NotNull String token) {
 			myToken = StringUtil.trim(token);
+			myRefreshToken = "";
+		}
+
+		private TokenAuth(@NotNull String token, @NotNull String refreshToken) {
+			myToken = StringUtil.trim(token);
+			myRefreshToken = StringUtil.trim(refreshToken);
 		}
 
 		@NotNull
 		public String getToken() {
 			return myToken;
+		}
+
+		@NotNull
+		public String getRefreshToken() {
+			return myRefreshToken;
+		}
+
+		@NotNull
+		public boolean isTryRefreshAccessToken() {
+			return !StringUtil.isEmptyOrSpaces(myToken) && !StringUtil.isEmptyOrSpaces(myRefreshToken) && myTryRefreshAccessToken;
+		}
+
+		public void setTryRefreshAccessToken(@NotNull boolean myTryRefreshAccessToken) {
+			this.myTryRefreshAccessToken = myTryRefreshAccessToken;
 		}
 	}
 

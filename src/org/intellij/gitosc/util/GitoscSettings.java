@@ -16,6 +16,7 @@
  */
 package org.intellij.gitosc.util;
 
+import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -41,6 +42,7 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 
 	private static final String GITOSC_SETTINGS_PASSWORD_KEY = "GITOSC_SETTINGS_PASSWORD_KEY";
 	private static final String GITOSC_SETTINGS_ACCESS_TOKEN_KEY = "GITOSC_SETTINGS_ACCESS_TOKEN_KEY";
+	private static final String GITOSC_SETTINGS_REFRESH_TOKEN_KEY = "GITOSC_SETTINGS_REFRESH_TOKEN_KEY";
 
 	private State myState = new State();
 
@@ -168,22 +170,36 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 
 	@NotNull
 	private String getPassword() {
-		return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(GitoscSettings.class, GITOSC_SETTINGS_PASSWORD_KEY));
+		return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(createCredentialAttributes(GITOSC_SETTINGS_PASSWORD_KEY)));
 	}
 
 	private void setPassword(@NotNull String password, boolean rememberPassword) {
 		if (!rememberPassword) return;
-		PasswordSafe.getInstance().setPassword(GitoscSettings.class, GITOSC_SETTINGS_PASSWORD_KEY, password);
+		PasswordSafe.getInstance().setPassword(createCredentialAttributes(GITOSC_SETTINGS_PASSWORD_KEY), password);
 	}
 
 	@NotNull
 	private String getAccessToken() {
-		return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(GitoscSettings.class, GITOSC_SETTINGS_ACCESS_TOKEN_KEY));
+		return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(createCredentialAttributes(GITOSC_SETTINGS_ACCESS_TOKEN_KEY)));
 	}
 
 	private void setAccessToken(@NotNull String accessToken, boolean rememberPassword) {
 		if (!rememberPassword) return;
-		PasswordSafe.getInstance().setPassword(GitoscSettings.class, GITOSC_SETTINGS_ACCESS_TOKEN_KEY, accessToken);
+		PasswordSafe.getInstance().setPassword(createCredentialAttributes(GITOSC_SETTINGS_ACCESS_TOKEN_KEY), accessToken);
+	}
+
+	@NotNull
+	private String getRefreshToken() {
+		return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(createCredentialAttributes(GITOSC_SETTINGS_REFRESH_TOKEN_KEY)));
+	}
+
+	private void setRefreshToken(@NotNull String refreshToken, boolean rememberPassword) {
+		if (!rememberPassword) return;
+		PasswordSafe.getInstance().setPassword(createCredentialAttributes(GITOSC_SETTINGS_REFRESH_TOKEN_KEY), refreshToken);
+	}
+
+	private static CredentialAttributes createCredentialAttributes(@NotNull String userName) {
+		return new CredentialAttributes(GitoscSettings.class.getName() + "@" + userName, userName);
 	}
 
 	private static boolean isValidGitAuth(@NotNull GitoscAuthData auth) {
@@ -205,7 +221,7 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 			case SESSION:
 				return GitoscAuthData.createSessionAuth(getHost(), getLogin(), getPassword(), getAccessToken());
 			case TOKEN:
-				return GitoscAuthData.createTokenAuth(getHost(), getPassword());
+				return GitoscAuthData.createTokenAuth(getHost(), getAccessToken(), getRefreshToken());
 			case ANONYMOUS:
 				return GitoscAuthData.createAnonymous();
 			default:
@@ -225,12 +241,15 @@ public class GitoscSettings implements PersistentStateComponent<GitoscSettings.S
 				assert sessionAuth != null;
 				setLogin(sessionAuth.getLogin());
 				setPassword(sessionAuth.getPassword(), rememberPassword);
-				setAccessToken(sessionAuth.getAccessToken() == null ? "":sessionAuth.getAccessToken(), rememberPassword);
+				setAccessToken(sessionAuth.getAccessToken() == null ? "" : sessionAuth.getAccessToken(), rememberPassword);
 				break;
 			case TOKEN:
-				assert auth.getTokenAuth() != null;
+				GitoscAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
+				assert tokenAuth != null;
 				setLogin(null);
-				setPassword(auth.getTokenAuth().getToken(), rememberPassword);
+//				setPassword(tokenAuth.getToken(), rememberPassword);
+				setAccessToken(tokenAuth.getToken(), rememberPassword);
+				setRefreshToken(tokenAuth.getRefreshToken(), rememberPassword);
 				break;
 			case ANONYMOUS:
 				setLogin(null);

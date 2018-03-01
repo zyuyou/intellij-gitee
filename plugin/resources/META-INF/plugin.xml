@@ -9,6 +9,10 @@
     </description>
     <change-notes>
       <![CDATA[
+        <ul>
+          <li>修改保存秘钥的PasswordSafe的调用API.</li>
+          <li>改进Token过期的刷新机制.</li>
+        </ul>
       ]]>
     </change-notes>
     

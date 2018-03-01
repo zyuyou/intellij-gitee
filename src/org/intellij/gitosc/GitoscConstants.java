@@ -38,6 +38,7 @@ public class GitoscConstants {
 	public static final String DEFAULT_GITOSC_HOST = "gitee.com";
 
 	public static final String AUTH_GRANT_TYPE = "grant_type=password";
+	public static final String REFRESH_AUTH_GRANT_TYPE = "grant_type=refresh_token";
 	public static final String AUTH_CLIENT_ID = "client_id=fc439d90cb2ffc20cffeb70a6a4039e69847485e0fa56cfa0d1bf006098e24dd";
 	public static final String AUTH_CLIENT_SECRET = "client_secret=386f187646ee361049f69cd213424bdba5af03e820d10a68a68e5fb520902596";
 }

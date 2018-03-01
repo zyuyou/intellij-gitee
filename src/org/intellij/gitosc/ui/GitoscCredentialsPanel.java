@@ -25,15 +25,15 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.api.GitoscApiUtil;
+import org.intellij.gitosc.api.data.GitoscAuthorization;
 import org.intellij.gitosc.api.data.GitoscUser;
 import org.intellij.gitosc.exceptions.GitoscAuthenticationException;
 import org.intellij.gitosc.util.*;
+import org.intellij.gitosc.util.GitoscAuthData.AuthType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.intellij.gitosc.util.GitoscAuthData.AuthType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -56,6 +56,7 @@ public class GitoscCredentialsPanel extends JPanel {
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JPasswordField myTokenField;
+  private JPasswordField myRefreshTokenField;
 
   private ComboBox<Layout> myAuthTypeComboBox;
   private JButton myCreateTokenButton;
@@ -119,6 +120,11 @@ public class GitoscCredentialsPanel extends JPanel {
   }
 
   @NotNull
+  private String getRefreshToken() {
+    return String.valueOf(myRefreshTokenField.getPassword());
+  }
+
+  @NotNull
   public AuthType getAuthType() {
     Layout selected = (Layout)myAuthTypeComboBox.getSelectedItem();
 
@@ -143,7 +149,7 @@ public class GitoscCredentialsPanel extends JPanel {
 //      case BASIC:
 //        return GitoscAuthData.createBasicAuth(getHost(), getLogin(), getPassword());
       case TOKEN:
-        return GitoscAuthData.createTokenAuth(getHost(), StringUtil.trim(getToken()));
+        return GitoscAuthData.createTokenAuth(getHost(), StringUtil.trim(getToken()), StringUtil.trim(getRefreshToken()));
       default:
         throw new IllegalStateException();
     }
@@ -163,6 +169,10 @@ public class GitoscCredentialsPanel extends JPanel {
 
   public void setToken(@NotNull String token) {
     myTokenField.setText(token);
+  }
+
+  public void setRefreshToken(@NotNull String refreshToken) {
+    myRefreshTokenField.setText(refreshToken);
   }
 
   public void setAuthType(@NotNull GitoscAuthData.AuthType type) {
@@ -193,6 +203,7 @@ public class GitoscCredentialsPanel extends JPanel {
       GitoscAuthData.TokenAuth tokenAuth = authData.getTokenAuth();
       assert tokenAuth != null;
       setToken(tokenAuth.getToken());
+      setRefreshToken(tokenAuth.getRefreshToken());
     }
   }
 
@@ -233,11 +244,12 @@ public class GitoscCredentialsPanel extends JPanel {
 
   private void generateToken(@NotNull Project project) {
     try {
-      String newToken = GitoscUtil.computeValueInModalIO(project, TITLE_ACCESS_TO_GITOSC, indicator ->
-        GitoscUtil.runTask(project, GitoscAuthDataHolder.createFromSettings(), indicator, AuthLevel.basicOnetime(getHost()), connection ->
-          GitoscApiUtil.getMasterToken(connection, "IntelliJ plugin")));
+      GitoscAuthorization authorization = GitoscUtil.computeValueInModalIO(project, TITLE_ACCESS_TO_GITOSC, indicator ->
+        GitoscUtil.runTask(project, GitoscAuthDataHolder.createForLogin(), indicator, AuthLevel.basicOnetime(getHost()), connection ->
+          GitoscApiUtil.getMasterAuth(connection, "IntelliJ plugin")));
 
-      myTokenField.setText(newToken);
+      myTokenField.setText(authorization.getAccessToken());
+      myRefreshTokenField.setText(authorization.getRefreshToken());
     }
     catch (IOException ex) {
       GitoscNotifications.showErrorDialog(myPane, "Can't Create API Token", ex);
