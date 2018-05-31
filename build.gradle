@@ -3,6 +3,7 @@ plugins {
 }
 
 version = "${version}.$buildNumber"
+
 allprojects {
     apply plugin: 'java'
     sourceCompatibility = javaVersion

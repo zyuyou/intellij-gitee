@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -68,10 +68,7 @@ public class GitoscCheckoutProvider implements CheckoutProvider {
 			return;
 		}
 
-		Collections.sort(availableRepos, (r1, r2) -> {
-			final int comparedOwners = r1.getUserName().compareTo(r2.getUserName());
-			return comparedOwners != 0 ? comparedOwners : r1.getName().compareTo(r2.getName());
-		});
+		availableRepos.sort(Comparator.comparing(GitoscRepo::getUserName).thenComparing(GitoscRepo::getName));
 
 		final GitCloneDialog dialog = new GitCloneDialog(project);
 		// Add predefined repositories to history

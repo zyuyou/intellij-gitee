@@ -24,7 +24,6 @@ import org.intellij.gitosc.GitoscBundle;
 import org.intellij.gitosc.util.GitoscSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.intellij.gitosc.util.GitoscSettings;
 
 import javax.swing.*;
 

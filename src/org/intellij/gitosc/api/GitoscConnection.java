@@ -83,7 +83,7 @@ public class GitoscConnection {
 	public GitoscConnection(@NotNull GitoscAuthData auth, boolean reusable) {
 		myApiURL = GitoscUrlUtil.getApiUrl(auth);
 		myAuth = auth;
-		myClient = new GithubConnectionBuilder(auth, myApiURL).createClient();
+		myClient = new GitoscConnectionBuilder(auth, myApiURL).createClient();
 		myReusable = reusable;
 	}
 

@@ -22,9 +22,6 @@ import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
-import icons.TasksCoreIcons;
-import org.intellij.gitosc.GitoscBundle;
-import org.intellij.gitosc.GitoscConstants;
 import org.intellij.gitosc.icons.GitoscIcons;
 import org.jetbrains.annotations.NotNull;
 

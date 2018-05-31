@@ -51,13 +51,13 @@ import java.util.List;
  *
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubConnectionBuilder.java
  * */
-class GithubConnectionBuilder {
+class GitoscConnectionBuilder {
   @NotNull
   private final GitoscAuthData myAuth;
   @NotNull
   private final String myApiURL;
 
-  public GithubConnectionBuilder(@NotNull GitoscAuthData auth, @NotNull String apiURL) {
+  public GitoscConnectionBuilder(@NotNull GitoscAuthData auth, @NotNull String apiURL) {
     myAuth = auth;
     myApiURL = apiURL;
   }
