@@ -1,6 +1,5 @@
 <idea-plugin version="2">
     <extensions defaultExtensionNs="com.intellij">
-        <checkoutProvider implementation="org.intellij.gitosc.extensions.GitoscCheckoutProvider"/>
         <applicationService serviceInterface="org.intellij.gitosc.util.GitoscSettings"
                             serviceImplementation="org.intellij.gitosc.util.GitoscSettings" />
         <projectService serviceInterface="org.intellij.gitosc.util.GitoscProjectSettings"
@@ -11,7 +10,8 @@
 
     <extensions defaultExtensionNs="Git4Idea">
         <GitHttpAuthDataProvider implementation="org.intellij.gitosc.extensions.GitoscHttpAuthDataProvider" />
-    </extensions>
+        <gitRepositoryHostingService implementation="org.intellij.gitosc.extensions.GitoscRepositoryHostingService"/>
+     </extensions>
 
     <actions>
         <action id="GitOSC.Share" class="org.intellij.gitosc.actions.GitoscShareAction">

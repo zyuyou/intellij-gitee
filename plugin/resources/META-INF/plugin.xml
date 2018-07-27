@@ -10,13 +10,12 @@
     <change-notes>
       <![CDATA[
         <ul>
-          <li>修改保存秘钥的PasswordSafe的调用API.</li>
-          <li>改进Token过期的刷新机制.</li>
+          <li>修改IDEA新的Git版本管理机制</li>
         </ul>
       ]]>
     </change-notes>
     
-    <idea-version since-build="181.4203.550" until-build="181.*"/>
+    <idea-version since-build="181.5087.20" until-build="181.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GitoscTracker.xml">com.intellij.tasks</depends>
