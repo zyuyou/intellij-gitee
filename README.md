@@ -20,4 +20,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Authors
 
-* 码云 - [Gitee](https://gitee.com/oschina/intellij-gitosc)
+* 码云 - [Gitee](https://gitee.com/oschina/intellij-gitee)

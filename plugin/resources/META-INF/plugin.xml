@@ -1,5 +1,5 @@
 <idea-plugin url="https://gitee.com/oschina/intellij-gitosc" version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <id>org.intellij.gitosc</id>
+    <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
     <description>
@@ -18,11 +18,11 @@
     <idea-version since-build="182.1" until-build="182.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
-    <depends optional="true" config-file="GitoscTracker.xml">com.intellij.tasks</depends>
+    <depends optional="true" config-file="META-INF/GiteeTracker.xml">com.intellij.tasks</depends>
 
-    <xi:include href="GitoscPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:include href="META-INF/GiteePlugin.xml" xpointer="xpointer(/idea-plugin/*)">
         <xi:fallback>
-            <xi:include href="/META-INF/GitoscPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+            <xi:include href="/META-INF/GiteePlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
         </xi:fallback>
     </xi:include>
 </idea-plugin>

@@ -29,14 +29,14 @@ allprojects {
         downloadSources Boolean.valueOf(sources)
         sameSinceUntilBuild Boolean.valueOf(isEAP)
         intellij.updateSinceUntilBuild false
-        pluginName 'intellij-gitosc'
+        pluginName 'intellij-gitee'
         publishPlugin {
             username publishUser
             password publishPassword
         }
     }
 
-    def compilationPackages = ['org/intellij/gitosc/build/**']
+    def compilationPackages = ['org/intellij/gitee/build/**']
 
     test {
         useJUnit {

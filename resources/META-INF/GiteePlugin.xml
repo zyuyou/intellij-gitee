@@ -1,0 +1,35 @@
+<idea-plugin version="2">
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceInterface="org.intellij.gitee.util.GiteeSettings"
+                            serviceImplementation="org.intellij.gitee.util.GiteeSettings" />
+        <projectService serviceInterface="org.intellij.gitee.util.GiteeProjectSettings"
+                        serviceImplementation="org.intellij.gitee.util.GiteeProjectSettings"/>
+        <vcsAnnotationGutterActionProvider implementation="org.intellij.gitee.extensions.GiteeAnnotationGutterActionProvider" />
+        <vcsConfigurableProvider implementation="org.intellij.gitee.ui.GiteeSettingsConfigurable"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="Git4Idea">
+        <GitHttpAuthDataProvider implementation="org.intellij.gitee.extensions.GiteeHttpAuthDataProvider" />
+        <gitRepositoryHostingService implementation="org.intellij.gitee.extensions.GiteeRepositoryHostingService"/>
+     </extensions>
+
+    <actions>
+        <action id="GitOSC.Share" class="org.intellij.gitee.actions.GiteeShareAction">
+            <add-to-group group-id="Vcs.Import"/>
+        </action>
+        <action id="GitOSC.Open.In.Browser" class="org.intellij.gitee.actions.GiteeOpenInBrowserAction">
+            <add-to-group group-id="EditorPopupMenu"/>
+            <add-to-group group-id="ProjectViewPopupMenu"/>
+            <add-to-group group-id="EditorTabPopupMenu"/>
+            <add-to-group group-id="Git.LogContextMenu"/>
+            <add-to-group group-id="Vcs.Log.ContextMenu"/>
+            <add-to-group group-id="VcsHistoryActionsGroup"/>
+        </action>
+        <action id="GitOSC.Create.Gist" class="org.intellij.gitee.actions.GiteeCreateGistAction">
+            <add-to-group group-id="EditorPopupMenu"/>
+            <add-to-group group-id="ProjectViewPopupMenu"/>
+            <add-to-group group-id="EditorTabPopupMenu"/>
+            <add-to-group group-id="ConsoleEditorPopupMenu"/>
+        </action>
+    </actions>
+</idea-plugin>
