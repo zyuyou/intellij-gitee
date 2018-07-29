@@ -1,4 +1,27 @@
-<idea-plugin version="2">
+<idea-plugin url="https://gitee.com/oschina/intellij-gitosc">
+    <id>org.intellij.gitee</id>
+    <vendor email="likui@oschina.cn">码云</vendor>
+    <name>Gitee</name>
+    <description>
+      <![CDATA[
+        Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
+      ]]>
+    </description>
+    <change-notes>
+      <![CDATA[
+        <ul>
+          <li>修改IDEA新的Git版本管理机制</li>
+        </ul>
+      ]]>
+    </change-notes>
+
+    <idea-version since-build="182.1" until-build="182.*"/>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>Git4Idea</depends>
+    <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>
+
+    <!-- //////////////////////////////////////////////////////////////////////////////////// -->
+
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceInterface="org.intellij.gitee.util.GiteeSettings"
                             serviceImplementation="org.intellij.gitee.util.GiteeSettings" />
@@ -11,13 +34,13 @@
     <extensions defaultExtensionNs="Git4Idea">
         <GitHttpAuthDataProvider implementation="org.intellij.gitee.extensions.GiteeHttpAuthDataProvider" />
         <gitRepositoryHostingService implementation="org.intellij.gitee.extensions.GiteeRepositoryHostingService"/>
-     </extensions>
+    </extensions>
 
     <actions>
-        <action id="GitOSC.Share" class="org.intellij.gitee.actions.GiteeShareAction">
+        <action id="Gitee.Share" class="org.intellij.gitee.actions.GiteeShareAction">
             <add-to-group group-id="Vcs.Import"/>
         </action>
-        <action id="GitOSC.Open.In.Browser" class="org.intellij.gitee.actions.GiteeOpenInBrowserAction">
+        <action id="Gitee.Open.In.Browser" class="org.intellij.gitee.actions.GiteeOpenInBrowserAction">
             <add-to-group group-id="EditorPopupMenu"/>
             <add-to-group group-id="ProjectViewPopupMenu"/>
             <add-to-group group-id="EditorTabPopupMenu"/>
@@ -25,7 +48,7 @@
             <add-to-group group-id="Vcs.Log.ContextMenu"/>
             <add-to-group group-id="VcsHistoryActionsGroup"/>
         </action>
-        <action id="GitOSC.Create.Gist" class="org.intellij.gitee.actions.GiteeCreateGistAction">
+        <action id="Gitee.Create.Gist" class="org.intellij.gitee.actions.GiteeCreateGistAction">
             <add-to-group group-id="EditorPopupMenu"/>
             <add-to-group group-id="ProjectViewPopupMenu"/>
             <add-to-group group-id="EditorTabPopupMenu"/>

@@ -4,37 +4,54 @@ plugins {
 
 version = "${version}.$buildNumber"
 
+apply plugin: 'idea'
+apply plugin: 'org.jetbrains.intellij'
+apply plugin: 'java'
+
+intellij {
+    version ideaVersion
+    plugins 'tasks', 'git4idea'
+    pluginName 'intellij-gitee'
+
+    downloadSources Boolean.valueOf(sources)
+
+    publishPlugin {
+        username publishUser
+        password publishPassword
+    }
+}
+
 allprojects {
-    apply plugin: 'java'
+//    apply plugin: 'java'
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
     }
 
-    sourceSets {
-        main {
-            java.srcDirs 'src'
-            resources.srcDirs 'resources', 'plugin/resources'
-        }
-        test {
-            java.srcDir 'tests'
-        }
-    }
+//    sourceSets {
+//        main {
+//            java.srcDirs 'src'
+//            resources.srcDirs 'resources', 'plugin/resources'
+//        }
+//        test {
+//            java.srcDir 'tests'
+//        }
+//    }
 
-    apply plugin: 'org.jetbrains.intellij'
-    intellij {
-        version ideaVersion
-        plugins 'tasks', 'git4idea'
-        downloadSources Boolean.valueOf(sources)
-        sameSinceUntilBuild Boolean.valueOf(isEAP)
-        intellij.updateSinceUntilBuild false
-        pluginName 'intellij-gitee'
-        publishPlugin {
-            username publishUser
-            password publishPassword
-        }
-    }
+//    apply plugin: 'org.jetbrains.intellij'
+//    intellij {
+//        version ideaVersion
+//        plugins 'tasks', 'git4idea'
+//        downloadSources Boolean.valueOf(sources)
+//        sameSinceUntilBuild Boolean.valueOf(isEAP)
+//        intellij.updateSinceUntilBuild false
+//        pluginName 'intellij-gitee'
+//        publishPlugin {
+//            username publishUser
+//            password publishPassword
+//        }
+//    }
 
     def compilationPackages = ['org/intellij/gitee/build/**']
 
@@ -57,16 +74,10 @@ allprojects {
     }
 }
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
-apply plugin: 'idea'
-idea {
-    project {
-        jdkName = javaVersion
-        languageLevel = javaVersion
-    }
-}
+//apply plugin: 'idea'
+//idea {
+//    project {
+//        jdkName = javaVersion
+//        languageLevel = javaVersion
+//    }
+//}

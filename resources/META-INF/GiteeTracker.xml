@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <tasks.repositoryType implementation="org.intellij.gitee.tasks.GiteeRepositoryType"/>
-  </extensions>
-</idea-plugin>
