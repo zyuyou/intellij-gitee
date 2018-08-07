@@ -1,3 +1,15 @@
+buildscript {
+    ext.kotlin_version = '1.2.51'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 plugins {
     id 'org.jetbrains.intellij' version "0.3.5"
 }
@@ -6,7 +18,7 @@ version = "${version}.$buildNumber"
 
 apply plugin: 'idea'
 apply plugin: 'org.jetbrains.intellij'
-apply plugin: 'java'
+apply plugin: 'kotlin'
 
 intellij {
     version ideaVersion
@@ -22,36 +34,18 @@ intellij {
 }
 
 allprojects {
-//    apply plugin: 'java'
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
+
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
     }
 
-//    sourceSets {
-//        main {
-//            java.srcDirs 'src'
-//            resources.srcDirs 'resources', 'plugin/resources'
-//        }
-//        test {
-//            java.srcDir 'tests'
-//        }
-//    }
-
-//    apply plugin: 'org.jetbrains.intellij'
-//    intellij {
-//        version ideaVersion
-//        plugins 'tasks', 'git4idea'
-//        downloadSources Boolean.valueOf(sources)
-//        sameSinceUntilBuild Boolean.valueOf(isEAP)
-//        intellij.updateSinceUntilBuild false
-//        pluginName 'intellij-gitee'
-//        publishPlugin {
-//            username publishUser
-//            password publishPassword
-//        }
-//    }
+    compileKotlin {
+        kotlinOptions {
+            jvmTarget = '1.8'
+        }
+    }
 
     def compilationPackages = ['org/intellij/gitee/build/**']
 
@@ -73,11 +67,3 @@ allprojects {
         }
     }
 }
-
-//apply plugin: 'idea'
-//idea {
-//    project {
-//        jdkName = javaVersion
-//        languageLevel = javaVersion
-//    }
-//}

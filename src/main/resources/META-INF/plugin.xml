@@ -1,4 +1,4 @@
-<idea-plugin url="https://gitee.com/oschina/intellij-gitosc">
+<idea-plugin url="https://gitee.com/lrucase_group/intellij-gitee">
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
@@ -10,7 +10,8 @@
     <change-notes>
       <![CDATA[
         <ul>
-          <li>修改IDEA新的Git版本管理机制</li>
+          <li>适配IDEA的VCS.GIT新框架</li>
+          <li>重构代码, 采用`gitee`作为码云统一标识, 修改代码包名为码云域名</li>
         </ul>
       ]]>
     </change-notes>
@@ -23,32 +24,49 @@
     <!-- //////////////////////////////////////////////////////////////////////////////////// -->
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceInterface="org.intellij.gitee.util.GiteeSettings"
-                            serviceImplementation="org.intellij.gitee.util.GiteeSettings" />
-        <projectService serviceInterface="org.intellij.gitee.util.GiteeProjectSettings"
-                        serviceImplementation="org.intellij.gitee.util.GiteeProjectSettings"/>
-        <vcsAnnotationGutterActionProvider implementation="org.intellij.gitee.extensions.GiteeAnnotationGutterActionProvider" />
-        <vcsConfigurableProvider implementation="org.intellij.gitee.ui.GiteeSettingsConfigurable"/>
+        <applicationService serviceInterface="com.gitee.util.GiteeSettings"
+                            serviceImplementation="com.gitee.util.GiteeSettings" />
+
+        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountManager"/>
+        <applicationService serviceImplementation="com.gitee.authentication.GiteeAuthenticationManager"/>
+        <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutor$Factory"/>
+        <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutorManager"/>
+        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountInformationProvider"/>
+
+        <applicationService serviceImplementation="com.gitee.util.GiteeGitHelper"/>
+        <applicationService serviceImplementation="com.gitee.extensions.GiteeAccountGitAuthenticationFailureManager"/>
+
+        <projectService serviceInterface="com.gitee.util.GiteeProjectSettings"
+                        serviceImplementation="com.gitee.util.GiteeProjectSettings"/>
+        <projectService serviceImplementation="com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder"/>
+        <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="com.gitee.ui.GiteeSettingsConfigurable"/>
+
+        <vcsAnnotationGutterActionProvider implementation="com.gitee.extensions.GiteeAnnotationGutterActionProvider" />
+
+        <statistics.applicationUsagesCollector implementation="com.gitee.authentication.accounts.GiteeAccountsStatisticsCollector"/>
     </extensions>
 
     <extensions defaultExtensionNs="Git4Idea">
-        <GitHttpAuthDataProvider implementation="org.intellij.gitee.extensions.GiteeHttpAuthDataProvider" />
-        <gitRepositoryHostingService implementation="org.intellij.gitee.extensions.GiteeRepositoryHostingService"/>
+        <GitHttpAuthDataProvider implementation="com.gitee.extensions.GiteeHttpAuthDataProvider" />
+        <gitRepositoryHostingService implementation="com.gitee.extensions.GiteeRepositoryHostingService"/>
     </extensions>
 
     <actions>
-        <action id="Gitee.Share" class="org.intellij.gitee.actions.GiteeShareAction">
+        <action id="Gitee.Share" class="com.gitee.actions.GiteeShareAction">
             <add-to-group group-id="Vcs.Import"/>
         </action>
-        <action id="Gitee.Open.In.Browser" class="org.intellij.gitee.actions.GiteeOpenInBrowserAction">
+
+        <action id="Gitee.Open.In.Browser" class="com.gitee.actions.GiteeOpenInBrowserActionGroup">
             <add-to-group group-id="EditorPopupMenu"/>
             <add-to-group group-id="ProjectViewPopupMenu"/>
             <add-to-group group-id="EditorTabPopupMenu"/>
             <add-to-group group-id="Git.LogContextMenu"/>
             <add-to-group group-id="Vcs.Log.ContextMenu"/>
             <add-to-group group-id="VcsHistoryActionsGroup"/>
+            <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
         </action>
-        <action id="Gitee.Create.Gist" class="org.intellij.gitee.actions.GiteeCreateGistAction">
+
+        <action id="Gitee.Create.Gist" class="com.gitee.actions.GiteeCreateGistAction">
             <add-to-group group-id="EditorPopupMenu"/>
             <add-to-group group-id="ProjectViewPopupMenu"/>
             <add-to-group group-id="EditorTabPopupMenu"/>
