@@ -2,11 +2,11 @@
 package com.gitee.api
 
 import com.intellij.util.ThrowableConvertor
-import org.intellij.gitee.api.GiteeApiRequest.*
-import org.intellij.gitee.api.data.*
-import org.intellij.gitee.api.requests.*
-import org.intellij.gitee.api.util.GiteeApiPagesLoader
-import org.intellij.gitee.api.util.GiteeApiUrlQueryBuilder
+import com.gitee.api.GiteeApiRequest.*
+import com.gitee.api.data.*
+import com.gitee.api.requests.*
+import com.gitee.api.util.GiteeApiPagesLoader
+import com.gitee.api.util.GiteeApiUrlQueryBuilder
 import java.awt.Image
 
 /**

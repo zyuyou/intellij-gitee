@@ -5,10 +5,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.project.Project
-import org.intellij.gitee.api.GiteeApiRequestExecutor
-import org.intellij.gitee.authentication.accounts.*
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.authentication.accounts.*
 import com.gitee.util.GiteeSettings
-import org.intellij.gitee.util.GiteeUtil
+import com.gitee.util.GiteeUtil
 
 class GiteeSettingsConfigurable internal constructor(private val project: Project,
                                                      private val settings: com.gitee.util.GiteeSettings,

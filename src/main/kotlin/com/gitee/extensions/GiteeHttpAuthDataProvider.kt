@@ -7,11 +7,11 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
-import org.intellij.gitee.api.GiteeApiRequestExecutor
-import org.intellij.gitee.api.GiteeApiRequestExecutorManager
-import org.intellij.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequestExecutorManager
+import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
-import org.intellij.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import java.io.IOException
 
 class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenticationManager,

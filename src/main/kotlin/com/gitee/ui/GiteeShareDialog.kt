@@ -16,16 +16,16 @@ import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.dialog.DialogUtils
 import com.gitee.authentication.accounts.GiteeAccount
-import org.intellij.gitee.authentication.ui.GiteeAccountCombobox
+import com.gitee.authentication.ui.GiteeAccountCombobox
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.util.regex.Pattern
 import javax.swing.JComponent
 import javax.swing.JTextArea
-import org.intellij.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
-import org.intellij.gitee.ui.util.DialogValidationUtils.chain
-import org.intellij.gitee.ui.util.DialogValidationUtils.notBlank
-import org.intellij.gitee.ui.util.Validator
+import com.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
+import com.gitee.ui.util.DialogValidationUtils.chain
+import com.gitee.ui.util.DialogValidationUtils.notBlank
+import com.gitee.ui.util.Validator
 
 
 class GiteeShareDialog(project: Project,

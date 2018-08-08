@@ -11,9 +11,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
-import org.intellij.gitee.api.GiteeApiRequestExecutor
-import org.intellij.gitee.authentication.accounts.GiteeAccountInformationProvider
-import org.intellij.gitee.authentication.ui.GiteeAccountsPanel
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.authentication.ui.GiteeAccountsPanel
 import com.gitee.util.GiteeSettings
 import java.awt.Component.LEFT_ALIGNMENT
 import java.awt.GridLayout

@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.util.text.StringUtil
-import org.intellij.gitee.api.GiteeServerPath
+import com.gitee.api.GiteeServerPath
 
 private const val GROUP_ID = "statistics.vcs.gitee"
 

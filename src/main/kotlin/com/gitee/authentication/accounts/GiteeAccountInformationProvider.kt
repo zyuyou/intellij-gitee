@@ -4,8 +4,8 @@ package com.gitee.authentication.accounts
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
-import org.intellij.gitee.api.GiteeApiRequestExecutor
-import org.intellij.gitee.api.GiteeApiRequests
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequests
 import com.gitee.api.data.GiteeUserDetailed
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.Image

@@ -3,9 +3,9 @@ package com.gitee.authentication.util
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProgressIndicator
-import org.intellij.gitee.api.GiteeApiRequestExecutor
-import org.intellij.gitee.api.GiteeApiRequests
-import org.intellij.gitee.api.GiteeServerPath
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequests
+import com.gitee.api.GiteeServerPath
 import com.gitee.api.data.GiteeAuthorization
 import com.gitee.exceptions.GiteeStatusCodeException
 import org.jetbrains.annotations.Nls

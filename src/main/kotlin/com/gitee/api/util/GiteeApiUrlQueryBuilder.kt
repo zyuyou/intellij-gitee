@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.api.util
 
-import org.intellij.gitee.api.requests.GiteeRequestPagination
+import com.gitee.api.requests.GiteeRequestPagination
 
 @DslMarker
 private annotation class UrlQueryDsl

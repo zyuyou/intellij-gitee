@@ -2,9 +2,9 @@
 package com.gitee.api.util
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.intellij.gitee.api.GiteeApiRequest
-import org.intellij.gitee.api.GiteeApiRequestExecutor
-import org.intellij.gitee.api.data.GiteeResponsePage
+import com.gitee.api.GiteeApiRequest
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.data.GiteeResponsePage
 import java.io.IOException
 import java.util.function.Predicate
 

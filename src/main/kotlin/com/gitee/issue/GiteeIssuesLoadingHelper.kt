@@ -2,12 +2,12 @@
 package com.gitee.issue
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.intellij.gitee.api.GiteeApiRequestExecutor
-import org.intellij.gitee.api.GiteeApiRequests
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeFullPath
-import org.intellij.gitee.api.GiteeServerPath
+import com.gitee.api.GiteeServerPath
 import com.gitee.api.data.GiteeIssue
-import org.intellij.gitee.api.util.GiteeApiPagesLoader
+import com.gitee.api.util.GiteeApiPagesLoader
 import java.io.IOException
 
 object GiteeIssuesLoadingHelper {

@@ -2,9 +2,9 @@
 package com.gitee.extensions
 
 import com.intellij.openapi.application.ApplicationManager
-import org.intellij.gitee.authentication.accounts.AccountTokenChangedListener
+import com.gitee.authentication.accounts.AccountTokenChangedListener
 import com.gitee.authentication.accounts.GiteeAccount
-import org.intellij.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.authentication.accounts.GiteeAccountManager
 import java.util.concurrent.ConcurrentHashMap
 
 class GiteeAccountGitAuthenticationFailureManager {

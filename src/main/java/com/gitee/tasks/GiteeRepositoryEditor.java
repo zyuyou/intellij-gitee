@@ -11,8 +11,8 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
-import org.intellij.gitee.api.GiteeApiRequestExecutor;
-import org.intellij.gitee.authentication.ui.GiteeLoginDialog;
+import com.gitee.api.GiteeApiRequestExecutor;
+import com.gitee.authentication.ui.GiteeLoginDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -7,9 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
 import com.gitee.api.GiteeFullPath
-import org.intellij.gitee.api.GiteeRepositoryPath
-import org.intellij.gitee.api.GiteeServerPath
-import org.intellij.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.api.GiteeRepositoryPath
+import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GiteeAuthenticationManager
 
 /**
  * Utilities for Github-Git interactions

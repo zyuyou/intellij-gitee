@@ -3,7 +3,7 @@ package com.gitee.api
 
 import com.google.gson.reflect.TypeToken
 import com.intellij.util.ThrowableConvertor
-import org.intellij.gitee.api.data.GiteeResponsePage
+import com.gitee.api.data.GiteeResponsePage
 import java.io.IOException
 
 /**

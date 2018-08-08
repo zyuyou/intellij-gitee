@@ -8,8 +8,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener
 import git4idea.GitUtil
-import org.intellij.gitee.api.GiteeRepositoryPath
-import org.intellij.gitee.util.GiteeGitHelper
+import com.gitee.api.GiteeRepositoryPath
+import com.gitee.util.GiteeGitHelper
 
 
 class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation) : com.gitee.actions.GiteeOpenInBrowserActionGroup(), UpToDateLineNumberListener {

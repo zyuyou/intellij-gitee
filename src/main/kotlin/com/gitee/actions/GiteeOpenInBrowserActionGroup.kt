@@ -25,11 +25,11 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
-import org.intellij.gitee.api.GiteeRepositoryPath
+import com.gitee.api.GiteeRepositoryPath
 import com.gitee.icons.GiteeIcons
-import org.intellij.gitee.util.GiteeGitHelper
+import com.gitee.util.GiteeGitHelper
 import com.gitee.util.GiteeNotifications
-import org.intellij.gitee.util.GiteeUtil
+import com.gitee.util.GiteeUtil
 
 open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open corresponding link in browser", com.gitee.icons.GiteeIcons.Gitee_icon) {
 

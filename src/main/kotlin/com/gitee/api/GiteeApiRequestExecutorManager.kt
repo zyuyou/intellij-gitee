@@ -3,7 +3,7 @@ package com.gitee.api
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.intellij.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.exceptions.GiteeMissingTokenException
 import org.jetbrains.annotations.CalledInAwt

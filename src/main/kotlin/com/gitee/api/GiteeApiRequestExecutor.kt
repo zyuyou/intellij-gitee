@@ -12,8 +12,8 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.gitee.api.data.GiteeErrorMessage
 import com.gitee.authentication.accounts.GiteeAccount
-import org.intellij.gitee.authentication.accounts.GiteeAccountManager
-import org.intellij.gitee.exceptions.*
+import com.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.exceptions.*
 import com.gitee.util.GiteeSettings
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly

@@ -9,8 +9,8 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.messages.Topic
-import org.intellij.gitee.api.GiteeServerPath
-import org.intellij.gitee.util.GiteeUtil
+import com.gitee.api.GiteeServerPath
+import com.gitee.util.GiteeUtil
 import kotlin.properties.Delegates.observable
 
 /**

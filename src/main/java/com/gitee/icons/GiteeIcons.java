@@ -29,10 +29,6 @@ public class GiteeIcons {
 		return IconLoader.getIcon(path, GiteeIcons.class);
 	}
 
-	private static Icon load(String path, Class<?> clazz) {
-		return IconLoader.getIcon(path, clazz);
-	}
-
 	public static final Icon DefaultAvatar_40 = load("/icons/defaultAvatar_40.svg"); // 40x40
 
 	public static final Icon Gitee_icon = load("/icons/gitee.svg");

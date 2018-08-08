@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.DialogManager
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
-import org.intellij.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
-import org.intellij.gitee.authentication.ui.GiteeChooseAccountDialog
-import org.intellij.gitee.util.GiteeUtil
+import com.gitee.authentication.ui.GiteeChooseAccountDialog
+import com.gitee.util.GiteeUtil
 import org.jetbrains.annotations.CalledInAwt
 import javax.swing.JComponent
 
