@@ -1,19 +1,5 @@
 ## Change log
 
-### Version 0.6.0
-* Stable version bump
-
-### Version 0.1.4
-* Fix Linux compatible
-
-### Version 0.1.3
-* Change some text ( GitOSC -> 码云 )
-
-### Version 0.1.2
-* Bug Fixes
-
-### Version 0.1.1
-* Git@OSC application setting
-* Login to Git@OSC
-* Checkout from Git@OSC
-* Share on Git@OSC
+### Version 2018.3.0.preview
+* 适配IDEA的VCS.GIT新框架
+* 重构代码, 采用`gitee`作为码云统一标识, 修改代码包名为码云域名

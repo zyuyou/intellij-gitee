@@ -5,4 +5,4 @@ Before submitting a pull request please make sure all tests run by **Tests** run
 ## Getting started with the plugin development
 1. Checkout the plugin repo
 2. Import the project using [gradle](https://www.jetbrains.com/idea/help/gradle.html)
-3. Run the **runIdea** gradle task
+3. Run the **runIde** gradle task
