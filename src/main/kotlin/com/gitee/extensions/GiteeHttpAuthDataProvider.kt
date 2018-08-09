@@ -2,23 +2,22 @@
 
 package com.gitee.extensions
 
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequestExecutorManager
+import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeApiRequestExecutorManager
-import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import java.io.IOException
 
 class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenticationManager,
                                 private val requestExecutorFactory: GiteeApiRequestExecutor.Factory,
                                 private val requestExecutorManager: GiteeApiRequestExecutorManager,
-                                private val accountInformationProvider: GiteeAccountInformationProvider,
-                                private val authenticationFailureManager: GiteeAccountGitAuthenticationFailureManager) : GitHttpAuthDataProvider {
+                                private val accountInformationProvider: GiteeAccountInformationProvider) : GitHttpAuthDataProvider {
 
   private val LOG = logger<GiteeHttpAuthDataProvider>()
 
@@ -47,13 +46,15 @@ class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenti
     }
   }
 
-  override fun forgetPassword(url: String, authData: AuthData) {
+  override fun forgetPassword(project: Project, url: String, authData: AuthData) {
     if (authData is GiteeAccountAuthData) {
-      authenticationFailureManager.ignoreAccount(url, authData.account)
+      project.service<GiteeAccountGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
     }
   }
 
   fun getSuitableAccounts(project: Project, url: String, login: String?): Set<com.gitee.authentication.accounts.GiteeAccount> {
+
+    val authenticationFailureManager = project.service<GiteeAccountGitAuthenticationFailureManager>()
 
     var potentialAccounts = authenticationManager.getAccounts()
       .filter { it.server.matches(url) }
