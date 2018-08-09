@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.api
 
+import com.gitee.authentication.accounts.GiteeAccountManager
 import com.google.gson.JsonParseException
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -10,11 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
-import com.gitee.api.data.GiteeErrorMessage
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountManager
-import com.gitee.exceptions.*
-import com.gitee.util.GiteeSettings
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -22,7 +18,6 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
-import java.util.function.Supplier
 
 /**
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.

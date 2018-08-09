@@ -1,11 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.api
 
+import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.exceptions.GiteeMissingTokenException
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.exceptions.GiteeMissingTokenException
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Component
 

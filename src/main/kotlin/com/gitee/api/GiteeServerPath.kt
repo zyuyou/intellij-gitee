@@ -1,12 +1,10 @@
 package com.gitee.api
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.xmlb.annotations.Attribute
-import com.gitee.util.GiteeUrlUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
-import com.gitee.exceptions.GiteeParseException
-import java.util.Objects
+import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 

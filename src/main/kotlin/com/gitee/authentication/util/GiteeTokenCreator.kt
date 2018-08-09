@@ -1,14 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication.util
 
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.progress.ProgressIndicator
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
-import com.gitee.api.data.GiteeAuthorization
-import com.gitee.exceptions.GiteeStatusCodeException
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.progress.ProgressIndicator
 import java.io.IOException
 
 /**

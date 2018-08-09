@@ -23,7 +23,6 @@ import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
-import com.gitee.icons.GiteeIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

@@ -1,6 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication.ui
 
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequests
+import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.util.GiteeTokenCreator
+import com.gitee.ui.util.DialogValidationUtils.chain
+import com.gitee.ui.util.DialogValidationUtils.notBlank
+import com.gitee.ui.util.Validator
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
@@ -26,15 +33,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeApiRequests
-import com.gitee.api.GiteeServerPath
-import com.gitee.authentication.util.GiteeTokenCreator
-import com.gitee.exceptions.GiteeAuthenticationException
-import com.gitee.exceptions.GiteeParseException
-import com.gitee.ui.util.DialogValidationUtils.chain
-import com.gitee.ui.util.DialogValidationUtils.notBlank
-import com.gitee.ui.util.Validator
 import java.awt.Component
 import java.awt.Cursor
 import java.net.UnknownHostException

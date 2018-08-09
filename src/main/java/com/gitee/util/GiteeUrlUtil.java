@@ -16,9 +16,9 @@
  */
 package com.gitee.util;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.gitee.GiteeConstants;
 import com.gitee.api.GiteeFullPath;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

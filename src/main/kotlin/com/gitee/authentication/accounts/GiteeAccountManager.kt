@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication.accounts
 
+import com.gitee.api.GiteeServerPath
+import com.gitee.util.GiteeUtil
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ApplicationManager
@@ -9,8 +11,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.messages.Topic
-import com.gitee.api.GiteeServerPath
-import com.gitee.util.GiteeUtil
 import kotlin.properties.Delegates.observable
 
 /**

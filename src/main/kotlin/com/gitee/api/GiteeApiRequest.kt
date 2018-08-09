@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.api
 
+import com.gitee.api.data.GiteeResponsePage
 import com.google.gson.reflect.TypeToken
 import com.intellij.util.ThrowableConvertor
-import com.gitee.api.data.GiteeResponsePage
 import java.io.IOException
 
 /**

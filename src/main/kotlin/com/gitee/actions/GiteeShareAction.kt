@@ -16,6 +16,14 @@
  */
 package com.gitee.actions
 
+import com.gitee.api.GiteeApiRequestExecutorManager
+import com.gitee.api.GiteeApiRequests
+import com.gitee.api.util.GiteeApiPagesLoader
+import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.ui.GiteeShareDialog
+import com.gitee.util.GiteeGitHelper
+import com.gitee.util.GiteeUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -58,17 +66,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import com.gitee.api.GiteeApiRequestExecutorManager
-import com.gitee.api.GiteeApiRequests
-import com.gitee.api.util.GiteeApiPagesLoader
-import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
-import com.gitee.icons.GiteeIcons
-import com.gitee.ui.GiteeShareDialog
-import com.gitee.util.GiteeGitHelper
-import com.gitee.util.GiteeNotifications
-import com.gitee.util.GiteeUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout

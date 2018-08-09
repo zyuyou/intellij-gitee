@@ -16,9 +16,9 @@
  */
 package com.gitee.api.data;
 
+import com.gitee.api.GiteeFullPath;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.util.text.StringUtil;
-import com.gitee.api.GiteeFullPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;

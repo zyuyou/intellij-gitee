@@ -16,10 +16,10 @@
  */
 package com.gitee.extensions;
 
+import com.gitee.actions.GiteeOpenInBrowserFromAnnotationActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.gitee.actions.GiteeOpenInBrowserFromAnnotationActionGroup;
 import org.jetbrains.annotations.NotNull;
 
 /**

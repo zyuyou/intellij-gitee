@@ -3,7 +3,6 @@ package com.gitee.authentication.ui
 
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.CollectionComboBoxModel
-import com.gitee.authentication.accounts.GiteeAccount
 import java.awt.event.ItemEvent
 
 class GiteeAccountCombobox(accounts: Set<com.gitee.authentication.accounts.GiteeAccount>,

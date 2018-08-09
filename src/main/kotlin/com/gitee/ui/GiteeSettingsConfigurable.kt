@@ -1,14 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui
 
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.authentication.accounts.AccountTokenChangedListener
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
+import com.gitee.util.GiteeUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.project.Project
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.authentication.accounts.*
-import com.gitee.util.GiteeSettings
-import com.gitee.util.GiteeUtil
 
 class GiteeSettingsConfigurable internal constructor(private val project: Project,
                                                      private val settings: com.gitee.util.GiteeSettings,

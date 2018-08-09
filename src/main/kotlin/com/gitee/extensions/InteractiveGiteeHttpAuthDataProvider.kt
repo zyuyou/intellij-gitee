@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.extensions
 
+import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.ui.GiteeChooseAccountDialog
+import com.gitee.util.GiteeUtil
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.DialogManager
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
-import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GiteeChooseAccountDialog
-import com.gitee.util.GiteeUtil
 import org.jetbrains.annotations.CalledInAwt
 import javax.swing.JComponent
 

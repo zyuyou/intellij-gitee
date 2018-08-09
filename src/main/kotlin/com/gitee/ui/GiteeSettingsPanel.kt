@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui
 
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.authentication.ui.GiteeAccountsPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.project.Project
@@ -11,10 +14,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
-import com.gitee.authentication.ui.GiteeAccountsPanel
-import com.gitee.util.GiteeSettings
 import java.awt.Component.LEFT_ALIGNMENT
 import java.awt.GridLayout
 import java.text.NumberFormat

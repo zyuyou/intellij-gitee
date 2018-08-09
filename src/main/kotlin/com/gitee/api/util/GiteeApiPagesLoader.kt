@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.api.util
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.gitee.api.GiteeApiRequest
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.data.GiteeResponsePage
+import com.intellij.openapi.progress.ProgressIndicator
 import java.io.IOException
 import java.util.function.Predicate
 

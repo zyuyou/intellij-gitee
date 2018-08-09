@@ -15,8 +15,19 @@
  */
 package com.gitee.tasks;
 
+import com.gitee.api.GiteeApiRequestExecutor;
+import com.gitee.api.GiteeApiRequests;
 import com.gitee.api.GiteeServerPath;
+import com.gitee.api.data.GiteeAuthorization;
+import com.gitee.api.data.GiteeIssue;
+import com.gitee.api.data.GiteeIssueComment;
+import com.gitee.api.util.GiteeApiPagesLoader;
+import com.gitee.authentication.accounts.GiteeAccountManager;
 import com.gitee.authentication.util.GiteeTokenCreator;
+import com.gitee.exceptions.GiteeAuthenticationException;
+import com.gitee.exceptions.GiteeJsonException;
+import com.gitee.exceptions.GiteeRateLimitExceededException;
+import com.gitee.exceptions.GiteeStatusCodeException;
 import com.gitee.icons.GiteeIcons;
 import com.gitee.issue.GiteeIssuesLoadingHelper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,21 +44,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import kotlin.Pair;
 import kotlin.Triple;
-import com.gitee.api.GiteeApiRequestExecutor;
-import com.gitee.api.GiteeApiRequests;
-import com.gitee.api.GiteeServerPath;
-import com.gitee.api.data.GiteeAuthorization;
-import com.gitee.api.data.GiteeIssue;
-import com.gitee.api.data.GiteeIssueComment;
-import com.gitee.api.util.GiteeApiPagesLoader;
-import com.gitee.authentication.accounts.GiteeAccountManager;
-import com.gitee.authentication.util.GiteeTokenCreator;
-import com.gitee.exceptions.GiteeAuthenticationException;
-import com.gitee.exceptions.GiteeJsonException;
-import com.gitee.exceptions.GiteeRateLimitExceededException;
-import com.gitee.exceptions.GiteeStatusCodeException;
-import com.gitee.icons.GiteeIcons;
-import com.gitee.issue.GiteeIssuesLoadingHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

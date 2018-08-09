@@ -1,19 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.extensions;
 
-import com.gitee.api.GiteeServerPath;
-import com.gitee.authentication.accounts.GiteeAccount;
-import com.gitee.exceptions.GiteeMissingTokenException;
-import com.gitee.exceptions.GiteeStatusCodeException;
-import com.gitee.util.GiteeGitHelper;
-import com.gitee.util.GiteeUtil;
-import com.intellij.dvcs.hosting.RepositoryListLoader;
-import com.intellij.dvcs.hosting.RepositoryListLoadingException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import git4idea.remote.GitRepositoryHostingService;
-import git4idea.remote.InteractiveGitHttpAuthDataProvider;
-import one.util.streamex.StreamEx;
 import com.gitee.api.GiteeApiRequestExecutor;
 import com.gitee.api.GiteeApiRequestExecutorManager;
 import com.gitee.api.GiteeApiRequests;
@@ -27,6 +14,13 @@ import com.gitee.exceptions.GiteeMissingTokenException;
 import com.gitee.exceptions.GiteeStatusCodeException;
 import com.gitee.util.GiteeGitHelper;
 import com.gitee.util.GiteeUtil;
+import com.intellij.dvcs.hosting.RepositoryListLoader;
+import com.intellij.dvcs.hosting.RepositoryListLoadingException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import git4idea.remote.GitRepositoryHostingService;
+import git4idea.remote.InteractiveGitHttpAuthDataProvider;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

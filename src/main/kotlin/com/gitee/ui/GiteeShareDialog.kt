@@ -1,5 +1,10 @@
 package com.gitee.ui
 
+import com.gitee.authentication.ui.GiteeAccountCombobox
+import com.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
+import com.gitee.ui.util.DialogValidationUtils.chain
+import com.gitee.ui.util.DialogValidationUtils.notBlank
+import com.gitee.ui.util.Validator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -15,17 +20,11 @@ import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.dialog.DialogUtils
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GiteeAccountCombobox
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.util.regex.Pattern
 import javax.swing.JComponent
 import javax.swing.JTextArea
-import com.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
-import com.gitee.ui.util.DialogValidationUtils.chain
-import com.gitee.ui.util.DialogValidationUtils.notBlank
-import com.gitee.ui.util.Validator
 
 
 class GiteeShareDialog(project: Project,

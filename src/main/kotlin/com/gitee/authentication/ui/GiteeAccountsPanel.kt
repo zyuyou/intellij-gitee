@@ -1,6 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication.ui
 
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.authentication.accounts.GiteeAccountManager
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,15 +24,6 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeServerPath
-import com.gitee.api.data.GiteeUserDetailed
-import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
-import com.gitee.authentication.accounts.GiteeAccountManager
-import com.gitee.exceptions.GiteeAuthenticationException
-import com.gitee.icons.GiteeIcons
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent

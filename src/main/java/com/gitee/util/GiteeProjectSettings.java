@@ -16,9 +16,9 @@
  */
 package com.gitee.util;
 
+import com.gitee.api.GiteeFullPath;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.gitee.api.GiteeFullPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

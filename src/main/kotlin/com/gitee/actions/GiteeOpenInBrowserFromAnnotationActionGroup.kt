@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.actions
 
+import com.gitee.api.GiteeRepositoryPath
+import com.gitee.util.GiteeGitHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
@@ -8,8 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener
 import git4idea.GitUtil
-import com.gitee.api.GiteeRepositoryPath
-import com.gitee.util.GiteeGitHelper
 
 
 class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation) : com.gitee.actions.GiteeOpenInBrowserActionGroup(), UpToDateLineNumberListener {

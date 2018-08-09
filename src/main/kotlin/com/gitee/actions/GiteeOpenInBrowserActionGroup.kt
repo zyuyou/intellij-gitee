@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.actions
 
+import com.gitee.api.GiteeRepositoryPath
+import com.gitee.util.GiteeGitHelper
+import com.gitee.util.GiteeUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
@@ -25,11 +28,6 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
-import com.gitee.api.GiteeRepositoryPath
-import com.gitee.icons.GiteeIcons
-import com.gitee.util.GiteeGitHelper
-import com.gitee.util.GiteeNotifications
-import com.gitee.util.GiteeUtil
 
 open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open corresponding link in browser", com.gitee.icons.GiteeIcons.Gitee_icon) {
 

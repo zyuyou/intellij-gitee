@@ -15,7 +15,16 @@
  */
 package com.gitee.actions;
 
+import com.gitee.api.GiteeApiRequestExecutor;
+import com.gitee.api.GiteeApiRequestExecutorManager;
+import com.gitee.api.GiteeApiRequests;
 import com.gitee.api.GiteeServerPath;
+import com.gitee.api.requests.GiteeGistRequest.FileContent;
+import com.gitee.authentication.GiteeAuthenticationManager;
+import com.gitee.icons.GiteeIcons;
+import com.gitee.ui.GiteeCreateGistDialog;
+import com.gitee.util.GiteeNotifications;
+import com.gitee.util.GiteeSettings;
 import com.gitee.util.GiteeUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,17 +44,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.gitee.api.GiteeApiRequestExecutor;
-import com.gitee.api.GiteeApiRequestExecutorManager;
-import com.gitee.api.GiteeApiRequests;
-import com.gitee.api.GiteeServerPath;
-import com.gitee.api.requests.GiteeGistRequest.FileContent;
-import com.gitee.authentication.GiteeAuthenticationManager;
-import com.gitee.icons.GiteeIcons;
-import com.gitee.ui.GiteeCreateGistDialog;
-import com.gitee.util.GiteeNotifications;
-import com.gitee.util.GiteeSettings;
-import com.gitee.util.GiteeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

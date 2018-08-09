@@ -16,7 +16,7 @@
       ]]>
     </change-notes>
 
-    <idea-version since-build="182.1" until-build="182.*"/>
+    <idea-version since-build="183.1" until-build="183.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>

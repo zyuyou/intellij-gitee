@@ -12,7 +12,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.gitee.authentication.accounts.GiteeAccount
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextArea

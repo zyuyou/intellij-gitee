@@ -1,5 +1,6 @@
 package com.gitee.tasks;
 
+import com.gitee.api.GiteeApiRequestExecutor;
 import com.gitee.authentication.ui.GiteeLoginDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,8 +12,6 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
-import com.gitee.api.GiteeApiRequestExecutor;
-import com.gitee.authentication.ui.GiteeLoginDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

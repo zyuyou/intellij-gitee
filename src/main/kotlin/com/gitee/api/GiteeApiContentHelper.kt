@@ -4,16 +4,12 @@ package com.gitee.api
 import com.google.common.io.ByteStreams
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
-import com.gitee.exceptions.GiteeFormUrlEncodedException
-import com.gitee.exceptions.GiteeJsonException
-import org.jetbrains.io.mandatory.Mandatory
 import org.jetbrains.io.mandatory.NullCheckingFactory
 import java.awt.Image
 import java.awt.Toolkit
 import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
-import kotlin.reflect.full.memberProperties
 
 object GiteeApiContentHelper {
   const val JSON_MIME_TYPE = "application/json"

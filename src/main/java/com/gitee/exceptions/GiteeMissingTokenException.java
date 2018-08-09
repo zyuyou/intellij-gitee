@@ -2,7 +2,6 @@
 package com.gitee.exceptions;
 
 import com.gitee.authentication.accounts.GiteeAccount;
-import com.gitee.authentication.accounts.GiteeAccount;
 import org.jetbrains.annotations.NotNull;
 
 public class GiteeMissingTokenException extends GiteeAuthenticationException {

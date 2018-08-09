@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.api.data
 
-import com.gitee.exceptions.GiteeConfusingException
-
 class GiteeResponsePage<T> constructor(private var totalCount: Int,
                                        var list: List<T>,
                                        val nextLink: String? = null) {

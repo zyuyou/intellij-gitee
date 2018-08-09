@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication.accounts
 
+import com.gitee.api.GiteeServerPath
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.util.text.StringUtil
-import com.gitee.api.GiteeServerPath
 
 private const val GROUP_ID = "statistics.vcs.gitee"
 

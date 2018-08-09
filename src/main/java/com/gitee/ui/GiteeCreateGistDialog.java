@@ -28,8 +28,6 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import com.gitee.authentication.accounts.GiteeAccount;
-import com.gitee.authentication.ui.GiteeAccountCombobox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

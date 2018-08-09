@@ -1,19 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication
 
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
+import com.gitee.authentication.ui.GiteeLoginDialog
+import com.gitee.authentication.util.GiteeTokenCreator
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeServerPath
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountManager
-import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
-import com.gitee.authentication.ui.GiteeLoginDialog
-import com.gitee.authentication.util.GiteeTokenCreator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
