@@ -3,12 +3,11 @@ package com.gitee.authentication
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.authentication.ui.GiteeLoginDialog
 import com.gitee.authentication.util.GiteeTokenCreator
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
@@ -27,52 +26,49 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
   fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()
 
   @CalledInAny
-  fun getAccounts(): Set<com.gitee.authentication.accounts.GiteeAccount> = accountManager.accounts
+  fun getAccounts(): Set<GiteeAccount> = accountManager.accounts
 
   @CalledInAny
-  internal fun getTokenForAccount(account: com.gitee.authentication.accounts.GiteeAccount): String? = accountManager.getTokenForAccount(account)
+  internal fun getTokenForAccount(account: GiteeAccount): String? = accountManager.getTokenForAccount(account)
 
   @CalledInAny
-  internal fun getTokensForAccount(account: com.gitee.authentication.accounts.GiteeAccount): Pair<String, String>? = accountManager.getTokensForAccount(account)
+  internal fun getTokensForAccount(account: GiteeAccount): Pair<String, String>? = accountManager.getTokensForAccount(account)
 
+  @CalledInAwt
   @JvmOverloads
-  @CalledInAny
-  internal fun getOrRequestTokensForAccount(account: com.gitee.authentication.accounts.GiteeAccount,
+  internal fun getOrRequestTokensForAccount(account: GiteeAccount,
                                             project: Project? = null,
-                                            parentComponent: Component? = null,
-                                            modalityStateSupplier: () -> ModalityState = { ModalityState.any() }): Pair<String, String>? {
+                                            parentComponent: Component? = null): Pair<String, String>? {
 
-    return getTokensForAccount(account) ?: invokeAndWaitIfNeed(modalityStateSupplier()) {
-      requestNewTokens(account, project, parentComponent)
-    }
+    return getTokensForAccount(account) ?: requestNewTokens(account, project, parentComponent)
   }
 
   @CalledInAny
-  internal fun refreshNewTokens(account: com.gitee.authentication.accounts.GiteeAccount, refreshToken: String) : Triple<com.gitee.authentication.accounts.GiteeAccount, String, String> {
+  internal fun refreshNewTokens(account: GiteeAccount, refreshToken: String) : Triple<GiteeAccount, String, String> {
     val authorization = GiteeTokenCreator(account.server, executorFactory.create(), DumbProgressIndicator()).updateMaster(refreshToken)
     return Triple(account, authorization.accessToken, authorization.refreshToken)
   }
 
+//  @CalledInAwt
+//  private fun requestNewToken(account: GiteeAccount, project: Project?, parentComponent: Component?): String? {
+//
+//    val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
+//      .withServer(account.server.toString(), false)
+//      .withCredentials(account.name)
+//      .withToken()
+//
+//    DialogManager.show(dialog)
+//    if (!dialog.isOK) return null
+//
+//    val accessToken = dialog.getAccessToken()
+//    account.name = dialog.getLogin()
+//    accountManager.updateAccountToken(account, "$accessToken&${dialog.getRefreshToken()}")
+//
+//    return accessToken
+//  }
+
   @CalledInAwt
-  private fun requestNewToken(account: com.gitee.authentication.accounts.GiteeAccount, project: Project?, parentComponent: Component?): String? {
-
-    val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
-      .withServer(account.server.toString(), false)
-      .withCredentials(account.name)
-      .withToken()
-
-    DialogManager.show(dialog)
-    if (!dialog.isOK) return null
-
-    val accessToken = dialog.getAccessToken()
-    account.name = dialog.getLogin()
-    accountManager.updateAccountToken(account, "$accessToken&${dialog.getRefreshToken()}")
-
-    return accessToken
-  }
-
-  @CalledInAwt
-  private fun requestNewTokens(account: com.gitee.authentication.accounts.GiteeAccount, project: Project?, parentComponent: Component?): Pair<String, String>? {
+  private fun requestNewTokens(account: GiteeAccount, project: Project?, parentComponent: Component? = null): Pair<String, String>? {
 
     val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
@@ -88,14 +84,15 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     return dialog.getAccessToken() to dialog.getRefreshToken()
   }
 
-  fun hasTokenForAccount(account: com.gitee.authentication.accounts.GiteeAccount): Boolean = getTokenForAccount(account) != null
+  fun hasTokenForAccount(account: GiteeAccount): Boolean = getTokenForAccount(account) != null
 
   @CalledInAwt
-  fun requestNewAccount(project: Project): com.gitee.authentication.accounts.GiteeAccount? {
+  @JvmOverloads
+  fun requestNewAccount(project: Project?, parentComponent: Component? = null): GiteeAccount? {
     fun isAccountUnique(name: String, server: GiteeServerPath) =
       accountManager.accounts.none { it.name == name && it.server == server }
 
-    val dialog = GiteeLoginDialog(executorFactory, project, null, ::isAccountUnique)
+    val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
@@ -106,7 +103,7 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
   }
 
   @TestOnly
-  fun registerAccount(name: String, host: String, token: String): com.gitee.authentication.accounts.GiteeAccount {
+  fun registerAccount(name: String, host: String, token: String): GiteeAccount {
     val account = GiteeAccountManager.createAccount(name, GiteeServerPath.from(host))
     accountManager.accounts += account
     accountManager.updateAccountToken(account, token)
@@ -119,25 +116,27 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     accountManager.accounts = emptySet()
   }
 
-  fun getDefaultAccount(project: Project): com.gitee.authentication.accounts.GiteeAccount? {
+  fun getDefaultAccount(project: Project): GiteeAccount? {
     return project.service<GiteeProjectDefaultAccountHolder>().account
   }
 
   @TestOnly
-  fun setDefaultAccount(project: Project, account: com.gitee.authentication.accounts.GiteeAccount?) {
+  fun setDefaultAccount(project: Project, account: GiteeAccount?) {
     project.service<GiteeProjectDefaultAccountHolder>().account = account
   }
 
-  fun ensureHasAccounts(project: Project): Boolean {
+  @CalledInAwt
+  @JvmOverloads
+  fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean {
     if (!hasAccounts()) {
-      if (requestNewAccount(project) == null) {
+      if (requestNewAccount(project, parentComponent) == null) {
         return false
       }
     }
     return true
   }
 
-  fun getSingleOrDefaultAccount(project: Project): com.gitee.authentication.accounts.GiteeAccount? {
+  fun getSingleOrDefaultAccount(project: Project): GiteeAccount? {
     project.service<GiteeProjectDefaultAccountHolder>().account?.let { return it }
     val accounts = accountManager.accounts
     if (accounts.size == 1) return accounts.first()

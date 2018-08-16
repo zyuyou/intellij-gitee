@@ -25,7 +25,9 @@ import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -72,8 +74,8 @@ public class GiteeRepositoryHostingService extends GitRepositoryHostingService {
 			}
 
 			@Override
-			public boolean enable() {
-				if (!myAuthenticationManager.ensureHasAccounts(project)) return false;
+			public boolean enable(@Nullable Component parentComponent) {
+				if (!myAuthenticationManager.ensureHasAccounts(project, parentComponent)) return false;
 
 				boolean atLeastOneHasToken = false;
 

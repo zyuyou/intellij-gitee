@@ -12,11 +12,12 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextArea
 
-class GiteeChooseAccountDialog(project: Project?, parentComponent: JComponent?,
+class GiteeChooseAccountDialog(project: Project?, parentComponent: Component?,
                                accounts: Collection<com.gitee.authentication.accounts.GiteeAccount>,
                                descriptionText: String?, showHosts: Boolean, allowDefault: Boolean,
                                title: String, okText: String)

@@ -4,6 +4,7 @@ package com.gitee.ui
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.ui.GiteeAccountsPanel
+import com.gitee.util.GiteeSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.project.Project
@@ -72,11 +73,11 @@ class GiteeSettingsPanel(project: Project,
     settings.application.isCloneGitUsingSsh = cloneUsingSshCheckBox.isSelected
   }
 
-  private fun com.gitee.util.GiteeSettings.getConnectionTimeoutSeconds(): Int {
+  private fun GiteeSettings.getConnectionTimeoutSeconds(): Int {
     return connectionTimeout / 1000
   }
 
-  private fun com.gitee.util.GiteeSettings.setConnectionTimeoutSeconds(timeout: Int) {
+  private fun GiteeSettings.setConnectionTimeoutSeconds(timeout: Int) {
     connectionTimeout = timeout * 1000
   }
 

@@ -5,20 +5,22 @@ import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.ui.GiteeChooseAccountDialog
 import com.gitee.util.GiteeUtil
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.DialogManager
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import org.jetbrains.annotations.CalledInAwt
-import javax.swing.JComponent
+import java.awt.Component
 
 internal class InteractiveGiteeHttpAuthDataProvider(private val project: Project,
                                                     private val potentialAccounts: Collection<com.gitee.authentication.accounts.GiteeAccount>,
                                                     private val authenticationManager: GiteeAuthenticationManager) : InteractiveGitHttpAuthDataProvider {
 
   @CalledInAwt
-  override fun getAuthData(parentComponent: JComponent?): AuthData? {
-    val dialog = GiteeChooseAccountDialog(project,
+  override fun getAuthData(parentComponent: Component?): AuthData? {
+    val dialog = GiteeChooseAccountDialog(
+      project,
       parentComponent,
       potentialAccounts,
       null,
@@ -33,10 +35,14 @@ internal class InteractiveGiteeHttpAuthDataProvider(private val project: Project
 
     val account = dialog.account
 
-    val modalityStateSupplier = { parentComponent?.let(ModalityState::stateForComponent) ?: ModalityState.any() }
+//    val modalityStateSupplier = { parentComponent?.let(ModalityState::stateForComponent) ?: ModalityState.any() }
 
-    val tokens = authenticationManager.getOrRequestTokensForAccount(account,
-      parentComponent = parentComponent, modalityStateSupplier = modalityStateSupplier) ?: return null
+    val tokens = invokeAndWaitIfNeed(parentComponent?.let(ModalityState::stateForComponent) ?: ModalityState.any()) {
+      authenticationManager.getOrRequestTokensForAccount(account, project, parentComponent)
+    } ?: return null
+
+//    val tokens = authenticationManager.getOrRequestTokensForAccount(account,
+//      parentComponent = parentComponent, modalityStateSupplier = modalityStateSupplier) ?: return null
 
     if (dialog.setDefault) authenticationManager.setDefaultAccount(project, account)
 

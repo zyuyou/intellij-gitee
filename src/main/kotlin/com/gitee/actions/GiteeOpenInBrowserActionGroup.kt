@@ -52,9 +52,7 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
     getData(e.dataContext)?.let { com.gitee.actions.GiteeOpenInBrowserActionGroup.Companion.GiteeOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
   }
 
-  override fun canBePerformed(context: DataContext?): Boolean {
-    if (context == null) return false
-
+  override fun canBePerformed(context: DataContext): Boolean {
     val data = getData(context)
     return data != null && data.first.size == 1
   }

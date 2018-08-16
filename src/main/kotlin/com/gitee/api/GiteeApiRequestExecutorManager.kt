@@ -15,14 +15,14 @@ class GiteeApiRequestExecutorManager(private val authenticationManager: GiteeAut
                                      private val requestExecutorFactory: GiteeApiRequestExecutor.Factory) {
   @CalledInAwt
   fun getExecutor(account: com.gitee.authentication.accounts.GiteeAccount, project: Project): GiteeApiRequestExecutor? {
-    return authenticationManager.getOrRequestTokensForAccount(account, project = project) ?.let { it ->
+    return authenticationManager.getOrRequestTokensForAccount(account, project) ?.let { it ->
       requestExecutorFactory.create(it) { authenticationManager.refreshNewTokens(account, it) }
     }
   }
 
   @CalledInAwt
   fun getExecutor(account: com.gitee.authentication.accounts.GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor? {
-    return authenticationManager.getOrRequestTokensForAccount(account, parentComponent = parentComponent) ?.let { it ->
+    return authenticationManager.getOrRequestTokensForAccount(account, null, parentComponent) ?.let { it ->
       requestExecutorFactory.create(it) { authenticationManager.refreshNewTokens(account, it) }
     }
   }

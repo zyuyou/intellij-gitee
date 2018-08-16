@@ -2,10 +2,8 @@
 package com.gitee.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.authentication.accounts.AccountTokenChangedListener
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
-import com.gitee.authentication.accounts.GiteeAccountManager
-import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
+import com.gitee.authentication.accounts.*
+import com.gitee.util.GiteeSettings
 import com.gitee.util.GiteeUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
@@ -13,7 +11,7 @@ import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.project.Project
 
 class GiteeSettingsConfigurable internal constructor(private val project: Project,
-                                                     private val settings: com.gitee.util.GiteeSettings,
+                                                     private val settings: GiteeSettings,
                                                      private val accountManager: GiteeAccountManager,
                                                      private val defaultAccountHolder: GiteeProjectDefaultAccountHolder,
                                                      private val executorFactory: GiteeApiRequestExecutor.Factory,
@@ -29,7 +27,7 @@ class GiteeSettingsConfigurable internal constructor(private val project: Projec
       .messageBus
       .connect(project)
       .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-        override fun tokenChanged(account: com.gitee.authentication.accounts.GiteeAccount) {
+        override fun tokenChanged(account: GiteeAccount) {
           if (!isModified) reset()
         }
       })
@@ -43,7 +41,7 @@ class GiteeSettingsConfigurable internal constructor(private val project: Projec
     return GiteeSettingsPanel(project, executorFactory, accountInformationProvider)
   }
 
-  inner class GiteeSettingsHolder internal constructor(val application: com.gitee.util.GiteeSettings,
+  inner class GiteeSettingsHolder internal constructor(val application: GiteeSettings,
                                                        val applicationAccounts: GiteeAccountManager,
                                                        val projectAccount: GiteeProjectDefaultAccountHolder)
 }

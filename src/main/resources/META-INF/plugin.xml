@@ -56,6 +56,14 @@
             <add-to-group group-id="Vcs.Import"/>
         </action>
 
+        <action id="Gitee.Rebase" class="com.gitee.actions.GiteeRebaseAction">
+            <add-to-group group-id="Git.Menu"/>
+        </action>
+
+        <action id="Gitee.Create.Pull.Request" class="com.gitee.actions.GiteeCreatePullRequestAction">
+            <add-to-group group-id="Git.Menu"/>
+        </action>
+
         <action id="Gitee.Open.In.Browser" class="com.gitee.actions.GiteeOpenInBrowserActionGroup">
             <add-to-group group-id="EditorPopupMenu"/>
             <add-to-group group-id="ProjectViewPopupMenu"/>
