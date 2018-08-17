@@ -21,14 +21,11 @@ import com.gitee.util.GiteeUrlUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.Convertor;
-import com.gitee.api.GiteeFullPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.gitee.util.GiteeUrlUtil.*;
 
 public class GiteeUrlUtilTest extends UsefulTestCase {
 	private static class TestCase<T> {

@@ -65,8 +65,6 @@ sealed class GiteeApiRequest<T>(val url: String) {
       inline fun <reified T> jsonPage(url: String): Get<GiteeResponsePage<T>> = JsonPage(url, T::class.java)
 
       inline fun <reified T> jsonPage2(url: String): Get<GiteeResponsePage<T>> = JsonPage2(url, T::class.java)
-
-//      inline fun <reified T> jsonSearchPage(url: String): Get<GiteeResponsePage<T>> = JsonSearchPage(url, T::class.java)
     }
 
     open class Json<T>(url: String, clazz: Class<T>) : Get<T>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {

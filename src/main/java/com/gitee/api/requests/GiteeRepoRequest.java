@@ -19,7 +19,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-public class GiteeRepoRequest extends GiteePostRequestBase {
+public class GiteeRepoRequest {
   @NotNull
   private final String name;
   @NotNull

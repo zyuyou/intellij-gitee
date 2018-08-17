@@ -63,7 +63,7 @@ object GiteeUtil {
 
       return task.compute()
     } finally {
-      if (future != null) future.cancel(true)
+      future?.cancel(true)
       Thread.interrupted()
     }
   }

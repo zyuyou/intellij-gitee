@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gitee.api.requests;
+package com.gitee.api.requests
 
 /**
  * @author Yuyou Chow

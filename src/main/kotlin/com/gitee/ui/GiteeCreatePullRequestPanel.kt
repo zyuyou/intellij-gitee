@@ -35,7 +35,7 @@ import javax.swing.event.DocumentEvent
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubCreatePullRequestPanel.java
  * @author JetBrains s.r.o.
  */
-internal class GiteeCreatePullRequestPanel() {
+internal class GiteeCreatePullRequestPanel {
   private val titleTextField: JTextField = JTextField().apply {
     preferredSize = JBDimension(150, -1)
   }
@@ -51,7 +51,7 @@ internal class GiteeCreatePullRequestPanel() {
   val showDiffButton = JButton("Show Diff")
   val selectForkButton = JButton("Select Other Fork")
 
-  private var titleDescriptionUserModified = false;
+  private var titleDescriptionUserModified = false
 
   val panel: JPanel by lazy {
     com.intellij.ui.layout.panel {
@@ -76,7 +76,7 @@ internal class GiteeCreatePullRequestPanel() {
       }
       row("Description:") {
       }
-      row() {
+      row {
         JBScrollPane(descriptionTextArea).apply {
           minimumSize = JBDimension(150, 60)
           border = EmptyBorder(0, 0, 0, 0)

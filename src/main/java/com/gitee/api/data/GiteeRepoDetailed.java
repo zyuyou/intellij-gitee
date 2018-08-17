@@ -25,27 +25,6 @@ public class GiteeRepoDetailed extends GiteeRepo {
 	private GiteeRepo parent;
 	private GiteeRepo source;
 
-  @Nullable
-  private final Long myParentId;
-
-	public GiteeRepoDetailed(@NotNull String name,
-	                         @Nullable String description,
-	                         boolean isPrivate,
-	                         boolean isFork,
-	                         @NotNull String htmlUrl,
-	                         @NotNull String cloneUrl,
-	                         @Nullable String defaultBranch,
-	                         @NotNull GiteeUser owner,
-	                         @Nullable Long parentId) {
-		super(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner);
-		myParentId = parentId;
-	}
-
-	@Nullable
-	public Long getParentId() {
-		return myParentId;
-	}
-
 	@Nullable
 	public GiteeRepo getParent() {
 		return parent;

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Yuyou Chow
@@ -36,7 +37,7 @@ public class GiteeBundle extends AbstractBundle {
 	public static String message2(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params){
 		String msg = message(key, params);
 		try {
-			return new String(msg.getBytes("ISO8859-1"), "utf-8");
+			return new String(msg.getBytes("ISO8859-1"), StandardCharsets.UTF_8);
 		} catch (UnsupportedEncodingException ignore) {
 		}
 		return msg;

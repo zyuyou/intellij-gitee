@@ -39,11 +39,9 @@ data class GiteePullRequest(@Mandatory val number: String,
                             @Mandatory val head: Link,
                             @Mandatory val base: Link) {
 
-  class Link(@Mandatory val label: String,
-             @Mandatory val ref: String,
-             @Mandatory val sha: String,
-             val repo: GiteeRepo,
-             @Mandatory val user: GiteeUser) {
-
-  }
+  data class Link(@Mandatory val label: String,
+                  @Mandatory val ref: String,
+                  @Mandatory val sha: String,
+                  val repo: GiteeRepo,
+                  @Mandatory val user: GiteeUser)
 }

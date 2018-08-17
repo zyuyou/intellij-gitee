@@ -22,10 +22,12 @@ import com.intellij.ui.SortedComboBoxModel
 import javax.swing.JPanel
 
 /**
- * Created by zyuyou on 2018/8/16.
+ * @author Yuyou Chow
  *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSelectForkPanel.java
+ * @author JetBrains s.r.o.
  */
-class GiteeSelectForkPanel() {
+class GiteeSelectForkPanel {
   private val model: SortedComboBoxModel<String> = SortedComboBoxModel(NaturalComparator.INSTANCE)
   private val comboBox = ComboBox<String>(model)
 

@@ -206,8 +206,8 @@ internal class GiteeAccountsPanel(private val project: Project,
 
       val rendererRelativeX = point.x - cellBounds.x
       val rendererRelativeY = point.y - cellBounds.y
-      val childComponent = UIUtil.getDeepestComponentAt(rendererComponent, rendererRelativeX, rendererRelativeY)
-      if (childComponent !is SimpleColoredComponent) return null
+      val childComponent = UIUtil.getDeepestComponentAt(rendererComponent, rendererRelativeX, rendererRelativeY) as? SimpleColoredComponent
+        ?: return null
 
       val childRelativeX = rendererRelativeX - childComponent.parent.x - childComponent.x
       return if (childComponent.getFragmentTagAt(childRelativeX) == LINK_TAG) decorator else null

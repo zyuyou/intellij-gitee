@@ -24,7 +24,7 @@ import org.jetbrains.io.mandatory.Mandatory
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/requests/GithubAuthorizationUpdateRequest.java
  * @author JetBrains s.r.o.
  */
-sealed class GiteeAuthorizationRequest() {
+sealed class GiteeAuthorizationRequest {
   companion object {
     @Mandatory
     const val GRANT_TYPE_CREATE_AUTH: String = "password"
@@ -42,7 +42,7 @@ data class AuthorizationCreateRequest(private val scopes: List<String>,
 
   override fun toString(): String {
     return listOf(
-      "grant_type=password",
+      "grant_type=$GRANT_TYPE_CREATE_AUTH",
       "scope=${scopes.joinToString(" ")}",
       "username=$username",
       "password=$password",
@@ -56,7 +56,7 @@ data class AuthorizationUpdateRequest(private val refreshToken: String) : GiteeA
 
   override fun toString(): String {
     return listOf(
-      "grant_type=refresh_token",
+      "grant_type=$GRANT_TYPE_REFRESH_TOKEN",
       "refresh_token=$refreshToken"
     ).joinToString("&")
   }

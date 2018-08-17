@@ -45,45 +45,43 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
                                                      val suffix: String? = null) {
 
   companion object {
-    const val DEFAULT_HOST: String = "gitee.com";
+    const val DEFAULT_HOST: String = "gitee.com"
 
-    //        private val API_PREFIX: String = "api.";
-    private const val API_SUFFIX: String = "/api/v5";
-    private const val ENTERPRISE_API_SUFFIX: String = "/api/v5";
+    private const val API_SUFFIX: String = "/api/v5"
+    private const val ENTERPRISE_API_SUFFIX: String = "/api/v5"
 
-    private val URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?",
-      Pattern.CASE_INSENSITIVE)
+    private val URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?", Pattern.CASE_INSENSITIVE)
 
     @Throws(GiteeParseException::class)
     fun from(uri: String): GiteeServerPath {
-      val matcher: Matcher = URL_REGEX.matcher(uri);
+      val matcher: Matcher = URL_REGEX.matcher(uri)
 
-      if (!matcher.matches()) throw GiteeParseException("Not a valid URL");
+      if (!matcher.matches()) throw GiteeParseException("Not a valid URL")
 
-      val schema: String? = matcher.group(1);
-      val httpSchema: Boolean? = if (schema == null || schema.isEmpty()) null else schema.equals("http://", true);
+      val schema: String? = matcher.group(1)
+      val httpSchema: Boolean? = if (schema == null || schema.isEmpty()) null else schema.equals("http://", true)
 
-      val host: String = matcher.group(2) ?: throw GiteeParseException("Empty host");
+      val host: String = matcher.group(2) ?: throw GiteeParseException("Empty host")
 
-      val portGroup: String? = matcher.group(4);
+      val portGroup: String? = matcher.group(4)
       val port: Int? = if (portGroup == null) {
         null
       } else {
         try {
-          portGroup.toInt();
+          portGroup.toInt()
         } catch (ignore: NumberFormatException) {
           throw GiteeParseException("Invalid port format")
         }
       }
 
-      val suffix: String? = StringUtil.nullize(matcher.group(5));
+      val suffix: String? = StringUtil.nullize(matcher.group(5))
 
       return GiteeServerPath(httpSchema, host, port, suffix)
     }
   }
 
   fun getSchema(): String {
-    return if (useHttp == null || !useHttp) "https" else "http";
+    return if (useHttp == null || !useHttp) "https" else "http"
   }
 
   fun matches(gitRemoteUrl: String): Boolean {

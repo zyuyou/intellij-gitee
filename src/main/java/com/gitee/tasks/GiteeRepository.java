@@ -321,7 +321,7 @@ public class GiteeRepository extends BaseRepositoryImpl {
 
 	public void setRepoName(@NotNull String repoName) {
 		myRepoName = repoName;
-		myPattern = Pattern.compile("(" + StringUtil.escapeToRegexp(repoName) + "\\-\\d+)");
+		myPattern = Pattern.compile("(" + StringUtil.escapeToRegexp(repoName) + "-\\d+)");
 	}
 
 	@NotNull
@@ -390,7 +390,7 @@ public class GiteeRepository extends BaseRepositoryImpl {
 	@NotNull
 	private GiteeApiRequestExecutor getExecutor() {
 		return GiteeApiRequestExecutor.Factory.getInstance().create(new Pair<>(getAccessToken(), getRefreshToken()), (refreshToken) -> {
-				GiteeAuthorization authorization = null;
+				GiteeAuthorization authorization;
 
 				try {
 					authorization = new GiteeTokenCreator(

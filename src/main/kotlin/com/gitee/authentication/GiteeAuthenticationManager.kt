@@ -68,24 +68,6 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     return Triple(account, authorization.accessToken, authorization.refreshToken)
   }
 
-//  @CalledInAwt
-//  private fun requestNewToken(account: GiteeAccount, project: Project?, parentComponent: Component?): String? {
-//
-//    val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
-//      .withServer(account.server.toString(), false)
-//      .withCredentials(account.name)
-//      .withToken()
-//
-//    DialogManager.show(dialog)
-//    if (!dialog.isOK) return null
-//
-//    val accessToken = dialog.getAccessToken()
-//    account.name = dialog.getLogin()
-//    accountManager.updateAccountToken(account, "$accessToken&${dialog.getRefreshToken()}")
-//
-//    return accessToken
-//  }
-
   @CalledInAwt
   private fun requestNewTokens(account: GiteeAccount, project: Project?, parentComponent: Component? = null): Pair<String, String>? {
 
@@ -153,13 +135,6 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
       }
     }
     return true
-  }
-
-  fun getSingleOrDefaultAccount(project: Project): GiteeAccount? {
-    project.service<GiteeProjectDefaultAccountHolder>().account?.let { return it }
-    val accounts = accountManager.accounts
-    if (accounts.size == 1) return accounts.first()
-    return null
   }
 
   companion object {

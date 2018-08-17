@@ -78,7 +78,7 @@ class GiteeRebaseAction : LegacySingleAccountActionGroup(
 
   companion object {
     private val LOG = GiteeUtil.LOG
-    private const val CANNOT_PERFORM_GITEE_REBASE = "Can't perform Gitee rebase";
+    private const val CANNOT_PERFORM_GITEE_REBASE = "Can't perform Gitee rebase"
   }
 
   private inner class RebaseTask(project: Project,
@@ -176,13 +176,13 @@ class GiteeRebaseAction : LegacySingleAccountActionGroup(
     }
 
     private fun loadRepositoryInfo(indicator: ProgressIndicator, fullPath: GiteeFullPath): GiteeRepoDetailed? {
-      try {
+      return try {
         val repo = requestExecutor.execute(indicator, GiteeApiRequests.Repos.get(server, fullPath.user, fullPath.repository))
         if (repo == null) GiteeNotifications.showError(myProject, "Repository " + fullPath.toString() + " was not found", "")
-        return repo
+        repo
       } catch (e: IOException) {
         GiteeNotifications.showError(myProject, "Can't load repository info", e)
-        return null
+        null
       }
 
     }

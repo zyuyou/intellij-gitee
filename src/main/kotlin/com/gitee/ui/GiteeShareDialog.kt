@@ -57,7 +57,7 @@ class GiteeShareDialog(project: Project,
                        private val accountInformationSupplier: (GiteeAccount, Component) -> Pair<Boolean, Set<String>>)
   : DialogWrapper(project) {
 
-  private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
+  private val GITEE_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
   private val repositoryTextField = JBTextField(project.name)
   private val privateCheckBox = JBCheckBox("Private", false)
@@ -122,7 +122,7 @@ class GiteeShareDialog(project: Project,
 
   override fun doValidateAll(): List<ValidationInfo> {
     val repositoryNamePatternMatchValidator: Validator = {
-      if (!GITHUB_REPO_PATTERN.matcher(repositoryTextField.text).matches()) ValidationInfo(
+      if (!GITEE_REPO_PATTERN.matcher(repositoryTextField.text).matches()) ValidationInfo(
         "Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores",
         repositoryTextField)
       else null

@@ -27,7 +27,7 @@ import javax.swing.JComponent
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubSelectForkDialog.java
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSelectForkDialog.java
  * @author JetBrains s.r.o.
  */
 class GiteeSelectForkDialog(private val project: Project,

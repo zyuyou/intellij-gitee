@@ -127,19 +127,6 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
     return this
   }
 
-  @JvmOverloads
-  fun withTokens(tokens: Pair<String, String>? = null): GiteeLoginDialog {
-    if (tokens != null) tokenUi.setTokens(tokens)
-    applyUi(tokenUi)
-    return this
-  }
-
-  fun withError(exception: Throwable): GiteeLoginDialog {
-    tokenAcquisitionError = currentUi.handleAcquireError(exception)
-    startTrackingValidation()
-    return this
-  }
-
   fun getServer(): GiteeServerPath = GiteeServerPath.from(serverTextField.text)
   fun getLogin(): String = login
   fun getAccessToken(): String = accessToken
@@ -295,7 +282,7 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
     )
 
     override fun getSouthPanel() = JBUI.Panels.simplePanel()
-      .addToCenter(LinkLabel.create("Sign up for Gitee", Runnable { BrowserUtil.browse("https://gitee.com") }))
+      .addToCenter(LinkLabel.create("Sign up for Gitee") { BrowserUtil.browse("https://gitee.com") })
       .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
 
 //    override fun createExecutor(): GiteeApiRequestExecutor.WithBasicAuth {

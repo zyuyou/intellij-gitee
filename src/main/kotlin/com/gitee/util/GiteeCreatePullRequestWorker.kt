@@ -82,7 +82,7 @@ class GiteeCreatePullRequestWorker(private val project: Project,
 
   companion object {
     private val LOG = GiteeUtil.LOG
-    private const val CANNOT_CREATE_PULL_REQUEST = "Can't Create Pull Request";
+    private const val CANNOT_CREATE_PULL_REQUEST = "Can't Create Pull Request"
 
     @JvmStatic
     fun create(project: Project,
@@ -195,16 +195,16 @@ class GiteeCreatePullRequestWorker(private val project: Project,
       }
     }
 
-    try {
+    return try {
       val branches = loadBranches(path, indicator)
       val defaultBranch = repo.defaultBranch
 
       val fork = ForkInfo(path, branches, defaultBranch)
       forks.add(fork)
-      return fork
+      fork
     } catch (e: IOException) {
-      GiteeNotifications.showWarning(project, "Can't load branches for " + path.getFullName(), e)
-      return null
+      GiteeNotifications.showWarning(project, "Can't load branches for " + path.fullName, e)
+      null
     }
 
   }
@@ -574,13 +574,13 @@ class GiteeCreatePullRequestWorker(private val project: Project,
   }
 
   private fun getAvailableForks(indicator: ProgressIndicator): List<GiteeFullPath>? {
-    try {
+    return try {
       val forks = GiteeApiPagesLoader.loadAll(executor, indicator, GiteeApiRequests.Repos.Forks.pages(server, source.user, source.repository))
       val forkPaths = ContainerUtil.map(forks, GiteeRepo::getFullPath)
-      return if (!forkPaths.contains(source)) ContainerUtil.append(forkPaths, source) else forkPaths
+      if (!forkPaths.contains(source)) ContainerUtil.append(forkPaths, source) else forkPaths
     } catch (e: IOException) {
       GiteeNotifications.showWarning(project, "Can't load available forks", e)
-      return null
+      null
     }
 
   }
@@ -596,10 +596,10 @@ class GiteeCreatePullRequestWorker(private val project: Project,
       val repo: GiteeRepo?
       val target = executor.execute(indicator, GiteeApiRequests.Repos.get(server, user, source.repository))
 
-      if (target != null && target.source != null && StringUtil.equals(target.source!!.userName, source.user)) {
-        repo = target
+      repo = if (target != null && target.source != null && StringUtil.equals(target.source!!.userName, source.user)) {
+        target
       } else {
-        repo = GiteeApiPagesLoader.find(executor, indicator, GiteeApiRequests.Repos.Forks.pages(server, source.user, source.repository),
+        GiteeApiPagesLoader.find(executor, indicator, GiteeApiRequests.Repos.Forks.pages(server, source.user, source.repository),
           Predicate { fork -> StringUtil.equalsIgnoreCase(fork.userName, user) })
       }
 
