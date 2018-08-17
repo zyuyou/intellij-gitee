@@ -1,7 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gitee.api
 
+import com.gitee.api.data.GiteeErrorMessage
+import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.exceptions.*
+import com.gitee.util.GiteeSettings
 import com.google.gson.JsonParseException
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -19,8 +37,14 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
 
+
 /**
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.
+ *
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutor.kt
+ * @author JetBrains s.r.o.
  */
 sealed class GiteeApiRequestExecutor {
 
@@ -31,7 +55,7 @@ sealed class GiteeApiRequestExecutor {
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GiteeApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
-  class WithTokenAuth internal constructor(giteeSettings: com.gitee.util.GiteeSettings,
+  class WithTokenAuth internal constructor(giteeSettings: GiteeSettings,
                                            private val token: String,
                                            private val useProxy: Boolean) : Base(giteeSettings) {
 
@@ -45,17 +69,7 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-//  class WithRrefreshTokenOAuth2 internal constructor(giteeSettings: GiteeSettings) : Base(giteeSettings) {
-//
-//    @Throws(IOException::class, ProcessCanceledException::class)
-//    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
-//      indicator.checkCanceled()
-//
-//      return createRequestBuilder(request).execute(request, indicator)
-//    }
-//  }
-
-  class WithPasswordOAuth2 internal constructor(giteeSettings: com.gitee.util.GiteeSettings) : Base(giteeSettings) {
+  class WithPasswordOAuth2 internal constructor(giteeSettings: GiteeSettings) : Base(giteeSettings) {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
@@ -65,10 +79,10 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-  class WithTokensAuth internal constructor(giteeSettings: com.gitee.util.GiteeSettings,
+  class WithTokensAuth internal constructor(giteeSettings: GiteeSettings,
                                             private val accountManager: GiteeAccountManager,
                                             private var tokens: Pair<String, String>,
-                                            private val refreshTokenSupplier: (refreshToken: String) -> Triple<com.gitee.authentication.accounts.GiteeAccount, String, String>) : Base(giteeSettings) {
+                                            private val refreshTokenSupplier: (refreshToken: String) -> Triple<GiteeAccount, String, String>) : Base(giteeSettings) {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
@@ -84,7 +98,7 @@ sealed class GiteeApiRequestExecutor {
           .tuner { connection -> connection.addRequestProperty("Authorization", "token ${tokens.first}") }
           .execute(request, indicator)
 
-      } catch (e: com.gitee.exceptions.GiteeAccessTokenExpiredException) {
+      } catch (e: GiteeAccessTokenExpiredException) {
         if (tokens.second == "") throw e
 
         val (account, newAccessToken, newRefreshToken) = refreshTokenSupplier(tokens.second)
@@ -98,37 +112,7 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-//  class WithBasicAuth internal constructor(giteeSettings: GiteeSettings,
-//                                           private val login: String,
-//                                           private val password: CharArray,
-//                                           private val twoFactorCodeSupplier: Supplier<String?>) : Base(giteeSettings) {
-//
-//    private var twoFactorCode: String? = null
-//
-//    @Throws(IOException::class, ProcessCanceledException::class)
-//    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
-//      indicator.checkCanceled()
-//      val basicHeaderValue = HttpSecurityUtil.createBasicAuthHeaderValue(login, password)
-//      return executeWithBasicHeader(indicator, request, basicHeaderValue)
-//    }
-//
-//    private fun <T> executeWithBasicHeader(indicator: ProgressIndicator, request: GiteeApiRequest<T>, header: String): T {
-//      indicator.checkCanceled()
-//      return try {
-//        createRequestBuilder(request)
-//          .tuner { connection ->
-//            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $header")
-//            twoFactorCode?.let { connection.addRequestProperty(OTP_HEADER_NAME, it) }
-//          }
-//          .execute(request, indicator)
-//      } catch (e: GiteeTwoFactorAuthenticationException) {
-//        twoFactorCode = twoFactorCodeSupplier.get() ?: throw e
-//        executeWithBasicHeader(indicator, request, header)
-//      }
-//    }
-//  }
-
-  abstract class Base(private val giteeSettings: com.gitee.util.GiteeSettings) : GiteeApiRequestExecutor() {
+  abstract class Base(private val giteeSettings: GiteeSettings) : GiteeApiRequestExecutor() {
 
     protected fun <T> RequestBuilder.execute(request: GiteeApiRequest<T>, indicator: ProgressIndicator): T {
       indicator.checkCanceled()
@@ -150,10 +134,10 @@ sealed class GiteeApiRequestExecutor {
 
           result
         }
-      } catch (e: com.gitee.exceptions.GiteeStatusCodeException) {
+      } catch (e: GiteeStatusCodeException) {
         @Suppress("UNCHECKED_CAST")
         if (request is GiteeApiRequest.Get.Optional<*> && e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) return null as T else throw e
-      } catch (e: com.gitee.exceptions.GiteeConfusingException) {
+      } catch (e: GiteeConfusingException) {
         if (request.operationName != null) {
           val errorText = "Can't ${request.operationName}"
           e.setDetails(errorText)
@@ -195,29 +179,29 @@ sealed class GiteeApiRequestExecutor {
         HttpURLConnection.HTTP_FORBIDDEN -> {
 
           when {
-            jsonError?.containsReasonMessage("API rate limit exceeded") == true -> com.gitee.exceptions.GiteeRateLimitExceededException(jsonError.message)
-            jsonError?.containsReasonMessage("Access token is expired") == true -> com.gitee.exceptions.GiteeAccessTokenExpiredException(jsonError.message)
-            jsonError?.containsErrorMessage("invalid_grant") == true -> com.gitee.exceptions.GiteeAuthenticationException("${jsonError.error} : ${jsonError.errorDescription
+            jsonError?.containsReasonMessage("API rate limit exceeded") == true -> GiteeRateLimitExceededException(jsonError.message)
+            jsonError?.containsReasonMessage("Access token is expired") == true -> GiteeAccessTokenExpiredException(jsonError.message)
+            jsonError?.containsErrorMessage("invalid_grant") == true -> GiteeAuthenticationException("${jsonError.error} : ${jsonError.errorDescription
               ?: ""}")
-            else -> com.gitee.exceptions.GiteeAuthenticationException("Request response: " + (jsonError?.message
+            else -> GiteeAuthenticationException("Request response: " + (jsonError?.message
               ?: if (errorText != "") errorText else statusLine))
           }
         }
         else -> {
           if (jsonError != null) {
-            com.gitee.exceptions.GiteeStatusCodeException("$statusLine - ${jsonError.message}", jsonError, connection.responseCode)
+            GiteeStatusCodeException("$statusLine - ${jsonError.message}", jsonError, connection.responseCode)
           } else {
-            com.gitee.exceptions.GiteeStatusCodeException("$statusLine - $errorText", connection.responseCode)
+            GiteeStatusCodeException("$statusLine - $errorText", connection.responseCode)
           }
         }
       }
     }
 
     private fun getErrorText(connection: HttpURLConnection): String {
-      return connection.errorStream?.let { InputStreamReader(it).use { it.readText() } } ?: ""
+      return connection.errorStream?.let { it -> InputStreamReader(it).use { it.readText() } } ?: ""
     }
 
-    private fun getJsonError(connection: HttpURLConnection, errorText: String): com.gitee.api.data.GiteeErrorMessage? {
+    private fun getJsonError(connection: HttpURLConnection, errorText: String): GiteeErrorMessage? {
       if (!connection.contentType.startsWith(GiteeApiContentHelper.JSON_MIME_TYPE)) return null
       return try {
         return GiteeApiContentHelper.fromJson(errorText)
@@ -242,7 +226,7 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-  class Factory internal constructor(private val giteeSettings: com.gitee.util.GiteeSettings,
+  class Factory internal constructor(private val giteeSettings: GiteeSettings,
                                      private val accountManager: GiteeAccountManager) {
 
     @CalledInAny
@@ -256,7 +240,7 @@ sealed class GiteeApiRequestExecutor {
     }
 
     @CalledInAny
-    fun create(tokens: Pair<String, String>, refreshTokenSupplier: (refreshToken: String) -> Triple<com.gitee.authentication.accounts.GiteeAccount, String, String>): WithTokensAuth {
+    fun create(tokens: Pair<String, String>, refreshTokenSupplier: (refreshToken: String) -> Triple<GiteeAccount, String, String>): WithTokensAuth {
       return GiteeApiRequestExecutor.WithTokensAuth(giteeSettings, accountManager, tokens, refreshTokenSupplier)
     }
 

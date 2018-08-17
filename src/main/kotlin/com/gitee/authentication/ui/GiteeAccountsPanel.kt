@@ -1,11 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
+import com.gitee.api.data.GiteeUserDetailed
 import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.exceptions.GiteeAuthenticationException
+import com.gitee.icons.GiteeIcons
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -34,6 +52,12 @@ import javax.swing.event.ListDataListener
 private const val ACCOUNT_PICTURE_SIZE: Int = 40
 private const val LINK_TAG = "EDIT_LINK"
 
+/**
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/ui/GithubAccountsPanel.kt
+ * @author JetBrains s.r.o.
+ */
 internal class GiteeAccountsPanel(private val project: Project,
                                   private val executorFactory: GiteeApiRequestExecutor.Factory,
                                   private val accountInformationProvider: GiteeAccountInformationProvider)
@@ -65,8 +89,8 @@ internal class GiteeAccountsPanel(private val project: Project,
   private val progressManager = createListProgressManager()
   private val errorLinkHandler = createLinkActivationListener()
   private var errorLinkHandlerInstalled = false
-  private var currentTokensMap = mapOf<com.gitee.authentication.accounts.GiteeAccount, Pair<String, String>?>()
-  private val newTokensMap = mutableMapOf<com.gitee.authentication.accounts.GiteeAccount, Pair<String, String>>()
+  private var currentTokensMap = mapOf<GiteeAccount, Pair<String, String>?>()
+  private val newTokensMap = mutableMapOf<GiteeAccount, Pair<String, String>>()
 
   init {
     addToCenter(ToolbarDecorator.createDecorator(accountList)
@@ -224,7 +248,7 @@ internal class GiteeAccountsPanel(private val project: Project,
     }
 
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
-      lateinit var data: Pair<com.gitee.api.data.GiteeUserDetailed, Image?>
+      lateinit var data: Pair<GiteeUserDetailed, Image?>
 
       override fun run(indicator: ProgressIndicator) {
 //        val executor = executorFactory.create(tokens, Supplier {
@@ -255,7 +279,7 @@ internal class GiteeAccountsPanel(private val project: Project,
       override fun onThrowable(error: Throwable) {
         accountListModel.contentsChanged(accountData.apply {
           loadingError = error.message.toString()
-          showLoginLink = error is com.gitee.exceptions.GiteeAuthenticationException
+          showLoginLink = error is GiteeAuthenticationException
         })
       }
     })
@@ -266,7 +290,7 @@ internal class GiteeAccountsPanel(private val project: Project,
     override fun getModalityState() = ModalityState.any()
   }
 
-  fun setAccounts(accounts: Map<com.gitee.authentication.accounts.GiteeAccount, Pair<String, String>?>, defaultAccount: com.gitee.authentication.accounts.GiteeAccount?) {
+  fun setAccounts(accounts: Map<GiteeAccount, Pair<String, String>?>, defaultAccount: GiteeAccount?) {
     accountListModel.removeAll()
     accountListModel.addAll(0, accounts.keys.map { GiteeAccountDecorator(it, it == defaultAccount) })
     currentTokensMap = accounts
@@ -275,14 +299,14 @@ internal class GiteeAccountsPanel(private val project: Project,
   /**
    * @return list of accounts and associated tokens if new token was created and selected default account
    */
-  fun getAccounts(): Pair<Map<com.gitee.authentication.accounts.GiteeAccount, Pair<String, String>?>, com.gitee.authentication.accounts.GiteeAccount?> {
+  fun getAccounts(): Pair<Map<GiteeAccount, Pair<String, String>?>, GiteeAccount?> {
     return accountListModel.items.associate { it.account to newTokensMap[it.account] } to
       accountListModel.items.find { it.projectDefault }?.account
   }
 
   fun clearNewTokens() = newTokensMap.clear()
 
-  fun isModified(accounts: Set<com.gitee.authentication.accounts.GiteeAccount>, defaultAccount: com.gitee.authentication.accounts.GiteeAccount?): Boolean {
+  fun isModified(accounts: Set<GiteeAccount>, defaultAccount: GiteeAccount?): Boolean {
     return accountListModel.items.find { it.projectDefault }?.account != defaultAccount
       || accountListModel.items.map { it.account }.toSet() != accounts
       || newTokensMap.isNotEmpty()
@@ -362,7 +386,7 @@ private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecor
       icon = value.profilePicture?.let {
         val size = JBUI.scale(ACCOUNT_PICTURE_SIZE)
         JBImageIcon(it.getScaledInstance(size, size, java.awt.Image.SCALE_FAST))
-      } ?: com.gitee.icons.GiteeIcons.DefaultAvatar_40
+      } ?: GiteeIcons.DefaultAvatar_40
     }
 
     fullName.apply {
@@ -399,7 +423,7 @@ private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecor
 /**
  * Account + auxillary info + info loading error
  */
-private class GiteeAccountDecorator(val account: com.gitee.authentication.accounts.GiteeAccount, var projectDefault: Boolean) {
+private class GiteeAccountDecorator(val account: GiteeAccount, var projectDefault: Boolean) {
   var fullName: String? = null
   var profilePicture: Image? = null
   var loadingError: String? = null

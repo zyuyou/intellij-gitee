@@ -1,5 +1,22 @@
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.gitee.ui
 
+import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeAccountCombobox
 import com.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
 import com.gitee.ui.util.DialogValidationUtils.chain
@@ -27,11 +44,17 @@ import javax.swing.JComponent
 import javax.swing.JTextArea
 
 
+/**
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubShareDialog.kt
+ * @author JetBrains s.r.o.
+ */
 class GiteeShareDialog(project: Project,
-                       accounts: Set<com.gitee.authentication.accounts.GiteeAccount>,
-                       defaultAccount: com.gitee.authentication.accounts.GiteeAccount?,
+                       accounts: Set<GiteeAccount>,
+                       defaultAccount: GiteeAccount?,
                        existingRemotes: Set<String>,
-                       private val accountInformationSupplier: (com.gitee.authentication.accounts.GiteeAccount, Component) -> Pair<Boolean, Set<String>>)
+                       private val accountInformationSupplier: (GiteeAccount, Component) -> Pair<Boolean, Set<String>>)
   : DialogWrapper(project) {
 
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
@@ -50,10 +73,10 @@ class GiteeShareDialog(project: Project,
     title = "Share Project On GitHub"
     setOKButtonText("Share")
     init()
-    DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(accountSelector.selectedItem as com.gitee.authentication.accounts.GiteeAccount) }
+    DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(accountSelector.selectedItem as GiteeAccount) }
   }
 
-  private fun switchAccount(account: com.gitee.authentication.accounts.GiteeAccount) {
+  private fun switchAccount(account: GiteeAccount) {
     try {
       accountInformationLoadingError = null
       accountInformationSupplier(account, window).let {
@@ -122,7 +145,7 @@ class GiteeShareDialog(project: Project,
   fun getRemoteName(): String = remoteTextField.text
   fun isPrivate(): Boolean = privateCheckBox.isSelected
   fun getDescription(): String = descriptionTextArea.text
-  fun getAccount(): com.gitee.authentication.accounts.GiteeAccount = accountSelector.selectedItem as com.gitee.authentication.accounts.GiteeAccount
+  fun getAccount(): GiteeAccount = accountSelector.selectedItem as GiteeAccount
 
   @TestOnly
   fun testSetRepositoryName(name: String) {

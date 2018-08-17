@@ -1,10 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.util.GiteeTokenCreator
+import com.gitee.exceptions.GiteeAuthenticationException
+import com.gitee.exceptions.GiteeParseException
 import com.gitee.ui.util.DialogValidationUtils.chain
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
@@ -40,6 +56,12 @@ import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.html.HTMLEditorKit
 
+/**
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/ui/GithubLoginDialog.kt
+ * @author JetBrains s.r.o.
+ */
 class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: GiteeApiRequestExecutor.Factory,
                                                  private val project: Project? = null,
                                                  parent: Component? = null,
@@ -307,8 +329,8 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
       return when (error) {
         is LoginNotUniqueException -> ValidationInfo("Account already added", loginTextField)
         is UnknownHostException -> ValidationInfo("Server is unreachable", false)
-        is com.gitee.exceptions.GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
-        is com.gitee.exceptions.GiteeParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
+        is GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
+        is GiteeParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
         else -> ValidationInfo("Invalid authentication data.\n ${error.message}", false)
       }
     }
@@ -366,8 +388,8 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
       return when (error) {
         is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added", false)
         is UnknownHostException -> ValidationInfo("Server is unreachable", false)
-        is com.gitee.exceptions.GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
-        is com.gitee.exceptions.GiteeParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
+        is GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
+        is GiteeParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
         else -> ValidationInfo("Invalid authentication data.\n ${error.message}", false)
       }
     }

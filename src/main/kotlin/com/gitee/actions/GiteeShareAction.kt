@@ -1,6 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2016-2018 码云 - Gitee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.gitee.actions
 
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.icons.GiteeIcons
 import com.gitee.ui.GiteeShareDialog
 import com.gitee.util.GiteeGitHelper
+import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -79,7 +82,13 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share project on Gitee", com.gitee.icons.GiteeIcons.Gitee_icon) {
+/**
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShareAction.kt
+ * @author JetBrains s.r.o.
+ */
+class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share project on Gitee", GiteeIcons.Gitee_icon) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault
@@ -138,11 +147,11 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
         }
       }
 
-      val accountInformationLoader = object : (com.gitee.authentication.accounts.GiteeAccount, Component) -> Pair<Boolean, Set<String>> {
-        private val loadedInfo = mutableMapOf<com.gitee.authentication.accounts.GiteeAccount, Pair<Boolean, Set<String>>>()
+      val accountInformationLoader = object : (GiteeAccount, Component) -> Pair<Boolean, Set<String>> {
+        private val loadedInfo = mutableMapOf<GiteeAccount, Pair<Boolean, Set<String>>>()
 
         @Throws(IOException::class)
-        override fun invoke(account: com.gitee.authentication.accounts.GiteeAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
+        override fun invoke(account: GiteeAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
           val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent)
             ?: throw ProcessCanceledException()
           progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
@@ -172,7 +181,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
       val isPrivate: Boolean = shareDialog.isPrivate()
       val remoteName: String = shareDialog.getRemoteName()
       val description: String = shareDialog.getDescription()
-      val account: com.gitee.authentication.accounts.GiteeAccount = shareDialog.getAccount()
+      val account: GiteeAccount = shareDialog.getAccount()
 
       val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
       object : Task.Backgroundable(project, "Sharing Project on Gitee...") {
@@ -203,7 +212,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
           val repository = repositoryManager.getRepositoryForRoot(root)
 
           if (repository == null) {
-            com.gitee.util.GiteeNotifications.showError(project, "Failed to create Gitee Repository", "Can't find Git repository")
+            GiteeNotifications.showError(project, "Failed to create Gitee Repository", "Can't find Git repository")
             return
           }
 
@@ -229,7 +238,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
             return
           }
 
-          com.gitee.util.GiteeNotifications.showInfoURL(project, "Successfully shared project on Gitee", name, url)
+          GiteeNotifications.showInfoURL(project, "Successfully shared project on Gitee", name, url)
         }
 
         private fun createEmptyGitRepository(project: Project, root: VirtualFile): Boolean {
@@ -280,7 +289,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
 
             val files2commit = dialog.selectedFiles
             if (!dialog.isOK || files2commit.isEmpty()) {
-              com.gitee.util.GiteeNotifications.showInfoURL(project, "Successfully created empty repository on Gitee", name, url)
+              GiteeNotifications.showInfoURL(project, "Successfully created empty repository on Gitee", name, url)
               return false
             }
 
@@ -304,7 +313,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
             VcsFileUtil.markFilesDirty(project, modified)
           } catch (e: VcsException) {
             LOG.warn(e)
-            com.gitee.util.GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
+            GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
               " on Gitee, but initial commit failed:<br/>" + GiteeUtil.getErrorTextFromException(e),
               url)
             return false
@@ -328,13 +337,13 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
                                       url: String): Boolean {
           val currentBranch = repository.currentBranch
           if (currentBranch == null) {
-            com.gitee.util.GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
+            GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
               " on Gitee, but initial push failed: no current branch", url)
             return false
           }
           val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
           if (!result.success()) {
-            com.gitee.util.GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
+            GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
               " on Gitee, but initial push failed:<br/>" + result.errorOutputAsHtmlString, url)
             return false
           }
@@ -342,7 +351,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
         }
 
         override fun onThrowable(error: Throwable) {
-          com.gitee.util.GiteeNotifications.showError(project, "Failed to create Gitee Repository", error)
+          GiteeNotifications.showError(project, "Failed to create Gitee Repository", error)
         }
       }.queue()
     }
@@ -365,7 +374,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
       }
       for (remote in remotes) {
         remotesPanel.add(JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-          add(LinkLabel.create(remote, Runnable { BrowserUtil.browse(remote) }))
+          add(LinkLabel.create(remote) { BrowserUtil.browse(remote) })
           add(JBLabel(AllIcons.Ide.External_link_arrow))
         })
       }

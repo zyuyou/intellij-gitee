@@ -1,8 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gitee.actions
 
 import com.gitee.api.GiteeRepositoryPath
+import com.gitee.icons.GiteeIcons
 import com.gitee.util.GiteeGitHelper
+import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
@@ -29,7 +45,14 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 
-open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open corresponding link in browser", com.gitee.icons.GiteeIcons.Gitee_icon) {
+
+/**
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubOpenInBrowserActionGroup.kt
+ * @author JetBrains s.r.o.
+ */
+open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open corresponding link in browser", GiteeIcons.Gitee_icon) {
 
   override fun update(e: AnActionEvent) {
     val repositories = getData(e.dataContext)?.first
@@ -40,7 +63,7 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
     if (e != null) {
       val data = getData(e.dataContext)
       if (data != null && data.first.size > 1) {
-        return data.first.map { com.gitee.actions.GiteeOpenInBrowserActionGroup.Companion.GiteeOpenInBrowserAction(it, data.second) }.toTypedArray()
+        return data.first.map { GiteeOpenInBrowserActionGroup.Companion.GiteeOpenInBrowserAction(it, data.second) }.toTypedArray()
       }
     }
     return emptyArray()
@@ -49,7 +72,7 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
   override fun isPopup(): Boolean = true
 
   override fun actionPerformed(e: AnActionEvent) {
-    getData(e.dataContext)?.let { com.gitee.actions.GiteeOpenInBrowserActionGroup.Companion.GiteeOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
+    getData(e.dataContext)?.let { GiteeOpenInBrowserActionGroup.Companion.GiteeOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
   }
 
   override fun canBePerformed(context: DataContext): Boolean {
@@ -59,7 +82,7 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
 
   override fun disableIfNoVisibleChildren(): Boolean = false
 
-  protected open fun getData(dataContext: DataContext): Pair<Set<GiteeRepositoryPath>, com.gitee.actions.GiteeOpenInBrowserActionGroup.Data>? {
+  protected open fun getData(dataContext: DataContext): Pair<Set<GiteeRepositoryPath>, GiteeOpenInBrowserActionGroup.Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
     return getDataFromHistory(project, dataContext.getData(VcsDataKeys.FILE_PATH), dataContext.getData(VcsDataKeys.VCS_FILE_REVISION))
@@ -67,7 +90,7 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
            ?: getDataFromVirtualFile(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE))
   }
 
-  private fun getDataFromHistory(project: Project, filePath: FilePath?, fileRevision: VcsFileRevision?): Pair<Set<GiteeRepositoryPath>, com.gitee.actions.GiteeOpenInBrowserActionGroup.Data>? {
+  private fun getDataFromHistory(project: Project, filePath: FilePath?, fileRevision: VcsFileRevision?): Pair<Set<GiteeRepositoryPath>, GiteeOpenInBrowserActionGroup.Data>? {
     if (filePath == null || fileRevision == null || fileRevision !is GitFileRevision) return null
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath) ?: return null
@@ -75,10 +98,10 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
     val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories to com.gitee.actions.GiteeOpenInBrowserActionGroup.Data.Revision(project, fileRevision.revisionNumber.asString())
+    return accessibleRepositories to GiteeOpenInBrowserActionGroup.Data.Revision(project, fileRevision.revisionNumber.asString())
   }
 
-  private fun getDataFromLog(project: Project, log: VcsLog?): Pair<Set<GiteeRepositoryPath>, com.gitee.actions.GiteeOpenInBrowserActionGroup.Data>? {
+  private fun getDataFromLog(project: Project, log: VcsLog?): Pair<Set<GiteeRepositoryPath>, GiteeOpenInBrowserActionGroup.Data>? {
     if (log == null) return null
 
     val selectedCommits = log.selectedCommits
@@ -91,10 +114,10 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
     val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories to com.gitee.actions.GiteeOpenInBrowserActionGroup.Data.Revision(project, commit.hash.asString())
+    return accessibleRepositories to GiteeOpenInBrowserActionGroup.Data.Revision(project, commit.hash.asString())
   }
 
-  private fun getDataFromVirtualFile(project: Project, virtualFile: VirtualFile?): Pair<Set<GiteeRepositoryPath>, com.gitee.actions.GiteeOpenInBrowserActionGroup.Data>? {
+  private fun getDataFromVirtualFile(project: Project, virtualFile: VirtualFile?): Pair<Set<GiteeRepositoryPath>, GiteeOpenInBrowserActionGroup.Data>? {
     if (virtualFile == null) return null
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(virtualFile) ?: return null
@@ -108,25 +131,25 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
     val change = changeListManager.getChange(virtualFile)
 
     return if (change != null && change.type == Change.Type.NEW) null
-    else accessibleRepositories to com.gitee.actions.GiteeOpenInBrowserActionGroup.Data.File(project, repository.root, virtualFile)
+    else accessibleRepositories to GiteeOpenInBrowserActionGroup.Data.File(project, repository.root, virtualFile)
   }
 
   protected sealed class Data(val project: Project) {
-    class File(project: Project, val gitRepoRoot: VirtualFile, val virtualFile: VirtualFile) : com.gitee.actions.GiteeOpenInBrowserActionGroup.Data(project)
+    class File(project: Project, val gitRepoRoot: VirtualFile, val virtualFile: VirtualFile) : GiteeOpenInBrowserActionGroup.Data(project)
 
-    class Revision(project: Project, val revisionHash: String) : com.gitee.actions.GiteeOpenInBrowserActionGroup.Data(project)
+    class Revision(project: Project, val revisionHash: String) : GiteeOpenInBrowserActionGroup.Data(project)
   }
 
   private companion object {
     private const val CANNOT_OPEN_IN_BROWSER = "Can't open in browser"
 
-    class GiteeOpenInBrowserAction(private val repoPath: GiteeRepositoryPath, val data: com.gitee.actions.GiteeOpenInBrowserActionGroup.Data)
+    class GiteeOpenInBrowserAction(private val repoPath: GiteeRepositoryPath, val data: GiteeOpenInBrowserActionGroup.Data)
       : AnAction(repoPath.toString().replace('_', ' ')) {
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {
-          is com.gitee.actions.GiteeOpenInBrowserActionGroup.Data.Revision -> openCommitInBrowser(repoPath, data.revisionHash)
-          is com.gitee.actions.GiteeOpenInBrowserActionGroup.Data.File -> openFileInBrowser(data.project, data.gitRepoRoot, repoPath, data.virtualFile, e.getData(CommonDataKeys.EDITOR))
+          is GiteeOpenInBrowserActionGroup.Data.Revision -> openCommitInBrowser(repoPath, data.revisionHash)
+          is GiteeOpenInBrowserActionGroup.Data.File -> openFileInBrowser(data.project, data.gitRepoRoot, repoPath, data.virtualFile, e.getData(CommonDataKeys.EDITOR))
         }
       }
 
@@ -143,14 +166,14 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open co
         val relativePath = VfsUtilCore.getRelativePath(virtualFile, repositoryRoot)
 
         if (relativePath == null) {
-          com.gitee.util.GiteeNotifications.showError(project, com.gitee.actions.GiteeOpenInBrowserActionGroup.Companion.CANNOT_OPEN_IN_BROWSER, "File is not under repository root",
+          GiteeNotifications.showError(project, GiteeOpenInBrowserActionGroup.CANNOT_OPEN_IN_BROWSER, "File is not under repository root",
                                         "Root: " + repositoryRoot.presentableUrl + ", file: " + virtualFile.presentableUrl)
           return
         }
 
         val hash = getCurrentFileRevisionHash(project, virtualFile)
         if (hash == null) {
-          com.gitee.util.GiteeNotifications.showError(project, com.gitee.actions.GiteeOpenInBrowserActionGroup.Companion.CANNOT_OPEN_IN_BROWSER, "Can't get last revision.")
+          GiteeNotifications.showError(project, GiteeOpenInBrowserActionGroup.CANNOT_OPEN_IN_BROWSER, "Can't get last revision.")
           return
         }
 

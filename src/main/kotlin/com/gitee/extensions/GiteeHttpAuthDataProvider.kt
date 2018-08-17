@@ -1,10 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.gitee.extensions
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -14,6 +29,12 @@ import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
 import java.io.IOException
 
+/**
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/extensions/GithubHttpAuthDataProvider.kt
+ * @author JetBrains s.r.o.
+ */
 class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenticationManager,
                                 private val requestExecutorFactory: GiteeApiRequestExecutor.Factory,
                                 private val requestExecutorManager: GiteeApiRequestExecutorManager,
@@ -52,7 +73,7 @@ class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenti
     }
   }
 
-  fun getSuitableAccounts(project: Project, url: String, login: String?): Set<com.gitee.authentication.accounts.GiteeAccount> {
+  fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GiteeAccount> {
 
     val authenticationFailureManager = project.service<GiteeAccountGitAuthenticationFailureManager>()
 
@@ -82,7 +103,7 @@ class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenti
     return potentialAccounts.toSet()
   }
 
-  class GiteeAccountAuthData(val account: com.gitee.authentication.accounts.GiteeAccount,
+  class GiteeAccountAuthData(val account: GiteeAccount,
                              login: String,
                              password: String) : AuthData(login, password)
 }

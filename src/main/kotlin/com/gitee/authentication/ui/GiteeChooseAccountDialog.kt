@@ -1,6 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gitee.authentication.ui
 
+import com.gitee.authentication.accounts.GiteeAccount
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -17,8 +32,14 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextArea
 
+/**
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/ui/GithubChooseAccountDialog.kt
+ * @author JetBrains s.r.o.
+ */
 class GiteeChooseAccountDialog(project: Project?, parentComponent: Component?,
-                               accounts: Collection<com.gitee.authentication.accounts.GiteeAccount>,
+                               accounts: Collection<GiteeAccount>,
                                descriptionText: String?, showHosts: Boolean, allowDefault: Boolean,
                                title: String, okText: String)
   : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
@@ -36,10 +57,10 @@ class GiteeChooseAccountDialog(project: Project?, parentComponent: Component?,
       margin = JBUI.emptyInsets()
     }
   }
-  private val accountsList: JBList<com.gitee.authentication.accounts.GiteeAccount> = JBList<com.gitee.authentication.accounts.GiteeAccount>(accounts).apply {
-    cellRenderer = object : ColoredListCellRenderer<com.gitee.authentication.accounts.GiteeAccount>() {
-      override fun customizeCellRenderer(list: JList<out com.gitee.authentication.accounts.GiteeAccount>,
-                                         value: com.gitee.authentication.accounts.GiteeAccount,
+  private val accountsList: JBList<GiteeAccount> = JBList<GiteeAccount>(accounts).apply {
+    cellRenderer = object : ColoredListCellRenderer<GiteeAccount>() {
+      override fun customizeCellRenderer(list: JList<out GiteeAccount>,
+                                         value: GiteeAccount,
                                          index: Int,
                                          selected: Boolean,
                                          hasFocus: Boolean) {
@@ -65,7 +86,7 @@ class GiteeChooseAccountDialog(project: Project?, parentComponent: Component?,
     return if (accountsList.selectedValue == null) ValidationInfo("Account is not selected", accountsList) else null
   }
 
-  val account: com.gitee.authentication.accounts.GiteeAccount
+  val account: GiteeAccount
     get() = accountsList.selectedValue
 
   val setDefault: Boolean

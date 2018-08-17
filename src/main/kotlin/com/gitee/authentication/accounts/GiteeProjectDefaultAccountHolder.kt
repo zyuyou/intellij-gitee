@@ -1,6 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gitee.authentication.accounts
 
+import com.gitee.util.GiteeNotifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.PersistentStateComponent
@@ -13,18 +28,23 @@ import com.intellij.openapi.project.Project
  * Handles default Gitee account for project
  *
  * TODO: auto-detection
+ *
+ * @author Yuyou Chow
+ *
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/accounts/GithubProjectDefaultAccountHolder.kt
+ * @author JetBrains s.r.o.
  */
 @State(name = "GiteeDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 internal class GiteeProjectDefaultAccountHolder(private val project: Project,
                                                 private val accountManager: GiteeAccountManager) : PersistentStateComponent<AccountState> {
-  var account: com.gitee.authentication.accounts.GiteeAccount? = null
+  var account: GiteeAccount? = null
 
   init {
     ApplicationManager.getApplication()
       .messageBus
       .connect(project)
       .subscribe(GiteeAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
-        override fun accountRemoved(removedAccount: com.gitee.authentication.accounts.GiteeAccount) {
+        override fun accountRemoved(removedAccount: GiteeAccount) {
           if (account == removedAccount) account = null
         }
       })
@@ -38,11 +58,11 @@ internal class GiteeProjectDefaultAccountHolder(private val project: Project,
     account = state.defaultAccountId?.let(::findAccountById)
   }
 
-  private fun findAccountById(id: String): com.gitee.authentication.accounts.GiteeAccount? {
+  private fun findAccountById(id: String): GiteeAccount? {
     val account = accountManager.accounts.find { it.id == id }
     if (account == null) runInEdt {
-      com.gitee.util.GiteeNotifications.showWarning(project, "Missing Default Gitee Account", "",
-        com.gitee.util.GiteeNotifications.getConfigureAction(project))
+      GiteeNotifications.showWarning(project, "Missing Default Gitee Account", "",
+        GiteeNotifications.getConfigureAction(project))
     }
     return account
   }

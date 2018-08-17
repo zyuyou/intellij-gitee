@@ -1,5 +1,23 @@
+/*
+ * Copyright 2016-2018 码云 - Gitee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.gitee.api
 
+import com.gitee.exceptions.GiteeParseException
+import com.gitee.util.GiteeUrlUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.annotations.Attribute
@@ -36,16 +54,16 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
     private val URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?",
       Pattern.CASE_INSENSITIVE)
 
-    @Throws(com.gitee.exceptions.GiteeParseException::class)
+    @Throws(GiteeParseException::class)
     fun from(uri: String): GiteeServerPath {
       val matcher: Matcher = URL_REGEX.matcher(uri);
 
-      if (!matcher.matches()) throw com.gitee.exceptions.GiteeParseException("Not a valid URL");
+      if (!matcher.matches()) throw GiteeParseException("Not a valid URL");
 
       val schema: String? = matcher.group(1);
       val httpSchema: Boolean? = if (schema == null || schema.isEmpty()) null else schema.equals("http://", true);
 
-      val host: String = matcher.group(2) ?: throw com.gitee.exceptions.GiteeParseException("Empty host");
+      val host: String = matcher.group(2) ?: throw GiteeParseException("Empty host");
 
       val portGroup: String? = matcher.group(4);
       val port: Int? = if (portGroup == null) {
@@ -54,7 +72,7 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
         try {
           portGroup.toInt();
         } catch (ignore: NumberFormatException) {
-          throw com.gitee.exceptions.GiteeParseException("Invalid port format")
+          throw GiteeParseException("Invalid port format")
         }
       }
 
@@ -69,7 +87,7 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
   }
 
   fun matches(gitRemoteUrl: String): Boolean {
-    val url = com.gitee.util.GiteeUrlUtil.removePort(com.gitee.util.GiteeUrlUtil.removeProtocolPrefix(gitRemoteUrl))
+    val url = GiteeUrlUtil.removePort(GiteeUrlUtil.removeProtocolPrefix(gitRemoteUrl))
     return StringUtil.startsWithIgnoreCase(url, host + StringUtil.notNullize(suffix))
   }
 

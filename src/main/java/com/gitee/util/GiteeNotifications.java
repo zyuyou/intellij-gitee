@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 码云
+ * Copyright 2016-2018 码云 - Gitee
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 package com.gitee.util;
 
@@ -22,6 +21,7 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -35,8 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.net.UnknownHostException;
 
-import static com.gitee.GiteeConstants.LOG;
-
 /**
  * @author Yuyou Chow
  *
@@ -44,6 +42,8 @@ import static com.gitee.GiteeConstants.LOG;
  * @author JetBrains s.r.o.
  */
 public class GiteeNotifications {
+	private static final Logger LOG = GiteeUtil.LOG;
+
 	private static boolean isOperationCanceled(@NotNull Throwable e) {
 		return e instanceof GiteeOperationCanceledException ||
 			e instanceof ProcessCanceledException;
