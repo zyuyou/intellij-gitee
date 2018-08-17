@@ -137,6 +137,7 @@ class GiteeCreatePullRequestDialog(val project: Project,
 
   override fun doOKAction() {
     val branch = centerPanel.getSelectedBranch()
+
     if (worker.checkAction(branch)) {
       assert(branch != null)
 

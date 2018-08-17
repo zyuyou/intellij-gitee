@@ -47,7 +47,7 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
   }
 
   companion object {
-    private val MASTER_SCOPES = listOf("projects", "gists", "issues", "user_info")
+    private val MASTER_SCOPES = listOf("projects", "pull_requests", "gists", "issues", "user_info")
 //    const val DEFAULT_CLIENT_NAME = "Gitee Integration Plugin"
   }
 }

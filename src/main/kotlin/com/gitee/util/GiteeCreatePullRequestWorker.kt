@@ -54,7 +54,7 @@ class GiteeCreatePullRequestWorker(private val project: Project,
                                    private val path: GiteeFullPath,
                                    private val remoteName: String,
                                    private val remoteUrl: String,
-                                   public val currentBranch: String) {
+                                   val currentBranch: String) {
 
   private lateinit var source: GiteeFullPath
 
@@ -82,7 +82,6 @@ class GiteeCreatePullRequestWorker(private val project: Project,
         if (remote == null) {
           GiteeNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find Gitee remote")
           return@runProcessWithProgressSynchronously null
-//          return@progressManager.runProcessWithProgressSynchronously null
         }
         val remoteName = remote.first.name
         val remoteUrl = remote.second
@@ -91,14 +90,12 @@ class GiteeCreatePullRequestWorker(private val project: Project,
         if (path == null) {
           GiteeNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't process remote: $remoteUrl")
           return@runProcessWithProgressSynchronously null
-//          return@progressManager.runProcessWithProgressSynchronously null
         }
 
         val currentBranch = gitRepository.currentBranch
         if (currentBranch == null) {
           GiteeNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "No current branch")
           return@runProcessWithProgressSynchronously null
-//          return@progressManager.runProcessWithProgressSynchronously null
         }
 
         val worker = GiteeCreatePullRequestWorker(project, git, gitRepository, executor, server,
@@ -145,11 +142,9 @@ class GiteeCreatePullRequestWorker(private val project: Project,
     doLoadForksFromSettings(indicator)
   }
 
-  private fun doAddFork(path: GiteeFullPath,
-                        remoteName: String?,
-                        indicator: ProgressIndicator) {
+  private fun doAddFork(path: GiteeFullPath, remoteName: String?, indicator: ProgressIndicator) {
     for (fork in forks) {
-      if (fork.path.equals(path)) {
+      if (fork.path == path) {
         if (fork.remoteName == null && remoteName != null) {
           fork.remoteName = remoteName
         }
@@ -163,11 +158,12 @@ class GiteeCreatePullRequestWorker(private val project: Project,
 
       val fork = ForkInfo(path, branches, defaultBranch)
       forks.add(fork)
+
       if (remoteName != null) {
         fork.remoteName = remoteName
       }
     } catch (e: IOException) {
-      GiteeNotifications.showWarning(project, "Can't load branches for " + path.getFullName(), e)
+      GiteeNotifications.showWarning(project, "Can't load branches for " + path.fullName, e)
     }
 
   }
@@ -219,14 +215,15 @@ class GiteeCreatePullRequestWorker(private val project: Project,
 
   @Throws(IOException::class)
   private fun doLoadForksFromGitee(indicator: ProgressIndicator) {
-    val repo = executor.execute(indicator,
-      GiteeApiRequests.Repos.get(server, path.user, path.repository))
+    val repo = executor.execute(indicator, GiteeApiRequests.Repos.get(server, path.user, path.repository))
       ?: throw GiteeConfusingException("Can't find gitee repo " + path.toString())
 
     doAddFork(repo, indicator)
+
     if (repo.parent != null) {
       doAddFork(repo.parent!!, indicator)
     }
+
     if (repo.source != null) {
       doAddFork(repo.source!!, indicator)
     }
@@ -242,9 +239,9 @@ class GiteeCreatePullRequestWorker(private val project: Project,
 
   @Throws(IOException::class)
   private fun doLoadDefaultBranch(fork: GiteeFullPath, indicator: ProgressIndicator): String? {
-    val repo = executor.execute(indicator,
-      GiteeApiRequests.Repos.get(server, fork.user, fork.repository))
-      ?: throw GiteeConfusingException("Can't find github repo " + fork.toString())
+    val repo = executor.execute(indicator, GiteeApiRequests.Repos.get(server, fork.user, fork.repository))
+      ?: throw GiteeConfusingException("Can't find gitee repo " + fork.toString())
+
     return repo.defaultBranch
   }
 
@@ -280,7 +277,7 @@ class GiteeCreatePullRequestWorker(private val project: Project,
       getSimpleDefaultDescriptionMessage(branch)
     } else {
       progressManager.runProcessWithProgressSynchronously(
-        ThrowableComputable<Couple<String>, IOException>{
+        ThrowableComputable<Couple<String>, IOException> {
           val targetBranch = branch.forkInfo.remoteName + "/" + branch.remoteName
           try {
             val commits = GitHistoryUtils.readLastCommits(project, gitRepository.root, currentBranch, targetBranch)
@@ -321,12 +318,13 @@ class GiteeCreatePullRequestWorker(private val project: Project,
     }
 
     val info: DiffInfo?
+
     try {
       info = progressManager.runProcessWithProgressSynchronously(
         ThrowableComputable<DiffInfo?, IOException> {
           GiteeUtil.runInterruptable(
             progressManager.progressIndicator,
-            ThrowableComputable <DiffInfo, IOException> { getDiffInfo(branch) }
+            ThrowableComputable<DiffInfo, IOException> { getDiffInfo(branch) }
           )
         },
         "Collecting Diff Data...",
@@ -346,19 +344,21 @@ class GiteeCreatePullRequestWorker(private val project: Project,
 
     val localBranchName = "'$currentBranch'"
     val targetBranchName = "'" + fork.remoteName + "/" + branch.remoteName + "'"
+
     if (info.info.getBranchToHeadCommits(gitRepository).isEmpty()) {
-      return GiteeNotifications
-        .showYesNoDialog(project, "Empty Pull Request",
-          "The branch " + localBranchName + " is fully merged to the branch " + targetBranchName + '\n'.toString() +
-            "Do you want to proceed anyway?")
+      return GiteeNotifications.showYesNoDialog(project,
+        "Empty Pull Request",
+        "The branch " + localBranchName + " is fully merged to the branch " + targetBranchName + '\n'.toString() + "Do you want to proceed anyway?"
+      )
     }
     return if (!info.info.getHeadToBranchCommits(gitRepository).isEmpty()) {
-      GiteeNotifications
-        .showYesNoDialog(project, "Target Branch Is Not Fully Merged",
-          ("The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName + '\n'.toString() +
-            "Do you want to proceed anyway?"))
-    } else true
-
+      GiteeNotifications.showYesNoDialog(project,
+        "Target Branch Is Not Fully Merged",
+        ("The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName + '\n'.toString() + "Do you want to proceed anyway?")
+      )
+    } else {
+      true
+    }
   }
 
   fun launchFetchRemote(fork: ForkInfo) {
@@ -382,10 +382,12 @@ class GiteeCreatePullRequestWorker(private val project: Project,
     if (branch.forkInfo.remoteName == null) return
 
     if (branch.diffInfoTask != null) return
+
     synchronized(branch.LOCK) {
       if (branch.diffInfoTask != null) return
 
       launchFetchRemote(branch.forkInfo)
+
       val masterTask = branch.forkInfo.fetchTask!!
 
       val task = SlaveFutureTask<DiffInfo>(masterTask, Callable { doLoadDiffInfo(branch) })
@@ -403,15 +405,15 @@ class GiteeCreatePullRequestWorker(private val project: Project,
 
     assert(branch.diffInfoTask != null)
 
-    try {
-      return branch.diffInfoTask!!.get()
+    return try {
+      branch.diffInfoTask!!.get()
     } catch (e: InterruptedException) {
       throw GiteeOperationCanceledException(e)
     } catch (e: ExecutionException) {
       val ex = e.cause
       if (ex is VcsException) throw IOException(ex)
       LOG.error(ex)
-      return null
+      null
     }
   }
 
@@ -420,10 +422,12 @@ class GiteeCreatePullRequestWorker(private val project: Project,
     // TODO: make cancelable and abort old speculative requests (when intellij.vcs.git will allow to do so)
     val targetBranch = branch.forkInfo.remoteName + "/" + branch.remoteName
 
-    val commits1 = GitHistoryUtils.history(project, gitRepository.getRoot(), "..$targetBranch")
-    val commits2 = GitHistoryUtils.history(project, gitRepository.getRoot(), targetBranch + "..")
-    val diff = GitChangeUtils.getDiff(project, gitRepository.getRoot(), targetBranch, currentBranch, null)
+    val commits1 = GitHistoryUtils.history(project, gitRepository.root, "..$targetBranch")
+    val commits2 = GitHistoryUtils.history(project, gitRepository.root, "$targetBranch..")
+
+    val diff = GitChangeUtils.getDiff(project, gitRepository.root, targetBranch, currentBranch, null)
     val info = CommitCompareInfo(CommitCompareInfo.InfoType.BRANCH_TO_HEAD)
+
     info.putTotalDiff(gitRepository, diff)
     info.put(gitRepository, commits1, commits2)
 
@@ -434,6 +438,7 @@ class GiteeCreatePullRequestWorker(private val project: Project,
     if (fork.remoteName == null) return
 
     val result = GitFetcher(project, EmptyProgressIndicator(), false).fetch(gitRepository.root, fork.remoteName!!, null)
+
     if (!result.isSuccess) {
       GitFetcher.displayFetchResult(project, result, null, result.errors)
     }
@@ -445,7 +450,9 @@ class GiteeCreatePullRequestWorker(private val project: Project,
       override fun run(indicator: ProgressIndicator) {
         LOG.info("Pushing current branch")
         indicator.text = "Pushing current branch..."
+
         val result = git.push(gitRepository, remoteName, remoteUrl, currentBranch, true)
+
         if (!result.success()) {
           GiteeNotifications.showError(
             this@GiteeCreatePullRequestWorker.project,
@@ -472,17 +479,17 @@ class GiteeCreatePullRequestWorker(private val project: Project,
                                   branch: BranchInfo,
                                   title: String,
                                   description: String): GiteePullRequest? {
+
     val forkPath = branch.forkInfo.path
 
     val head = path.user + ":" + currentBranch
     val base = branch.remoteName
 
-    try {
-      return executor.execute(indicator,
-        GiteeApiRequests.Repos.PullRequests.create(server, forkPath.user, forkPath.repository, title, description, head, base))
+    return try {
+      executor.execute(indicator, GiteeApiRequests.Repos.PullRequests.create(server, forkPath.user, forkPath.repository, title, description, head, base))
     } catch (e: IOException) {
       GiteeNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e)
-      return null
+      null
     }
 
   }
@@ -641,8 +648,8 @@ class GiteeCreatePullRequestWorker(private val project: Project,
   }
 
   class DiffInfo internal constructor(val info: CommitCompareInfo,
-                                     val from: String,  // HEAD
-                                     val to: String)    // BASE
+                                      val from: String,  // HEAD
+                                      val to: String)    // BASE
 
   class SlaveFutureTask<T>(private val master: MasterFutureTask<*>,
                            callable: Callable<T>) : FutureTask<T>(callable) {

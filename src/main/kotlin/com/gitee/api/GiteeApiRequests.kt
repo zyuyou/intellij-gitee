@@ -77,10 +77,6 @@ object GiteeApiRequests {
       Delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
 
     object Branches : Entity("/branches") {
-      @JvmStatic
-      fun pages(server: GiteeServerPath, username: String, repoName: String) =
-        get(server, username, repoName, GiteeRequestPagination())
-
       @JvmOverloads
       @JvmStatic
       fun get(server: GiteeServerPath, username: String, repoName: String, pagination: GiteeRequestPagination? = null) =
@@ -133,12 +129,6 @@ object GiteeApiRequests {
         fun get(server: GiteeServerPath, username: String, repoName: String, issueId: String, pagination: GiteeRequestPagination? = null) =
           get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix, GiteeApiUrlQueryBuilder.urlQuery { param(pagination) }))
 
-//        @JvmStatic
-//        fun get(url: String) = object : Get.JsonPage2<GiteeIssueComment>(url, GiteeIssueComment::class.java) {
-//          override val acceptMimeType: String
-//            get() = GiteeApiContentHelper.JSON_MIME_TYPE
-//        }.withOperationName("get comments for issue")
-
         @JvmStatic
         fun get(url: String) = Get.jsonPage2<GiteeIssueComment>(url).withOperationName("get comments for issue")
       }
@@ -149,7 +139,7 @@ object GiteeApiRequests {
       fun create(server: GiteeServerPath, username: String, repoName: String, title: String, description: String, head: String, base: String) =
         Post.json<GiteePullRequest>(
           getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
-          GiteePullRequestRequest("", title, description, head, base)
+          GiteePullRequestRequest(username, repoName, title, description, head, base)
         ).withOperationName("create pull request in $username/$repoName")
     }
   }

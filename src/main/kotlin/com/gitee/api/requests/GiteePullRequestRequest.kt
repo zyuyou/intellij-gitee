@@ -5,9 +5,8 @@ package com.gitee.api.requests
  *
  */
 data class GiteePullRequestRequest(private val owner: String,
+                                   private val repo: String,
                                    private val title: String,
                                    private val body: String,
                                    private val head: String,    // branch with changes
-                                   private val bese: String) {  // branch requested to
-
-}
+                                   private val base: String)   // branch requested to

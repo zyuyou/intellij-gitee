@@ -28,9 +28,7 @@ class GiteeCreatePullRequestAction : LegacySingleAccountActionGroup("Create Pull
 
   companion object {
     @JvmStatic
-    fun createPullRequest(project: Project,
-                          gitRepository: GitRepository,
-                          account: GiteeAccount) {
+    fun createPullRequest(project: Project, gitRepository: GitRepository, account: GiteeAccount) {
 
       val executor = GiteeApiRequestExecutorManager.getInstance().getExecutor(account, project) ?: return
 
