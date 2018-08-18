@@ -29,7 +29,7 @@ intellij {
     plugins 'tasks', 'git4idea'
     pluginName 'intellij-gitee'
 
-    downloadSources Boolean.valueOf("$System.env.CI_BUILD")
+    downloadSources !Boolean.valueOf("$System.env.CI_BUILD")
     sameSinceUntilBuild Boolean.valueOf(isEAP)
 
     publishPlugin {
