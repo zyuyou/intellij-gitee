@@ -43,4 +43,3 @@ jobs:
 
     - store_artifacts:
         path: build/distributions/intellij-gitee-LATEST-TRUNK.SNAPSHOT.zip
-        destination: prefix
