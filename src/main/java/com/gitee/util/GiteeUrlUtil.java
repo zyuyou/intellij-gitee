@@ -15,7 +15,6 @@
  */
 package com.gitee.util;
 
-import com.gitee.GiteeConstants;
 import com.gitee.api.GiteeFullPath;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 public class GiteeUrlUtil {
+	private static final String DEFAULT_GITEE_HOST = "gitee.com";
+
 	@NotNull
 	public static String removeProtocolPrefix(String url) {
 		int index = url.indexOf('@');
@@ -140,15 +141,15 @@ public class GiteeUrlUtil {
 
 		final String API_SUFFIX = "/api/v3";
 
-		if (url.equals(GiteeConstants.DEFAULT_GITEE_HOST)) {
+		if (url.equals(DEFAULT_GITEE_HOST)) {
 			return url + API_SUFFIX;
 		}
-		else if (url.equals(GiteeConstants.DEFAULT_GITEE_HOST + API_SUFFIX)) {
+		else if (url.equals(DEFAULT_GITEE_HOST + API_SUFFIX)) {
 			return url;
 		}
 		else{
 			// have no custom Gitee url yet.
-			return GiteeConstants.DEFAULT_GITEE_HOST + API_SUFFIX;
+			return DEFAULT_GITEE_HOST + API_SUFFIX;
 		}
 	}
 

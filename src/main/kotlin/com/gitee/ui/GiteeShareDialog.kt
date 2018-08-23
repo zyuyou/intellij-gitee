@@ -47,7 +47,7 @@ import javax.swing.JTextArea
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubShareDialog.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubShareDialog.kt
  * @author JetBrains s.r.o.
  */
 class GiteeShareDialog(project: Project,

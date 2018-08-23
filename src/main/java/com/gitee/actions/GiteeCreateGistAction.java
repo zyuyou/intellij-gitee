@@ -15,6 +15,7 @@
  */
 package com.gitee.actions;
 
+import com.gitee.GiteeBundle;
 import com.gitee.api.GiteeApiRequestExecutor;
 import com.gitee.api.GiteeApiRequestExecutorManager;
 import com.gitee.api.GiteeApiRequests;
@@ -62,7 +63,7 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 	private static final String FAILED_TO_CREATE_GIST = "Can't create Gist";
 
 	protected GiteeCreateGistAction() {
-		super("Create Gist...", "Create Gitee Gist", GiteeIcons.Gitee_icon);
+		super(GiteeBundle.message2("gitee.create.gist.title"), GiteeBundle.message2("gitee.create.gist.desc"), GiteeIcons.Gitee_icon);
 	}
 
 	@Override

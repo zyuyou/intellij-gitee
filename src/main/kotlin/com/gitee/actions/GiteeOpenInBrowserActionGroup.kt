@@ -15,6 +15,7 @@
  */
 package com.gitee.actions
 
+import com.gitee.GiteeBundle
 import com.gitee.api.GiteeRepositoryPath
 import com.gitee.icons.GiteeIcons
 import com.gitee.util.GiteeGitHelper
@@ -52,7 +53,7 @@ import git4idea.history.GitHistoryUtils
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubOpenInBrowserActionGroup.kt
  * @author JetBrains s.r.o.
  */
-open class GiteeOpenInBrowserActionGroup : ActionGroup("Open on Gitee", "Open corresponding link in browser", GiteeIcons.Gitee_icon) {
+open class GiteeOpenInBrowserActionGroup : ActionGroup(GiteeBundle.message2("gitee.open.in.browser.title"), GiteeBundle.message2("gitee.open.in.browser.desc"), GiteeIcons.Gitee_icon) {
 
   override fun update(e: AnActionEvent) {
     val repositories = getData(e.dataContext)?.first

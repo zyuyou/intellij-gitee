@@ -34,7 +34,7 @@ import javax.swing.JComponent
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubCreatePullRequestDialog.java
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubCreatePullRequestDialog.java
  * @author JetBrains s.r.o.
  */
 class GiteeCreatePullRequestDialog(val project: Project,

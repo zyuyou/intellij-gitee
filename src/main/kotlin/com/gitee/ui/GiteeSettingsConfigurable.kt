@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubSettingsConfigurable.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSettingsConfigurable.kt
  * @author JetBrains s.r.o.
  */
 class GiteeSettingsConfigurable internal constructor(private val project: Project,
