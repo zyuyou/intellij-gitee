@@ -16,6 +16,7 @@
 
 package com.gitee.util
 
+import com.gitee.GiteeBundle
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeFullPath
@@ -560,7 +561,7 @@ class GiteeCreatePullRequestWorker(private val project: Project,
     val getForkPath = Convertor<String, ForkInfo> { user: String ->
       progressManager.runProcessWithProgressSynchronously(
         ThrowableComputable<ForkInfo, IOException> { findRepositoryByUser(progressManager.progressIndicator, user) },
-        "Access to Gitee",
+        GiteeBundle.message2("gitee.access.dialog.title"),
         false,
         project
       )

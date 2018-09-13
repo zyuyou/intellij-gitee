@@ -16,6 +16,7 @@
 
 package com.gitee.actions
 
+import com.gitee.GiteeBundle
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.util.GiteeApiPagesLoader
@@ -88,7 +89,7 @@ import javax.swing.JPanel
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShareAction.kt
  * @author JetBrains s.r.o.
  */
-class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share project on Gitee", GiteeIcons.Gitee_icon) {
+class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.project.title"), GiteeBundle.message2("gitee.share.project.desc"), GiteeIcons.Gitee_icon) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault
@@ -238,7 +239,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
             return
           }
 
-          GiteeNotifications.showInfoURL(project, "Successfully shared project on Gitee", name, url)
+          GiteeNotifications.showInfoURL(project, GiteeBundle.message2("gitee.share.project.success.notify"), name, url)
         }
 
         private fun createEmptyGitRepository(project: Project, root: VirtualFile): Boolean {
@@ -289,7 +290,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
 
             val files2commit = dialog.selectedFiles
             if (!dialog.isOK || files2commit.isEmpty()) {
-              GiteeNotifications.showInfoURL(project, "Successfully created empty repository on Gitee", name, url)
+              GiteeNotifications.showInfoURL(project, GiteeBundle.message2("gitee.create.empty.repository"), name, url)
               return false
             }
 
@@ -360,7 +361,7 @@ class GiteeShareAction : DumbAwareAction("Share Project on Gitee", "Easily share
   @TestOnly
   class GiteeExistingRemotesDialog(project: Project, private val remotes: List<String>) : DialogWrapper(project) {
     init {
-      title = "Project Is Already on Gitee"
+      title = GiteeBundle.message2("gitee.project.is.already.on.text")
       setOKButtonText("Share Anyway")
       init()
     }

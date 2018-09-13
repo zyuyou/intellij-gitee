@@ -32,7 +32,7 @@ import javax.swing.event.DocumentEvent
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubCreatePullRequestPanel.java
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubCreatePullRequestPanel.java
  * @author JetBrains s.r.o.
  */
 internal class GiteeCreatePullRequestPanel {

@@ -38,7 +38,7 @@ import javax.swing.text.NumberFormatter
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/util/GithubSettingsPanel.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSettingsPanel.kt
  * @author JetBrains s.r.o.
  */
 class GiteeSettingsPanel(project: Project,
