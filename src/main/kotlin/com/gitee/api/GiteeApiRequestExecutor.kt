@@ -1,17 +1,17 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.api
 
@@ -20,22 +20,27 @@ import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.exceptions.*
 import com.gitee.util.GiteeSettings
-import com.google.gson.JsonParseException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
+import java.util.*
+import java.util.zip.GZIPInputStream
 
 
 /**
@@ -47,23 +52,47 @@ import java.net.HttpURLConnection
  * @author JetBrains s.r.o.
  */
 sealed class GiteeApiRequestExecutor {
+  protected val authDataChangedEventDispatcher = EventDispatcher.create(AuthDataChangeListener::class.java)
 
+  @CalledInBackground
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T
 
   @TestOnly
+  @CalledInBackground
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GiteeApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
+  fun addListener(listener: AuthDataChangeListener, disposable: Disposable) =
+    authDataChangedEventDispatcher.addListener(listener, disposable)
+
+  fun addListener(disposable: Disposable, listener: () -> Unit) =
+    authDataChangedEventDispatcher.addListener(object : AuthDataChangeListener {
+      override fun authDataChanged() {
+        listener()
+      }
+    }, disposable)
+
   class WithTokenAuth internal constructor(giteeSettings: GiteeSettings,
-                                           private val token: String,
+                                           token: String,
                                            private val useProxy: Boolean) : Base(giteeSettings) {
+
+    @Volatile
+    internal var token: String = token
+      set(value) {
+        field = value
+        authDataChangedEventDispatcher.multicaster.authDataChanged()
+      }
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
       indicator.checkCanceled()
       return createRequestBuilder(request)
-        .tuner { connection -> connection.addRequestProperty("Authorization", "token $token") }
+        .tuner { connection ->
+//          connection.addRequestProperty("Authorization", "token $token")
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token")
+        }
         .useProxy(useProxy)
         .execute(request, indicator)
     }
@@ -81,8 +110,15 @@ sealed class GiteeApiRequestExecutor {
 
   class WithTokensAuth internal constructor(giteeSettings: GiteeSettings,
                                             private val accountManager: GiteeAccountManager,
-                                            private var tokens: Pair<String, String>,
+                                            tokens: Pair<String, String>,
                                             private val refreshTokenSupplier: (refreshToken: String) -> Triple<GiteeAccount, String, String>) : Base(giteeSettings) {
+
+    @Volatile
+    internal var tokens: Pair<String, String> = tokens
+      set(value) {
+        field = value
+        authDataChangedEventDispatcher.multicaster.authDataChanged()
+      }
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
@@ -117,20 +153,21 @@ sealed class GiteeApiRequestExecutor {
     protected fun <T> RequestBuilder.execute(request: GiteeApiRequest<T>, indicator: ProgressIndicator): T {
       indicator.checkCanceled()
       try {
+        LOG.debug("Request: ${request.url} ${request.operationName} : Connecting")
         return connect {
           val connection = it.connection as HttpURLConnection
 
           if (request is GiteeApiRequest.WithBody) {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url} with body:\n${request.body}")
-            it.write(request.body)
+            LOG.debug("Request: ${connection.requestMethod} ${connection.url} ${connection.requestMethod} with body:\n${request.body} : Connected")
+            request.body?.let { body -> it.write(body) }
           } else {
-            LOG.debug("Request: ${connection.requestMethod} ${connection.url}")
+            LOG.debug("Request: ${connection.requestMethod} ${connection.url} ${connection.requestMethod} : Connected")
           }
           checkResponseCode(connection)
           indicator.checkCanceled()
 
           val result = request.extractResult(createResponse(it, indicator))
-          LOG.debug("Request: ${connection.requestMethod} ${connection.url}: Success")
+          LOG.debug("Request: ${connection.requestMethod} ${connection.url} ${connection.requestMethod} : Result extracted")
 
           result
         }
@@ -151,6 +188,7 @@ sealed class GiteeApiRequestExecutor {
       return when (request) {
         is GiteeApiRequest.Get -> HttpRequests.request(request.url)
         is GiteeApiRequest.Post -> HttpRequests.post(request.url, request.bodyMimeType)
+        is GiteeApiRequest.Put -> HttpRequests.put(request.url, request.bodyMimeType)
         is GiteeApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GiteeApiRequest.Head -> HttpRequests.head(request.url)
         is GiteeApiRequest.Delete -> HttpRequests.delete(request.url)
@@ -169,9 +207,11 @@ sealed class GiteeApiRequestExecutor {
 
       val statusLine = "${connection.responseCode} ${connection.responseMessage}"
       val errorText = getErrorText(connection)
-      val jsonError = getJsonError(connection, errorText)
 
       LOG.debug("Request: ${connection.requestMethod} ${connection.url}: Error $statusLine body:\n $errorText")
+
+      val jsonError = getJsonError(connection, errorText)
+      jsonError ?: LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Unable to parse JSON error")
 
       throw when (connection.responseCode) {
         HttpURLConnection.HTTP_UNAUTHORIZED,
@@ -179,17 +219,17 @@ sealed class GiteeApiRequestExecutor {
         HttpURLConnection.HTTP_FORBIDDEN -> {
 
           when {
-            jsonError?.containsReasonMessage("API rate limit exceeded") == true -> GiteeRateLimitExceededException(jsonError.message)
-            jsonError?.containsReasonMessage("Access token is expired") == true -> GiteeAccessTokenExpiredException(jsonError.message)
+            jsonError?.containsReasonMessage("API rate limit exceeded") == true -> GiteeRateLimitExceededException(jsonError.presentableError)
+            jsonError?.containsReasonMessage("Access token is expired") == true -> GiteeAccessTokenExpiredException(jsonError.presentableError)
             jsonError?.containsErrorMessage("invalid_grant") == true -> GiteeAuthenticationException("${jsonError.error} : ${jsonError.errorDescription
               ?: ""}")
-            else -> GiteeAuthenticationException("Request response: " + (jsonError?.message
+            else -> GiteeAuthenticationException("Request response: " + (jsonError?.presentableError
               ?: if (errorText != "") errorText else statusLine))
           }
         }
         else -> {
           if (jsonError != null) {
-            GiteeStatusCodeException("$statusLine - ${jsonError.message}", jsonError, connection.responseCode)
+            GiteeStatusCodeException("$statusLine - ${jsonError.presentableError}", jsonError, connection.responseCode)
           } else {
             GiteeStatusCodeException("$statusLine - $errorText", connection.responseCode)
           }
@@ -198,14 +238,17 @@ sealed class GiteeApiRequestExecutor {
     }
 
     private fun getErrorText(connection: HttpURLConnection): String {
-      return connection.errorStream?.let { it -> InputStreamReader(it).use { it.readText() } } ?: ""
+//      return connection.errorStream?.let { it -> InputStreamReader(it).use { it.readText() } } ?: ""
+      val errorStream = connection.errorStream ?: return ""
+      val stream = if (connection.contentEncoding == "gzip") GZIPInputStream(errorStream) else errorStream
+      return InputStreamReader(stream, Charsets.UTF_8).use { it.readText() }
     }
 
     private fun getJsonError(connection: HttpURLConnection, errorText: String): GiteeErrorMessage? {
       if (!connection.contentType.startsWith(GiteeApiContentHelper.JSON_MIME_TYPE)) return null
       return try {
         return GiteeApiContentHelper.fromJson(errorText)
-      } catch (jse: JsonParseException) {
+      } catch (jse: GiteeJsonException) {
         LOG.debug(jse)
         null
       }
@@ -257,5 +300,9 @@ sealed class GiteeApiRequestExecutor {
 
   companion object {
     private val LOG = logger<GiteeApiRequestExecutor>()
+  }
+
+  interface AuthDataChangeListener : EventListener {
+    fun authDataChanged()
   }
 }

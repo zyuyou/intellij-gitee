@@ -1,17 +1,17 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.util;
 
@@ -70,24 +70,9 @@ public class GiteeUrlUtil {
 		}
 	}
 
-	/**
-	 * E.g.: https://gitee.com/api/v3
-	 */
-	@NotNull
-	public static String getApiUrl() {
-		return "";
-//		return getApiUrl(GiteeSettings.getInstance().getHost());
-	}
-
 	@NotNull
 	public static String getApiUrl(@NotNull String urlFromSettings) {
 		return getApiProtocolFromUrl(urlFromSettings) + getApiUrlWithoutProtocol(urlFromSettings);
-	}
-
-	@NotNull
-	public static String getApiProtocol() {
-		return "";
-//		return getApiProtocolFromUrl(GiteeSettings.getInstance().getHost());
 	}
 
 	@NotNull
@@ -97,16 +82,6 @@ public class GiteeUrlUtil {
 		}
 
 		return "https://";
-	}
-
-	/**
-	 * Returns the "host" part of Gitee URLs.
-	 * E.g.: https://gitee.com
-	 * Note: there is no trailing slash in the returned url.
-	 */
-	@NotNull
-	public static String getGiteeHost() {
-		return getApiProtocol() + getGitHostWithoutProtocol();
 	}
 
 	/**
@@ -125,16 +100,6 @@ public class GiteeUrlUtil {
 		}
 	}
 
-
-	/**
-	 * E.g.: gitee.com
-	 */
-	@NotNull
-	public static String getGitHostWithoutProtocol() {
-		return "";
-//		return removeTrailingSlash(removeProtocolPrefix(GiteeSettings.getInstance().getHost()));
-	}
-
 	@NotNull
 	public static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
 		String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings.toLowerCase()));
@@ -151,14 +116,6 @@ public class GiteeUrlUtil {
 			// have no custom Gitee url yet.
 			return DEFAULT_GITEE_HOST + API_SUFFIX;
 		}
-	}
-
-	/**
-	 * 是否Gitee仓库地址
-	 * */
-	public static boolean isGiteeUrl(@NotNull String url) {
-		return false;
-//		return isGiteeUrl(url, GiteeSettings.getInstance().getHost());
 	}
 
 	public static boolean isGiteeUrl(@NotNull String url, @NotNull String host) {
@@ -203,16 +160,6 @@ public class GiteeUrlUtil {
 		return url;
 	}
 
-	/**
-	 * assumed isGiteeUrl(remoteUrl)
-	 *
-	 * git@gitee.com:user/repo -> https://gitee.com/user/repo
-	 */
-	@Nullable
-	public static String makeGiteeRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
-		return makeGiteeRepoUrlFromRemoteUrl(remoteUrl, getGiteeHost());
-	}
-
 	@Nullable
 	public static String makeGiteeRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
 		GiteeFullPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
@@ -220,31 +167,5 @@ public class GiteeUrlUtil {
 			return null;
 		}
 		return host + '/' + repo.getUser() + '/' + repo.getRepository();
-	}
-
-	@NotNull
-	public static String getCloneUrl(@NotNull GiteeFullPath path) {
-		return StringUtil.isEmptyOrSpaces(path.getFullName()) ?
-			getCloneUrl(path.getUser(), path.getRepository()) : getCloneUrlFromFullName(path.getFullName());
-	}
-
-	@NotNull
-	public static String getCloneUrl(@NotNull String user, @NotNull String repo) {
-		if (GiteeSettings.getInstance().isCloneGitUsingSsh()) {
-			return "git@" + getGitHostWithoutProtocol() + ":" + user + "/" + repo + ".git";
-		}
-		else {
-			return getApiProtocol() + getGitHostWithoutProtocol() + "/" + user + "/" + repo + ".git";
-		}
-	}
-
-	@NotNull
-	private static String getCloneUrlFromFullName(@NotNull String fullName) {
-		if (GiteeSettings.getInstance().isCloneGitUsingSsh()) {
-			return "git@" + getGitHostWithoutProtocol() + ":" + fullName + ".git";
-		}
-		else {
-			return getApiProtocol() + getGitHostWithoutProtocol() + "/" + fullName + ".git";
-		}
 	}
 }

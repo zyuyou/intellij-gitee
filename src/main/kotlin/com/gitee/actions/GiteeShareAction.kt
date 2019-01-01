@@ -1,17 +1,17 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package com.gitee.actions
@@ -28,6 +28,7 @@ import com.gitee.ui.GiteeShareDialog
 import com.gitee.util.GiteeGitHelper
 import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeUtil
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -123,8 +124,6 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
       BasicAction.saveAll()
 
       val gitRepository = GiteeGitHelper.findGitRepository(project, file)
-
-//      if (!service<GiteeAccountsMigrationHelper>().migrate(project)) return
 
       val authManager = service<GiteeAuthenticationManager>()
       if (!authManager.ensureHasAccounts(project)) return
@@ -342,12 +341,14 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
               " on Gitee, but initial push failed: no current branch", url)
             return false
           }
+
           val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
           if (!result.success()) {
             GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
               " on Gitee, but initial push failed:<br/>" + result.errorOutputAsHtmlString, url)
             return false
           }
+
           return true
         }
 
@@ -406,6 +407,8 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
     init {
       title = "Add Files For Initial Commit"
+      setOKButtonText(CommonBundle.getAddButtonText())
+      setCancelButtonText(CommonBundle.getCancelButtonText())
       init()
     }
 

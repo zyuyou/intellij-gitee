@@ -1,17 +1,17 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package com.gitee.util
@@ -31,24 +31,27 @@ import com.intellij.dvcs.ui.CompareBranchesDialog
 import com.intellij.dvcs.util.CommitCompareInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Convertor
 import git4idea.DialogManager
+import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.Git
+import git4idea.fetch.GitFetchSupport.fetchSupport
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitCompareBranchesHelper
-import git4idea.update.GitFetcher
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Callable
@@ -88,6 +91,8 @@ class GiteeCreatePullRequestWorker(private val project: Project,
     @JvmStatic
     fun create(project: Project,
                gitRepository: GitRepository,
+               remote: GitRemote,
+               remoteUrl: String,
                executor: GiteeApiRequestExecutor,
                server: GiteeServerPath): GiteeCreatePullRequestWorker? {
 
@@ -96,14 +101,14 @@ class GiteeCreatePullRequestWorker(private val project: Project,
       return progressManager.runProcessWithProgressSynchronously<GiteeCreatePullRequestWorker, RuntimeException>({
         val git = ServiceManager.getService(Git::class.java)
 
-        gitRepository.update()
-        val remote = findGiteeRemote(server, gitRepository)
-        if (remote == null) {
-          GiteeNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find Gitee remote")
-          return@runProcessWithProgressSynchronously null
-        }
-        val remoteName = remote.first.name
-        val remoteUrl = remote.second
+//        gitRepository.update()
+//        val remote = findGiteeRemote(server, gitRepository)
+//        if (remote == null) {
+//          GiteeNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find Gitee remote")
+//          return@runProcessWithProgressSynchronously null
+//        }
+//        val remoteName = remote.first.name
+//        val remoteUrl = remote.second
 
         val path = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)
         if (path == null) {
@@ -118,7 +123,7 @@ class GiteeCreatePullRequestWorker(private val project: Project,
         }
 
         val worker = GiteeCreatePullRequestWorker(project, git, gitRepository, executor, server,
-          GiteeGitHelper.getInstance(), progressManager, path, remoteName, remoteUrl,
+          GiteeGitHelper.getInstance(), progressManager, path, remote.name, remoteUrl,
           currentBranch.name)
 
         try {
@@ -133,25 +138,25 @@ class GiteeCreatePullRequestWorker(private val project: Project,
       }, "Loading Data...", true, project)
     }
 
-    @JvmStatic
-    internal fun findGiteeRemote(server: GiteeServerPath, repository: GitRepository): Pair<GitRemote, String>? {
-      var githubRemote: Pair<GitRemote, String>? = null
-      for (gitRemote in repository.remotes) {
-        for (remoteUrl in gitRemote.urls) {
-          if (server.matches(remoteUrl)) {
-            val remoteName = gitRemote.name
-            if ("github" == remoteName || "origin" == remoteName) {
-              return Pair.create(gitRemote, remoteUrl)
-            }
-            if (githubRemote == null) {
-              githubRemote = Pair.create(gitRemote, remoteUrl)
-            }
-            break
-          }
-        }
-      }
-      return githubRemote
-    }
+//    @JvmStatic
+//    internal fun findGiteeRemote(server: GiteeServerPath, repository: GitRepository): Pair<GitRemote, String>? {
+//      var githubRemote: Pair<GitRemote, String>? = null
+//      for (gitRemote in repository.remotes) {
+//        for (remoteUrl in gitRemote.urls) {
+//          if (server.matches(remoteUrl)) {
+//            val remoteName = gitRemote.name
+//            if ("github" == remoteName || "origin" == remoteName) {
+//              return Pair.create(gitRemote, remoteUrl)
+//            }
+//            if (githubRemote == null) {
+//              githubRemote = Pair.create(gitRemote, remoteUrl)
+//            }
+//            break
+//          }
+//        }
+//      }
+//      return githubRemote
+//    }
   }
 
   @Throws(IOException::class)
@@ -454,13 +459,18 @@ class GiteeCreatePullRequestWorker(private val project: Project,
   }
 
   private fun doFetchRemote(fork: ForkInfo) {
-    if (fork.remoteName == null) return
+//    if (fork.remoteName == null) return
+//    val result = GitFetcher(project, EmptyProgressIndicator(), false).fetch(gitRepository.root, fork.remoteName!!, null)
+//    if (!result.isSuccess) {
+//      GitFetcher.displayFetchResult(project, result, null, result.errors)
+//    }
 
-    val result = GitFetcher(project, EmptyProgressIndicator(), false).fetch(gitRepository.root, fork.remoteName!!, null)
-
-    if (!result.isSuccess) {
-      GitFetcher.displayFetchResult(project, result, null, result.errors)
+    val remoteName: String? = fork.remoteName ?: return
+    val remote = GitUtil.findRemoteByName(gitRepository, remoteName!!)
+    if (remote == null) {
+      LOG.warn("Couldn't find remote $remoteName in $gitRepository")
     }
+    fetchSupport(project).fetch(gitRepository, remote!!).showNotificationIfFailed()
   }
 
   fun createPullRequest(branch: BranchInfo, title: String, description: String) {

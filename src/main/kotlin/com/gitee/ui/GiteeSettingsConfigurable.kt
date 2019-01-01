@@ -1,22 +1,24 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.authentication.accounts.*
+import com.gitee.util.CachingGiteeUserAvatarLoader
+import com.gitee.util.GiteeImageResizer
 import com.gitee.util.GiteeSettings
 import com.gitee.util.GiteeUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -35,7 +37,8 @@ class GiteeSettingsConfigurable internal constructor(private val project: Projec
                                                      private val accountManager: GiteeAccountManager,
                                                      private val defaultAccountHolder: GiteeProjectDefaultAccountHolder,
                                                      private val executorFactory: GiteeApiRequestExecutor.Factory,
-                                                     private val accountInformationProvider: GiteeAccountInformationProvider) :
+                                                     private val avatarLoader: CachingGiteeUserAvatarLoader,
+                                                     private val imageResizer: GiteeImageResizer) :
   ConfigurableBase<GiteeSettingsPanel, GiteeSettingsConfigurable.GiteeSettingsHolder>(
     "settings.gitee",
     GiteeUtil.SERVICE_DISPLAY_NAME,
@@ -58,7 +61,7 @@ class GiteeSettingsConfigurable internal constructor(private val project: Projec
   }
 
   override fun createUi(): GiteeSettingsPanel {
-    return GiteeSettingsPanel(project, executorFactory, accountInformationProvider)
+    return GiteeSettingsPanel(project, executorFactory, avatarLoader, imageResizer)
   }
 
   inner class GiteeSettingsHolder internal constructor(val application: GiteeSettings,

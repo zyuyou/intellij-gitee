@@ -1,17 +1,17 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.api
 
@@ -29,7 +29,7 @@ import java.awt.Image
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequests.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiRequests.kt
  * @author JetBrains s.r.o.
  */
 object GiteeApiRequests {
@@ -52,8 +52,8 @@ object GiteeApiRequests {
     object Repos : Entity("/repos") {
       @JvmOverloads
       @JvmStatic
-      fun pages(server: GiteeServerPath, allAssociated: Boolean = true) =
-        GiteeApiPagesLoader.Request(get(server, allAssociated, GiteeRequestPagination()), ::get)
+      fun pages(server: GiteeServerPath, allAssociated: Boolean = true, pagination: GiteeRequestPagination? = GiteeRequestPagination()) =
+        GiteeApiPagesLoader.Request(get(server, allAssociated, pagination), ::get)
 
       @JvmOverloads
       @JvmStatic
@@ -64,10 +64,10 @@ object GiteeApiRequests {
       fun get(url: String) = Get.jsonPage2<GiteeRepo>(url).withOperationName("get user repositories")
 
       @JvmStatic
-      fun create(server: GiteeServerPath, name: String, description: String, private: Boolean) =
+      fun create(server: GiteeServerPath, name: String, description: String, private: Boolean, autoInit: Boolean? = null) =
         Post.json<GiteeRepo>(
           getUrl(server, CurrentUser.urlSuffix, urlSuffix),
-          GiteeRepoRequest(name, description, private)
+          GiteeRepoRequest(name, description, private, autoInit)
         ).withOperationName("create user repository")
     }
 
@@ -85,6 +85,28 @@ object GiteeApiRequests {
     }
   }
 
+  object Organisations : Entity("/orgs") {
+
+    object Repos : Entity("/repos") {
+      @JvmStatic
+      fun pages(server: GiteeServerPath, organisation: String) = GiteeApiPagesLoader.Request(get(server, organisation), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GiteeServerPath, organisation: String, pagination: GiteeRequestPagination? = null) =
+        get(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix, pagination?.toString().orEmpty()))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GiteeRepo>(url).withOperationName("get organisation repositories")
+
+      @JvmStatic
+      fun create(server: GiteeServerPath, organisation: String, name: String, description: String, private: Boolean) =
+        Post.json<GiteeRepo>(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix),
+          GiteeRepoRequest(name, description, private, null))
+          .withOperationName("create organisation repository")
+    }
+  }
+
   object Repos : Entity("/repos") {
     @JvmStatic
     fun get(server: GiteeServerPath, username: String, repoName: String) =
@@ -93,7 +115,10 @@ object GiteeApiRequests {
 
     @JvmStatic
     fun delete(server: GiteeServerPath, username: String, repoName: String) =
-      Delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
+      delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
+
+    @JvmStatic
+    fun delete(url: String) = Delete(url).withOperationName("delete repository at $url")
 
     object Branches : Entity("/branches") {
       @JvmOverloads
@@ -106,6 +131,11 @@ object GiteeApiRequests {
     }
 
     object Forks : Entity("/forks") {
+      @JvmStatic
+      fun create(server: GiteeServerPath, username: String, repoName: String) =
+        Post.json<GiteeRepo>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix), Any())
+          .withOperationName("fork repository $username/$repoName for cuurent user")
+
       @JvmStatic
       fun pages(server: GiteeServerPath, username: String, repoName: String) =
         GiteeApiPagesLoader.Request(get(server, username, repoName, GiteeRequestPagination()), ::get)
@@ -137,12 +167,23 @@ object GiteeApiRequests {
 
       @JvmStatic
       fun updateState(server: GiteeServerPath, username: String, repoName: String, id: String, open: Boolean) =
-        Patch.json<GiteeIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id), GiteeChangeIssueStateRequest(if (open) "open" else "closed"))
+        Patch.json<GiteeIssue>(getUrl(server, Repos.urlSuffix, "/$username", urlSuffix, "/", id), GiteeChangeIssueStateRequest(repoName, if (open) "open" else "closed"))
+
+      @JvmStatic
+      fun get(server: GiteeServerPath, query: String, pagination: GiteeRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, urlSuffix, GiteeApiUrlQueryBuilder.urlQuery {
+          param("q", query)
+          param(pagination)
+        }))
 
       object Comments : Entity("/comments") {
         @JvmStatic
         fun pages(server: GiteeServerPath, username: String, repoName: String, issueId: String) =
           GiteeApiPagesLoader.Request(get(server, username, repoName, issueId, GiteeRequestPagination()), ::get)
+
+        @JvmStatic
+        fun pages(url: String) = GiteeApiPagesLoader.Request(
+          get(url + GiteeApiUrlQueryBuilder.urlQuery { param(GiteeRequestPagination()) }), ::get)
 
         @JvmStatic
         fun get(server: GiteeServerPath, username: String, repoName: String, issueId: String, pagination: GiteeRequestPagination? = null) =
@@ -155,11 +196,50 @@ object GiteeApiRequests {
 
     object PullRequests : Entity("/pulls") {
       @JvmStatic
+      fun get(server: GiteeServerPath, username: String, repoName: String, query: String) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, query))
+
+      @JvmStatic
+      fun get(server: GiteeServerPath, username: String, repoName: String) =
+        get(server, username, repoName, null, GiteeRequestPagination())
+
+      @JvmStatic
+      fun get(server: GiteeServerPath, username: String, repoName: String, state: String? = null, pagination: GiteeRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, GiteeApiUrlQueryBuilder.urlQuery { param("state", state); param(pagination) }))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage2<GiteePullRequest>(url).withOperationName("get pull request")
+
+      @JvmStatic
+      fun getHtml(url: String) = Get.json<GiteePullRequestDetailedWithHtml>(url, GiteeApiContentHelper.V3_HTML_JSON_MIME_TYPE)
+        .withOperationName("get pull request")
+
+      @JvmStatic
       fun create(server: GiteeServerPath, username: String, repoName: String, title: String, description: String, head: String, base: String) =
         Post.json<GiteePullRequest>(
           getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
           GiteePullRequestRequest(username, repoName, title, description, head, base)
         ).withOperationName("create pull request in $username/$repoName")
+
+      @JvmStatic
+      fun merge(pullRequest: GiteePullRequest, commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+          GiteePullRequestMergeRequest(commitSubject, commitBody, headSha, GiteePullRequestMergeMethod.merge))
+          .withOperationName("merge pull request ${pullRequest.number}")
+
+      @JvmStatic
+      fun squashMerge(pullRequest: GiteePullRequest, commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+          GiteePullRequestMergeRequest(commitSubject, commitBody, headSha, GiteePullRequestMergeMethod.squash))
+          .withOperationName("squash and merge pull request ${pullRequest.number}")
+
+      @JvmStatic
+      fun rebaseMerge(pullRequest: GiteePullRequest, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+          GiteePullRequestMergeRebaseRequest(headSha))
+          .withOperationName("rebase and merge pull request ${pullRequest.number}")
+
+      private fun getMergeUrl(pullRequest: GiteePullRequest) = pullRequest.url + "/merge"
     }
   }
 
@@ -206,7 +286,7 @@ object GiteeApiRequests {
 
   private fun getUrl(server: GiteeServerPath, suffix: String) = server.toApiUrl() + suffix
 
-  private fun getUrl(server: GiteeServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
+  fun getUrl(server: GiteeServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
 
   private fun getQuery(vararg queryParts: String): String {
     val builder = StringBuilder()

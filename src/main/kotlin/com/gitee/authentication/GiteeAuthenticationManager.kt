@@ -1,23 +1,25 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.authentication
 
 import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.accounts.GiteeAccount
+import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.authentication.ui.GiteeLoginDialog
@@ -53,14 +55,26 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
   @CalledInAny
   internal fun getTokensForAccount(account: GiteeAccount): Pair<String, String>? = accountManager.getTokensForAccount(account)
 
-  @CalledInAwt
-  @JvmOverloads
-  internal fun getOrRequestTokensForAccount(account: GiteeAccount,
-                                            project: Project? = null,
-                                            parentComponent: Component? = null): Pair<String, String>? {
+  @CalledInAny
+  internal fun getOrRefreshTokensForAccount(account: GiteeAccount): Pair<String, String>? {
+    val tokens = accountManager.getTokensForAccount(account) ?: return null
 
-    return getTokensForAccount(account) ?: requestNewTokens(account, project, parentComponent)
+    // no refresh_token return null
+    if (tokens.second == "") return null
+
+    executorFactory.create(tokens) { refreshNewTokens(account, it) }.execute(DumbProgressIndicator(), GiteeApiRequests.CurrentUser.get(account.server))
+
+    return accountManager.getTokensForAccount(account)
   }
+
+//  @CalledInAwt
+//  @JvmOverloads
+//  internal fun getOrRequestTokensForAccount(account: GiteeAccount,
+//                                            project: Project?,
+//                                            parentComponent: Component? = null): Pair<String, String>? {
+//
+//    return getTokensForAccount(account) ?: requestNewTokens(account, project, parentComponent)
+//  }
 
   @CalledInAny
   internal fun refreshNewTokens(account: GiteeAccount, refreshToken: String) : Triple<GiteeAccount, String, String> {
@@ -69,7 +83,8 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
   }
 
   @CalledInAwt
-  private fun requestNewTokens(account: GiteeAccount, project: Project?, parentComponent: Component? = null): Pair<String, String>? {
+  @JvmOverloads
+  internal fun requestNewTokens(account: GiteeAccount, project: Project?, parentComponent: Component? = null): Pair<String, String>? {
 
     val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
@@ -85,21 +100,40 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     return dialog.getAccessToken() to dialog.getRefreshToken()
   }
 
-  fun hasTokenForAccount(account: GiteeAccount): Boolean = getTokenForAccount(account) != null
-
   @CalledInAwt
   @JvmOverloads
   fun requestNewAccount(project: Project?, parentComponent: Component? = null): GiteeAccount? {
-    fun isAccountUnique(name: String, server: GiteeServerPath) =
-      accountManager.accounts.none { it.name == name && it.server == server }
+//    fun isAccountUnique(name: String, server: GiteeServerPath) =
+//      accountManager.accounts.none { it.name == name && it.server == server }
 
     val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
-    val account = GiteeAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
+//    val account = GiteeAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
+//    accountManager.accounts += account
+//    accountManager.updateAccountToken(account, "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+//    return account
+
+    return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+  }
+
+  @CalledInAwt
+  @JvmOverloads
+  fun requestNewAccountForServer(server: GiteeServerPath, project: Project?, parentComponent: Component? = null): GiteeAccount? {
+    val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique).withServer(server.toUrl(), false)
+    DialogManager.show(dialog)
+    if (!dialog.isOK) return null
+
+    return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+  }
+
+  private fun isAccountUnique(name: String, server: GiteeServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+
+  private fun registerAccount(name: String, server: GiteeServerPath, token: String): GiteeAccount {
+    val account = GiteeAccountManager.createAccount(name, server)
     accountManager.accounts += account
-    accountManager.updateAccountToken(account, "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+    accountManager.updateAccountToken(account, token)
     return account
   }
 

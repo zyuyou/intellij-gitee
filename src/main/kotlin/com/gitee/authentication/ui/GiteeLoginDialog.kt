@@ -1,23 +1,22 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.authentication.ui
 
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeApiRequests
-import com.gitee.api.GiteeServerPath
+import com.gitee.api.*
+import com.gitee.api.data.GiteeAuthenticatedUser
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeParseException
@@ -128,9 +127,9 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
   }
 
   fun getServer(): GiteeServerPath = GiteeServerPath.from(serverTextField.text)
-  fun getLogin(): String = login
-  fun getAccessToken(): String = accessToken
-  fun getRefreshToken(): String = refreshToken
+  fun getLogin(): String = login.trim()
+  fun getAccessToken(): String = accessToken.trim()
+  fun getRefreshToken(): String = refreshToken.trim()
 
   override fun doOKAction() {
     setBusy(true)
@@ -197,8 +196,6 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
 
     centerPanel.setContent(currentUi.getPanel())
     southAdditionalPanel.setContent(currentUi.getSouthPanel())
-
-    setErrorText(null)
 
     currentUi.getPreferredFocus().requestFocus()
 
@@ -315,10 +312,10 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
         is LoginNotUniqueException -> ValidationInfo("Account already added", loginTextField)
-        is UnknownHostException -> ValidationInfo("Server is unreachable", false)
-        is GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
+        is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
+        is GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.  ${error.message.orEmpty()}").withOKEnabled()
         is GiteeParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
-        else -> ValidationInfo("Invalid authentication data.\n ${error.message}", false)
+        else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }
     }
 
@@ -330,6 +327,9 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
   }
 
   private inner class TokenCredentialsUI : CredentialsUI() {
+    private val GIST_SCOPE_PATTERN = Regex("(?:^|, )repo(?:,|$)")
+    private val REPO_SCOPE_PATTERN = Regex("(?:^|, )gist(?:,|$)")
+
     private val accessTokenTextField = JBTextField()
     private val refreshTokenTextField = JBTextField()
 
@@ -366,18 +366,35 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
 
       val login = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(server)).login
 
-      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
+      // TODO checkout scopes
+//      var scopes: String? = null
+//      val login = executor.execute(indicator,
+//        object : GiteeApiRequest.Get.Json<GiteeAuthenticatedUser>(
+//          GiteeApiRequests.getUrl(server, GiteeApiRequests.CurrentUser.urlSuffix), GiteeAuthenticatedUser::class.java) {
+//
+//          override fun extractResult(response: GiteeApiResponse): GiteeAuthenticatedUser {
+//            scopes = response.findHeader("X-OAuth-Scopes")
+//            return super.extractResult(response)
+//          }
+//        }.withOperationName("get profile information")).login
+//
+//      if (scopes.isNullOrEmpty()
+//        || !GIST_SCOPE_PATTERN.containsMatchIn(scopes!!)
+//        || !REPO_SCOPE_PATTERN.containsMatchIn(scopes!!)) {
+//        throw GiteeAuthenticationException("Access token should have `repo` and `gist` scopes.")
+//      }
 
+      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
       return Triple(login, accessTokenTextField.text, refreshTokenTextField.text)
     }
 
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
-        is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added", false)
-        is UnknownHostException -> ValidationInfo("Server is unreachable", false)
-        is GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
+        is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added").withOKEnabled()
+        is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
+        is GiteeAuthenticationException -> ValidationInfo("Incorrect credentials.  ${error.message.orEmpty()}").withOKEnabled()
         is GiteeParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
-        else -> ValidationInfo("Invalid authentication data.\n ${error.message}", false)
+        else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }
     }
 

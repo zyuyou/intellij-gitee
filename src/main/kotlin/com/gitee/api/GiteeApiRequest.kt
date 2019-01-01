@@ -1,17 +1,17 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.api
 
@@ -25,13 +25,17 @@ import java.io.IOException
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequest.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiRequest.kt
  * @author JetBrains s.r.o.
  */
 sealed class GiteeApiRequest<T>(val url: String) {
 
   var operationName: String? = null
   abstract val acceptMimeType: String?
+
+  protected val headers = mutableMapOf<String, String>()
+  val additionalHeaders: Map<String, String>
+    get() = headers
 
   @Throws(IOException::class)
   abstract fun extractResult(response: GiteeApiResponse): T
@@ -60,6 +64,9 @@ sealed class GiteeApiRequest<T>(val url: String) {
     companion object {
       inline fun <reified T> json(url: String): Get<T> = Json(url, T::class.java)
 
+      inline fun <reified T> json(url: String, acceptMimeType: String? = null): Get<T> =
+        Json(url, T::class.java, acceptMimeType)
+
       inline fun <reified T> jsonList(url: String): Get<List<T>> = JsonList(url, T::class.java)
 
       inline fun <reified T> jsonPage(url: String): Get<GiteeResponsePage<T>> = JsonPage(url, T::class.java)
@@ -67,7 +74,15 @@ sealed class GiteeApiRequest<T>(val url: String) {
       inline fun <reified T> jsonPage2(url: String): Get<GiteeResponsePage<T>> = JsonPage2(url, T::class.java)
     }
 
-    open class Json<T>(url: String, clazz: Class<T>) : Get<T>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
+//    open class Json<T>(url: String, clazz: Class<T>) : Get<T>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
+//      private val typeToken = TypeToken.get(clazz)
+//
+//      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+//    }
+
+    open class Json<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+      : Get<T>(url, acceptMimeType) {
+
       private val typeToken = TypeToken.get(clazz)
 
       override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
@@ -112,7 +127,7 @@ sealed class GiteeApiRequest<T>(val url: String) {
                                                    override val acceptMimeType: String? = null) : GiteeApiRequest<T>(url)
 
   abstract class WithBody<T>(url: String) : GiteeApiRequest<T>(url) {
-    abstract val body: String
+    abstract val body: String?
     abstract val bodyMimeType: String
   }
 
@@ -144,6 +159,28 @@ sealed class GiteeApiRequest<T>(val url: String) {
       GiteeApiContentHelper.JSON_MIME_TYPE
     ) {
 
+      private val typeToken = TypeToken.get(clazz)
+
+      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+    }
+  }
+
+  abstract class Put<T> @JvmOverloads constructor(final override val body: String?,
+                                                  override val bodyMimeType: String,
+                                                  url: String,
+                                                  override val acceptMimeType: String? = null) : GiteeApiRequest.WithBody<T>(url) {
+    init {
+      if (body == null) headers["Content-Length"] = "0"
+    }
+
+    companion object {
+      inline fun <reified T> json(url: String, body: Any? = null): Put<T> = Json(url, body, T::class.java)
+    }
+
+    open class Json<T>(url: String, body: Any?, clazz: Class<T>) : Put<T>(body?.let { GiteeApiContentHelper.toJson(it) },
+      GiteeApiContentHelper.JSON_MIME_TYPE,
+      url,
+      GiteeApiContentHelper.JSON_MIME_TYPE) {
       private val typeToken = TypeToken.get(clazz)
 
       override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)

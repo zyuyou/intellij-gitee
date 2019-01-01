@@ -1,23 +1,24 @@
 /*
- * Copyright 2016-2018 码云 - Gitee
+ *  Copyright 2016-2019 码云 - Gitee
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.gitee.actions
 
 import com.gitee.GiteeBundle
 import com.gitee.api.GiteeRepositoryPath
 import com.gitee.icons.GiteeIcons
+import com.gitee.pullrequest.action.GiteePullRequestKeys
 import com.gitee.util.GiteeGitHelper
 import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeUtil
@@ -27,6 +28,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
@@ -53,7 +56,7 @@ import git4idea.history.GitHistoryUtils
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubOpenInBrowserActionGroup.kt
  * @author JetBrains s.r.o.
  */
-open class GiteeOpenInBrowserActionGroup : ActionGroup(GiteeBundle.message2("gitee.open.in.browser.title"), GiteeBundle.message2("gitee.open.in.browser.desc"), GiteeIcons.Gitee_icon) {
+open class GiteeOpenInBrowserActionGroup : ActionGroup(GiteeBundle.message2("gitee.open.in.browser.title"), GiteeBundle.message2("gitee.open.in.browser.desc"), GiteeIcons.Gitee_icon), DumbAware {
 
   override fun update(e: AnActionEvent) {
     val repositories = getData(e.dataContext)?.first
@@ -86,9 +89,19 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup(GiteeBundle.message2("git
   protected open fun getData(dataContext: DataContext): Pair<Set<GiteeRepositoryPath>, GiteeOpenInBrowserActionGroup.Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
-    return getDataFromHistory(project, dataContext.getData(VcsDataKeys.FILE_PATH), dataContext.getData(VcsDataKeys.VCS_FILE_REVISION))
-           ?: getDataFromLog(project, dataContext.getData(VcsLogDataKeys.VCS_LOG))
-           ?: getDataFromVirtualFile(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE))
+    return getDataFromPullRequest(project, dataContext)
+      ?: getDataFromHistory(project, dataContext.getData(VcsDataKeys.FILE_PATH), dataContext.getData(VcsDataKeys.VCS_FILE_REVISION))
+      ?: getDataFromLog(project, dataContext.getData(VcsLogDataKeys.VCS_LOG))
+      ?: getDataFromVirtualFile(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE))
+  }
+
+  private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GiteeRepositoryPath>, Data>? {
+    val pullRequest = dataContext.getData(GiteePullRequestKeys.SELECTED_PULL_REQUEST) ?: return null
+    val serverPath = dataContext.getData(GiteePullRequestKeys.SERVER_PATH) ?: return null
+    val fullPath = dataContext.getData(GiteePullRequestKeys.REPO_DETAILS)?.fullPath ?: return null
+
+//    val htmlUrl = pullRequest.htmlUrl ?: return null
+    return setOf(GiteeRepositoryPath(serverPath, fullPath)) to Data.URL(project, pullRequest.htmlUrl)
   }
 
   private fun getDataFromHistory(project: Project, filePath: FilePath?, fileRevision: VcsFileRevision?): Pair<Set<GiteeRepositoryPath>, GiteeOpenInBrowserActionGroup.Data>? {
@@ -139,13 +152,15 @@ open class GiteeOpenInBrowserActionGroup : ActionGroup(GiteeBundle.message2("git
     class File(project: Project, val gitRepoRoot: VirtualFile, val virtualFile: VirtualFile) : GiteeOpenInBrowserActionGroup.Data(project)
 
     class Revision(project: Project, val revisionHash: String) : GiteeOpenInBrowserActionGroup.Data(project)
+
+    class URL(project: Project, val htmlUrl: String) : Data(project)
   }
 
   private companion object {
     private const val CANNOT_OPEN_IN_BROWSER = "Can't open in browser"
 
     class GiteeOpenInBrowserAction(private val repoPath: GiteeRepositoryPath, val data: GiteeOpenInBrowserActionGroup.Data)
-      : AnAction(repoPath.toString().replace('_', ' ')) {
+      : DumbAwareAction(repoPath.toString().replace('_', ' ')) {
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {
