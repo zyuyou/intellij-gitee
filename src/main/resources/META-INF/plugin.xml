@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2018.3</version>
+    <version>2018.3.5</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -11,12 +11,10 @@
     </description>
     <change-notes>
         <![CDATA[
-        <i>2018.3.1:</i>
+        <i>2018.3.5</i>
         <ul>
-          <li>重启项目,删除v3版本api遗留代码, 各方面更`Gitee`</li>
-          <li>使用Kotlin语言编写新的Http接口</li>
-          <li>IDEA task功能兼容性修改</li>
-          <li>提供PullRequest界面查看功能</li>
+          <li>修改IDEA的task功能AccessTokens的授权问题</li>
+          <li>PR列表用户名称修改为Gitee的昵称</li>
         </ul>
       ]]>
     </change-notes>

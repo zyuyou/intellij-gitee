@@ -30,6 +30,8 @@ public class GiteeUser {
 
   @Mandatory
   private String login;
+  @Mandatory
+  private String name;
   private Long id;
 
   private String url;
@@ -46,6 +48,11 @@ public class GiteeUser {
   @NotNull
   public String getLogin() {
     return login;
+  }
+
+  @NotNull
+  public String getName() {
+    return name;
   }
 
   @NotNull

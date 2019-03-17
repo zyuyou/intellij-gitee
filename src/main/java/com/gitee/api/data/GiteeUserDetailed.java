@@ -21,7 +21,6 @@ import org.jetbrains.io.mandatory.RestModel;
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeUserDetailed extends GiteeUser {
-	private String name;
 	private String email;
 	private String type;
 	private String weibo;
@@ -45,11 +44,6 @@ public class GiteeUserDetailed extends GiteeUser {
 		private String city;
 		private String zipCode;
 		private String comment;
-	}
-
-	@Nullable
-	public String getName() {
-		return name;
 	}
 
 	@Nullable
