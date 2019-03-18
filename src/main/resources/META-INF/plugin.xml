@@ -15,6 +15,7 @@
         <ul>
           <li>修改IDEA的task功能AccessTokens的授权问题</li>
           <li>PR列表用户名称修改为Gitee的昵称</li>
+          <li>修复PR列表查看请求URL区分不同Namespace</li>
         </ul>
       ]]>
     </change-notes>

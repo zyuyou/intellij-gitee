@@ -30,6 +30,8 @@ import java.util.Objects;
 public class GiteeRepoBasic {
   @Mandatory private Long id;
   //private String nodeId;
+  @Mandatory private String url;
+  @Mandatory private GiteeNamespace namespace;
   @Mandatory
   private String name;
   private String path;
@@ -45,9 +47,6 @@ public class GiteeRepoBasic {
   @SerializedName("fork")
   @Mandatory
   private Boolean isFork;
-
-  @Mandatory private String url;
-  //urls
 
   @NotNull
   public String getName() {
@@ -84,7 +83,10 @@ public class GiteeRepoBasic {
 
   @NotNull
   public String getUserName() {
-    return getOwner().getLogin();
+    if (namespace.getType() == GiteeNamespaceType.personal) {
+      return getOwner().getLogin();
+    }
+    return namespace.getName();
   }
 
   @NotNull
@@ -94,9 +96,8 @@ public class GiteeRepoBasic {
 
   @NotNull
   public GiteeFullPath getFullPath() {
-    return new GiteeFullPath(getUserName(), path, getFullName());
+    return new GiteeFullPath(getUserName(), path, fullName);
   }
-
 
   @Override
   public String toString() {
