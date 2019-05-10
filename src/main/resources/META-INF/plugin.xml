@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2018.3.5</version>
+    <version>2019.1</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -20,7 +20,7 @@
       ]]>
     </change-notes>
 
-    <idea-version since-build="183.1" until-build="183.*"/>
+    <idea-version since-build="191.1" until-build="191.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>
