@@ -16,6 +16,7 @@
 package com.gitee.api.requests
 
 import org.jetbrains.io.mandatory.Mandatory
+import java.net.URLEncoder
 
 /**
  * @author Yuyou Chow
@@ -45,7 +46,7 @@ data class AuthorizationCreateRequest(private val scopes: List<String>,
       "grant_type=$GRANT_TYPE_CREATE_AUTH",
       "scope=${scopes.joinToString(" ")}",
       "username=$username",
-      "password=$password",
+      "password=${URLEncoder.encode(password, "utf-8")}",
       "client_id=$clientId",
       "client_secret=$clientSecret"
     ).joinToString("&")
