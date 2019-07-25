@@ -33,8 +33,8 @@ intellij {
     sameSinceUntilBuild Boolean.valueOf(isEAP)
 
     publishPlugin {
-        username publishUser
-        password publishPassword
+        token publishToken
+        channels 'stable'
     }
 }
 

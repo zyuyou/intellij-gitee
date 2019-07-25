@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2019.1</version>
+    <version>2019.2.0</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
