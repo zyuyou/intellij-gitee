@@ -5,3 +5,5 @@
 .gradle
 .gradletasknamecache
 .java-version
+
+.DS_Store
