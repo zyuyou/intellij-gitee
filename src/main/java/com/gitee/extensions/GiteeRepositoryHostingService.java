@@ -40,8 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,11 +55,11 @@ public class GiteeRepositoryHostingService extends GitRepositoryHostingService {
 	@NotNull
 	private final GiteeHttpAuthDataProvider myAuthDataProvider;
 
-	public GiteeRepositoryHostingService(@NotNull GiteeAuthenticationManager manager, @NotNull GiteeApiRequestExecutorManager executorManager, @NotNull GiteeGitHelper gitHelper, @NotNull GiteeHttpAuthDataProvider authDataProvider) {
-		myAuthenticationManager = manager;
-		myExecutorManager = executorManager;
-		myGitHelper = gitHelper;
-		myAuthDataProvider = authDataProvider;
+	public GiteeRepositoryHostingService() {
+		myAuthenticationManager = GiteeAuthenticationManager.getInstance();
+		myExecutorManager = GiteeApiRequestExecutorManager.getInstance();
+		myGitHelper = GiteeGitHelper.getInstance();
+		myAuthDataProvider = GiteeHttpAuthDataProvider.EP_NAME.findExtensionOrFail(GiteeHttpAuthDataProvider.class);
 	}
 
 	@NotNull

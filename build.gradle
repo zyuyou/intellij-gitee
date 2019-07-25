@@ -11,13 +11,10 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.intellij' version "0.4.7"
+    id 'org.jetbrains.intellij' version "0.4.9"
 }
 
 repositories {
-//    maven {
-//        url 'http://dl.bintray.com/kotlin/kotlin-eap'
-//    }
     mavenCentral()
 }
 
@@ -40,8 +37,6 @@ intellij {
         password publishPassword
     }
 }
-
-import org.jetbrains.intellij.tasks.RunIdeTask
 
 allprojects {
     sourceCompatibility = javaVersion
@@ -67,11 +62,6 @@ allprojects {
             exceptionFormat = 'full'
         }
     }
-
-//     tasks.withType(RunIdeTask) {
-////        jbrVersion("8u202b1483.37")
-//         jbrVersion("8u152b1343.28")
-//     }
 
     task testCompilation(type: Test, group: 'Verification', dependsOn: [classes, testClasses]) {
         useJUnit {

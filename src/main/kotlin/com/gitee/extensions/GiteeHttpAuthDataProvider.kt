@@ -29,26 +29,23 @@ import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
 import java.io.IOException
 
+private val LOG = logger<GiteeHttpAuthDataProvider>()
+
 /**
  * @author Yuyou Chow
  *
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/extensions/GithubHttpAuthDataProvider.kt
  * @author JetBrains s.r.o.
  */
-class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenticationManager,
-                                private val requestExecutorFactory: GiteeApiRequestExecutor.Factory,
-                                private val requestExecutorManager: GiteeApiRequestExecutorManager,
-                                private val accountInformationProvider: GiteeAccountInformationProvider) : GitHttpAuthDataProvider {
-
-  private val LOG = logger<GiteeHttpAuthDataProvider>()
+class GiteeHttpAuthDataProvider : GitHttpAuthDataProvider {
 
   override fun getAuthData(project: Project, url: String): GiteeAccountAuthData? {
     return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
       try {
-        val tokens = authenticationManager.getTokensForAccount(account) ?: return null
+        val tokens = GiteeAuthenticationManager.getInstance().getTokensForAccount(account) ?: return null
 
-        val username = accountInformationProvider.getInformation(
-          requestExecutorFactory.create(tokens) { authenticationManager.refreshNewTokens(account, it) },
+        val username = service<GiteeAccountInformationProvider>().getInformation(
+          GiteeApiRequestExecutor.Factory.getInstance().create(tokens) { GiteeAuthenticationManager.getInstance().refreshNewTokens(account, it) },
           DumbProgressIndicator(),
           account
         ).login
@@ -63,7 +60,7 @@ class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenti
 
   override fun getAuthData(project: Project, url: String, login: String): GiteeAccountAuthData? {
     return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
-      return authenticationManager.getTokenForAccount(account)?.let { GiteeAccountAuthData(account, login, it) }
+      return GiteeAuthenticationManager.getInstance().getTokenForAccount(account)?.let { GiteeAccountAuthData(account, login, it) }
     }
   }
 
@@ -77,15 +74,15 @@ class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenti
 
     val authenticationFailureManager = project.service<GiteeAccountGitAuthenticationFailureManager>()
 
-    var potentialAccounts = authenticationManager.getAccounts()
+    var potentialAccounts = GiteeAuthenticationManager.getInstance().getAccounts()
       .filter { it.server.matches(url) }
       .filter { !authenticationFailureManager.isAccountIgnored(url, it) }
 
     if (login != null) {
       potentialAccounts = potentialAccounts.filter {
         try {
-          accountInformationProvider.getInformation(
-            requestExecutorManager.getExecutor(it),
+          service<GiteeAccountInformationProvider>().getInformation(
+            GiteeApiRequestExecutorManager.getInstance().getExecutor(it),
             DumbProgressIndicator(),
             it).login == login
 
@@ -96,7 +93,7 @@ class GiteeHttpAuthDataProvider(private val authenticationManager: GiteeAuthenti
       }
     }
 
-    val defaultAccount = authenticationManager.getDefaultAccount(project)
+    val defaultAccount = GiteeAuthenticationManager.getInstance().getDefaultAccount(project)
 
     if (defaultAccount != null && potentialAccounts.contains(defaultAccount)) return setOf(defaultAccount)
 
