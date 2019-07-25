@@ -19,12 +19,10 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.api.data.GiteeAuthenticatedUser
-import com.gitee.api.data.GiteeUserDetailed
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.exceptions.GiteeAuthenticationException
-import com.gitee.icons.GiteeIcons
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.util.CachingGiteeUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
@@ -44,15 +42,12 @@ import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN
 import com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE
 import com.intellij.ui.components.JBList
-import com.intellij.util.IconUtil
-import com.intellij.util.ImageLoader
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -251,7 +246,6 @@ internal class GiteeAccountsPanel(private val project: Project,
 
   private fun loadAccountDetails(accountData: GiteeAccountDecorator) {
     val account = accountData.account
-//    val token = newTokensMap[account] ?: currentTokensMap[account]
     val tokens = newTokensMap[account] ?: currentTokensMap[account]
 
     if (tokens == null) {
@@ -262,51 +256,19 @@ internal class GiteeAccountsPanel(private val project: Project,
       return
     }
 
-    val pictureSize = JBUI.scale(ACCOUNT_PICTURE_SIZE)
-    // compute when parent frame is known, otherwise it will always be the default monitor scale
-    val scaleContext = JBUI.ScaleContext.create(accountList)
-
     val executor = executorFactory.create(tokens) {
       project.service<GiteeAuthenticationManager>().refreshNewTokens(accountData.account, it)
     }
 
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
-//      lateinit var data: Pair<GiteeUserDetailed, Image?>
       lateinit var loadedDetails: GiteeAuthenticatedUser
 
       override fun run(indicator: ProgressIndicator) {
-//        val executor = executorFactory.create(tokens, Supplier {
-//          refreshAccount(accountData, tokens.second, executorFactory.create(), indicator)
-//        })
-
-//        val executor = executorFactory.create(tokens) {
-//          project.service<GiteeAuthenticationManager>().refreshNewTokens(accountData.account, it)
-//        }
-
-//        val details = accountInformationProvider.getInformation(executor, indicator, account)
-//        var details = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server))
         loadedDetails = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server))
-
-//        val image = details.avatarUrl?.let {
-//          accountInformationProvider.getAvatar(executor, indicator, account, it)
-//        }
-//        val image = avatarLoader.requestAvatar(executor, details).get()
-
-//        val image = avatarLoader.requestAvatar(executor, details)
-//          .thenCompose<Image?> {
-//            if (it != null) imageResizer.requestImageResize(it, pictureSize, scaleContext)
-//            else CompletableFuture.completedFuture(null)
-//          }
-//          .join()
-//
-//        data = details to image
       }
 
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
-//          fullName = data.first.name
-//          profilePicture = data.second
-
           details = loadedDetails
           iconProvider = CachingGiteeAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList).apply {
             Disposer.register(this@GiteeAccountsPanel, this)
@@ -455,8 +417,8 @@ private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecor
         append(" ")
 
         if (value.showLoginLink) append("Log In",
-          if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBColor.link())
-          else SimpleTextAttributes(STYLE_PLAIN, JBColor.link()),
+          if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
+          else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
           LINK_TAG)
       }
     }

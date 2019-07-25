@@ -24,8 +24,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.LowMemoryWatcher
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Component
@@ -44,7 +44,7 @@ internal class CachingGiteeAvatarIconsProvider(private val avatarsLoader: Cachin
                                                private val iconSize: JBValue,
                                                private val component: Component) : Disposable {
 
-  private val scaleContext = JBUI.ScaleContext.create(component)
+  private val scaleContext = ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
   private val icons = mutableMapOf<GiteeUser, Icon>()
 
@@ -63,7 +63,7 @@ internal class CachingGiteeAvatarIconsProvider(private val avatarsLoader: Cachin
     val iconSize = iconSize.get()
 
     // so that icons are rescaled when any scale changes (be it font size or current DPI)
-    if (scaleContext.update(JBUI.ScaleContext.create(component))) {
+    if (scaleContext.update(ScaleContext.create(component))) {
       defaultIcon = createDefaultIcon(iconSize)
       icons.clear()
     }

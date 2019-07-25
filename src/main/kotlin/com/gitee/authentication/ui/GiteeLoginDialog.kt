@@ -15,8 +15,9 @@
  */
 package com.gitee.authentication.ui
 
-import com.gitee.api.*
-import com.gitee.api.data.GiteeAuthenticatedUser
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequests
+import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeParseException
@@ -233,7 +234,7 @@ class GiteeLoginDialog @JvmOverloads constructor(private val executorFactory: Gi
     init {
       contextHelp.apply {
         editorKit = UIUtil.getHTMLEditorKit()
-        val linkColor = JBColor.link()
+        val linkColor = JBUI.CurrentTheme.Link.linkColor()
 
         // language=CSS
         (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")

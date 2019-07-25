@@ -35,7 +35,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.util.EventDispatcher
 import git4idea.GitCommit
 import git4idea.commands.Git
-import git4idea.history.GitLogUtil
+import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
@@ -119,7 +119,7 @@ internal class GiteePullRequestsDataLoader(private val project: Project,
 
       runPartialTask(logCommitsRequest, indicator) {
         val hashes = getOrHandle(branchFetchRequest)
-        GitLogUtil.collectFullDetails(project, repository.root, "${hashes.first}..${hashes.second}")
+        GitHistoryUtils.history(project, repository.root, "${hashes.first}..${hashes.second}")
       }
 
       runPartialTask(changesRequest, indicator) {

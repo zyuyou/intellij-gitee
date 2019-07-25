@@ -34,7 +34,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -278,7 +278,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
             allFiles.addAll(trackedFiles)
             allFiles.addAll(untrackedFiles)
 
-            val dialog = invokeAndWaitIfNeed(indicator.modalityState) {
+            val dialog = invokeAndWaitIfNeeded(indicator.modalityState) {
               GiteeUntrackedFilesDialog(project, allFiles).apply {
                 if (!trackedFiles.isEmpty()) {
                   selectedFiles = trackedFiles

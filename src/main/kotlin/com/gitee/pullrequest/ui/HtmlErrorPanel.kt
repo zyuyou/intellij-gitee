@@ -15,7 +15,6 @@
  */
 package com.gitee.pullrequest.ui
 
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -34,7 +33,7 @@ class HtmlErrorPanel : Wrapper() {
 
   private val errorPane = JEditorPane().apply {
     editorKit = UIUtil.getHTMLEditorKit()
-    val linkColor = JBColor.link()
+    val linkColor = JBUI.CurrentTheme.Link.linkColor()
     //language=CSS
     (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
     addHyperlinkListener { e ->

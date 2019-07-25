@@ -304,7 +304,7 @@ class GiteeCreatePullRequestWorker(private val project: Project,
         ThrowableComputable<Couple<String>, IOException> {
           val targetBranch = branch.forkInfo.remoteName + "/" + branch.remoteName
           try {
-            val commits = GitHistoryUtils.readLastCommits(project, gitRepository.root, currentBranch, targetBranch)
+            val commits = GitHistoryUtils.collectCommitsMetadata(project, gitRepository.root, currentBranch, targetBranch)
               ?: return@ThrowableComputable getSimpleDefaultDescriptionMessage(branch)
 
             val localCommit = commits[0]

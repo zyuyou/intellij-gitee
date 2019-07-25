@@ -20,9 +20,8 @@ import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.StringUtil
-
-private const val GROUP_ID = "statistics.vcs.gitee"
 
 /**
  * @author Yuyou Chow
@@ -30,10 +29,10 @@ private const val GROUP_ID = "statistics.vcs.gitee"
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/accounts/GiteeAccountsStatisticsCollector.kt
  * @author JetBrains s.r.o.
  */
-class GiteeAccountsStatisticsCollector internal constructor(private val accountManager: GiteeAccountManager)
-  : ApplicationUsagesCollector() {
+class GiteeAccountsStatisticsCollector : ApplicationUsagesCollector() {
 
   override fun getUsages(): Set<UsageDescriptor> {
+    val accountManager = service<GiteeAccountManager>()
     val hasAccountsWithNonDefaultHost = accountManager.accounts.any {
       !StringUtil.equalsIgnoreCase(it.server.host, GiteeServerPath.DEFAULT_HOST)
     }
@@ -42,5 +41,5 @@ class GiteeAccountsStatisticsCollector internal constructor(private val accountM
       getBooleanUsage("gitee.accounts.not.default.host", hasAccountsWithNonDefaultHost))
   }
 
-  override fun getGroupId(): String = GROUP_ID
+  override fun getGroupId(): String = "vcs.gitee"
 }
