@@ -11,6 +11,10 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2019.1.1</i>
+        <ul>
+          <li>修复部分密码登录验证失败问题</li>
+        </ul>
         <i>2018.3.5</i>
         <ul>
           <li>修改IDEA的task功能AccessTokens的授权问题</li>
