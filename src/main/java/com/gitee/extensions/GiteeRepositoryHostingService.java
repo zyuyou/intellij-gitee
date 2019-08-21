@@ -46,122 +46,122 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GiteeRepositoryHostingService extends GitRepositoryHostingService {
-	@NotNull
-	private final GiteeAuthenticationManager myAuthenticationManager;
-	@NotNull
-	private final GiteeApiRequestExecutorManager myExecutorManager;
-	@NotNull
-	private final GiteeGitHelper myGitHelper;
-	@NotNull
-	private final GiteeHttpAuthDataProvider myAuthDataProvider;
+  @NotNull
+  private final GiteeAuthenticationManager myAuthenticationManager;
+  @NotNull
+  private final GiteeApiRequestExecutorManager myExecutorManager;
+  @NotNull
+  private final GiteeGitHelper myGitHelper;
+  @NotNull
+  private final GiteeHttpAuthDataProvider myAuthDataProvider;
 
-	public GiteeRepositoryHostingService() {
-		myAuthenticationManager = GiteeAuthenticationManager.getInstance();
-		myExecutorManager = GiteeApiRequestExecutorManager.getInstance();
-		myGitHelper = GiteeGitHelper.getInstance();
-		myAuthDataProvider = GiteeHttpAuthDataProvider.EP_NAME.findExtensionOrFail(GiteeHttpAuthDataProvider.class);
-	}
+  public GiteeRepositoryHostingService() {
+    myAuthenticationManager = GiteeAuthenticationManager.getInstance();
+    myExecutorManager = GiteeApiRequestExecutorManager.getInstance();
+    myGitHelper = GiteeGitHelper.getInstance();
+    myAuthDataProvider = GiteeHttpAuthDataProvider.EP_NAME.findExtensionOrFail(GiteeHttpAuthDataProvider.class);
+  }
 
-	@NotNull
-	@Override
-	public String getServiceDisplayName() {
-		return GiteeUtil.SERVICE_DISPLAY_NAME;
-	}
+  @NotNull
+  @Override
+  public String getServiceDisplayName() {
+    return GiteeUtil.SERVICE_DISPLAY_NAME;
+  }
 
-	@Override
-	@NotNull
-	public RepositoryListLoader getRepositoryListLoader(@NotNull Project project) {
-		return new RepositoryListLoader() {
-			@NotNull
-			private final Map<GiteeAccount, GiteeApiRequestExecutor> myExecutors = new HashMap<>();
+  @Override
+  @NotNull
+  public RepositoryListLoader getRepositoryListLoader(@NotNull Project project) {
+    return new RepositoryListLoader() {
+      @NotNull
+      private final Map<GiteeAccount, GiteeApiRequestExecutor> myExecutors = new HashMap<>();
 
-			@Override
-			public boolean isEnabled() {
-				for (GiteeAccount account : myAuthenticationManager.getAccounts()) {
-					try {
-						myExecutors.put(account, myExecutorManager.getExecutor(account));
-					} catch (GiteeMissingTokenException e) {
-						// skip
-					}
-				}
-				return !myExecutors.isEmpty();
-			}
+      @Override
+      public boolean isEnabled() {
+        for (GiteeAccount account : myAuthenticationManager.getAccounts()) {
+          try {
+            myExecutors.put(account, myExecutorManager.getExecutor(account));
+          } catch (GiteeMissingTokenException e) {
+            // skip
+          }
+        }
+        return !myExecutors.isEmpty();
+      }
 
-			@Override
-			public boolean enable(@Nullable Component parentComponent) {
-				if (!myAuthenticationManager.ensureHasAccounts(project, parentComponent)) return false;
+      @Override
+      public boolean enable(@Nullable Component parentComponent) {
+        if (!myAuthenticationManager.ensureHasAccounts(project, parentComponent)) return false;
 
-				boolean atLeastOneHasToken = false;
+        boolean atLeastOneHasToken = false;
 
-				for (GiteeAccount account : myAuthenticationManager.getAccounts()) {
-					GiteeApiRequestExecutor executor = myExecutorManager.getExecutor(account, project);
+        for (GiteeAccount account : myAuthenticationManager.getAccounts()) {
+          GiteeApiRequestExecutor executor = myExecutorManager.getExecutor(account, project);
 
-					if (executor == null) continue;
+          if (executor == null) continue;
 
-					myExecutors.put(account, executor);
+          myExecutors.put(account, executor);
 
-					atLeastOneHasToken = true;
-				}
+          atLeastOneHasToken = true;
+        }
 
-				return atLeastOneHasToken;
-			}
+        return atLeastOneHasToken;
+      }
 
-			@NotNull
-			@Override
-			public Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
-				List<String> urls = new ArrayList<>();
-				List<RepositoryListLoadingException> exceptions = new ArrayList<>();
+      @NotNull
+      @Override
+      public Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
+        List<String> urls = new ArrayList<>();
+        List<RepositoryListLoadingException> exceptions = new ArrayList<>();
 
-				for (Map.Entry<GiteeAccount, GiteeApiRequestExecutor> entry : myExecutors.entrySet()) {
-					GiteeServerPath server = entry.getKey().getServer();
-					GiteeApiRequestExecutor executor = entry.getValue();
+        for (Map.Entry<GiteeAccount, GiteeApiRequestExecutor> entry : myExecutors.entrySet()) {
+          GiteeServerPath server = entry.getKey().getServer();
+          GiteeApiRequestExecutor executor = entry.getValue();
 
-					try {
-						Stream<GiteeRepo> streamAssociated = GiteeApiPagesLoader.loadAll(executor, progressIndicator, GiteeApiRequests.CurrentUser.Repos.pages(server)).stream();
+          try {
+            Stream<GiteeRepo> streamAssociated = GiteeApiPagesLoader.loadAll(executor, progressIndicator, GiteeApiRequests.CurrentUser.Repos.pages(server)).stream();
 
-						Stream<GiteeRepo> streamWatched = StreamEx.empty();
+            Stream<GiteeRepo> streamWatched = StreamEx.empty();
 
-						try {
-							streamWatched = GiteeApiPagesLoader.loadAll(executor, progressIndicator, GiteeApiRequests.CurrentUser.RepoSubs.pages(server)).stream();
-						} catch (GiteeAuthenticationException | GiteeStatusCodeException ignore) {
-							// We already can return something useful from getUserRepos, so let's ignore errors.
-							// One of this may not exist in GitHub enterprise
-						}
+            try {
+              streamWatched = GiteeApiPagesLoader.loadAll(executor, progressIndicator, GiteeApiRequests.CurrentUser.RepoSubs.pages(server)).stream();
+            } catch (GiteeAuthenticationException | GiteeStatusCodeException ignore) {
+              // We already can return something useful from getUserRepos, so let's ignore errors.
+              // One of this may not exist in GitHub enterprise
+            }
 
-						urls.addAll(Stream.concat(streamAssociated, streamWatched)
-							.sorted(Comparator.comparing(GiteeRepo::getUserName).thenComparing(GiteeRepo::getName))
-							.map(repo -> myGitHelper.getRemoteUrl(server, repo.getFullName()))
-							.collect(Collectors.toList()));
+            urls.addAll(Stream.concat(streamAssociated, streamWatched)
+                .sorted(Comparator.comparing(GiteeRepo::getUserName).thenComparing(GiteeRepo::getName))
+                .map(repo -> myGitHelper.getRemoteUrl(server, repo.getFullName()))
+                .collect(Collectors.toList()));
 
-					} catch (Exception e) {
-						exceptions.add(new RepositoryListLoadingException("Cannot load repositories from Gitee", e));
-					}
-				}
-				return new Result(urls, exceptions);
-			}
-		};
-	}
+          } catch (Exception e) {
+            exceptions.add(new RepositoryListLoadingException("Cannot load repositories from Gitee", e));
+          }
+        }
+        return new Result(urls, exceptions);
+      }
+    };
+  }
 
-	@CalledInBackground
-	@Nullable
-	@Override
-	public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project, @NotNull String url) {
-		return getProvider(project, url, null);
-	}
+  @CalledInBackground
+  @Nullable
+  @Override
+  public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project, @NotNull String url) {
+    return getProvider(project, url, null);
+  }
 
-	@CalledInBackground
-	@Nullable
-	@Override
-	public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project, @NotNull String url, @NotNull String login) {
-		return getProvider(project, url, login);
-	}
+  @CalledInBackground
+  @Nullable
+  @Override
+  public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project, @NotNull String url, @NotNull String login) {
+    return getProvider(project, url, login);
+  }
 
-	@Nullable
-	private InteractiveGitHttpAuthDataProvider getProvider(@NotNull Project project, @NotNull String url, @Nullable String login) {
-		Set<GiteeAccount> potentialAccounts = myAuthDataProvider.getSuitableAccounts(project, url, login);
+  @Nullable
+  private InteractiveGitHttpAuthDataProvider getProvider(@NotNull Project project, @NotNull String url, @Nullable String login) {
+    Set<GiteeAccount> potentialAccounts = myAuthDataProvider.getSuitableAccounts(project, url, login);
 
-		if (potentialAccounts.isEmpty()) return null;
+    if (potentialAccounts.isEmpty()) return null;
 
-		return new InteractiveGiteeHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
-	}
+    return new InteractiveGiteeHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
+  }
 }

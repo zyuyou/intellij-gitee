@@ -66,7 +66,7 @@ public class GiteeErrorMessage {
       StringBuilder s = new StringBuilder();
       s.append(message);
       for (Error e : errors) {
-        s.append(String.format("<br/>[%s; %s]%s: %s", e.resource, e.field, e.code, e.message));
+        s.append(String.format("<br/>[%s; %s]%s: %s", e.getResource(), e.getField(), e.getCode(), e.getMessage()));
       }
       return s.toString();
     }
@@ -110,7 +110,7 @@ public class GiteeErrorMessage {
   public boolean containsErrorCode(@NotNull String code) {
     if (errors == null) return false;
     for (Error error : errors) {
-      if (error.code != null && error.code.contains(code)) return true;
+      if (error.getCode().contains(code)) return true;
     }
     return false;
   }
@@ -126,7 +126,7 @@ public class GiteeErrorMessage {
       if (errorDescription.contains(message)) return true;
     } else {
       for (Error error : errors) {
-        if (error.code != null && error.code.contains(message)) return true;
+        if (error.getCode().contains(message)) return true;
       }
     }
 
