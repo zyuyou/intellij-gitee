@@ -49,8 +49,7 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
   private fun safeCreate(scopes: List<String>, login: String, password: CharArray): GiteeAuthorization {
     try {
       return executor.execute(indicator, GiteeApiRequests.Auth.create(server, scopes, login, password))
-    }
-    catch (e: GiteeStatusCodeException) {
+    } catch (e: GiteeStatusCodeException) {
       e.setDetails("Can't create token: scopes - $scopes")
       throw e
     }
@@ -60,8 +59,7 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
   private fun safeUpdate(scopes: List<String>, refreshToken: String): GiteeAuthorization {
     try {
       return executor.execute(indicator, GiteeApiRequests.Auth.update(server, refreshToken))
-    }
-    catch (e: GiteeStatusCodeException) {
+    } catch (e: GiteeStatusCodeException) {
       e.setDetails("Can't create token: scopes - $scopes")
       throw e
     }
@@ -74,8 +72,9 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
       "gists",
       "issues",
       "user_info",
-      "notes"
+      "notes",
+      "groups"
     )
-//    const val DEFAULT_CLIENT_NAME = "Gitee Integration Plugin"
+    const val DEFAULT_CLIENT_NAME = "Gitee Integration Plugin"
   }
 }

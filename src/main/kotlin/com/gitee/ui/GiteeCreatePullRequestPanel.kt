@@ -16,9 +16,9 @@
 
 package com.gitee.ui
 
-import com.gitee.api.GiteeFullPath
-import com.gitee.util.GiteeCreatePullRequestWorker.BranchInfo
-import com.gitee.util.GiteeCreatePullRequestWorker.ForkInfo
+import com.gitee.GiteeCreatePullRequestWorker.BranchInfo
+import com.gitee.GiteeCreatePullRequestWorker.ForkInfo
+import com.gitee.api.GiteeRepositoryPath
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
@@ -45,7 +45,7 @@ internal class GiteeCreatePullRequestPanel {
   private val branchModel = SortedComboBoxModel<BranchInfo> { o1, o2 -> StringUtil.naturalCompare(o1.remoteName, o2.remoteName) }
   val branchComboBox = ComboBox<BranchInfo>(branchModel)
 
-  private val forkModel = SortedComboBoxModel<ForkInfo> { o1, o2 -> StringUtil.naturalCompare(o1.path.user, o2.path.user) }
+  private val forkModel = SortedComboBoxModel<ForkInfo> { o1, o2 -> StringUtil.naturalCompare(o1.path.owner, o2.path.owner) }
   val forkComboBox = ComboBox<ForkInfo>(forkModel)
 
   val showDiffButton = JButton("Show Diff")
@@ -114,7 +114,7 @@ internal class GiteeCreatePullRequestPanel {
     return branchModel.selectedItem
   }
 
-  fun setSelectedFork(path: GiteeFullPath?) {
+  fun setSelectedFork(path: GiteeRepositoryPath?) {
     if (path != null) {
       for (info in forkModel.items) {
         if (path == info.path) {

@@ -20,7 +20,7 @@ import com.gitee.api.GiteeApiRequestExecutor;
 import com.gitee.api.GiteeApiRequestExecutorManager;
 import com.gitee.api.GiteeApiRequests;
 import com.gitee.api.GiteeServerPath;
-import com.gitee.api.requests.GiteeGistRequest.FileContent;
+import com.gitee.api.data.request.GiteeGistRequest.FileContent;
 import com.gitee.authentication.GiteeAuthenticationManager;
 import com.gitee.icons.GiteeIcons;
 import com.gitee.ui.GiteeCreateGistDialog;

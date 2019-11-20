@@ -15,41 +15,44 @@
  */
 package com.gitee.api.data;
 
-import com.gitee.api.GiteeFullPath;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gitee.api.GiteeRepositoryPath;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Objects;
 
-//example/GiteeRepoBasic.json
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeRepoBasic {
-  @Mandatory private Long id;
-  //private String nodeId;
-  @Mandatory private String url;
-  @Mandatory private GiteeNamespace namespace;
-  @Mandatory
+  private Long id;
+  // display [repo_name]
   private String name;
+  // [repo_name]
   private String path;
+  // [owner]/[repo_name]
   private String fullName;
-  @Mandatory
-  private GiteeUser owner;
-  @SerializedName("private")
-  @Mandatory
-  private Boolean isPrivate;
-  @Mandatory
+  // display [owner]/[repo_name]
+  private String humanName;
+
+  // api url
+  private String url;
   private String htmlUrl;
+
+  @JsonProperty("private")
+  private Boolean isPrivate;
   private String description;
-  @SerializedName("fork")
-  @Mandatory
+  @JsonProperty("fork")
   private Boolean isFork;
+
+  private GiteeUser owner;
 
   @NotNull
   public String getName() {
+    return path;
+  }
+
+  @NotNull
+  public String getNickName() {
     return name;
   }
 
@@ -83,28 +86,32 @@ public class GiteeRepoBasic {
 
   @NotNull
   public String getUserName() {
-    if (namespace.getType() == GiteeNamespaceType.personal) {
-      return getOwner().getLogin();
-    }
-    return namespace.getName();
+    return humanName.split("/")[0];
   }
 
   @NotNull
   public String getFullName() {
-    return StringUtil.isEmptyOrSpaces(fullName) ? getUserName() + "/" + path : fullName;
+    return fullName;
   }
 
   @NotNull
-  public GiteeFullPath getFullPath() {
-    return new GiteeFullPath(getUserName(), path, fullName);
+  public String getHumanName() {
+    return humanName;
+  }
+
+  @NotNull
+  public GiteeRepositoryPath getFullPath() {
+    String[] split = humanName.split("/");
+    return new GiteeRepositoryPath(split[0], split[1]);
   }
 
   @Override
   public String toString() {
-    return "GiteeRepo{" +
-      "id=" + id +
-      ", name='" + name + '\'' +
-      '}';
+    return "GiteeRepo{"
+        + "id=" + id
+        + ", path='" + path + '\''
+        + ", name='" + name + '\''
+        + '}';
   }
 
   @Override

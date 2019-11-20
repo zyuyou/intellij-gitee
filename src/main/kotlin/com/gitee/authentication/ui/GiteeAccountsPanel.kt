@@ -270,9 +270,10 @@ internal class GiteeAccountsPanel(private val project: Project,
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
           details = loadedDetails
-          iconProvider = CachingGiteeAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList).apply {
-            Disposer.register(this@GiteeAccountsPanel, this)
-          }
+//          iconProvider = CachingGiteeAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList).apply {
+//            Disposer.register(this@GiteeAccountsPanel, this)
+//          }
+          iconProvider = CachingGiteeAvatarIconsProvider(avatarLoader, imageResizer, executor, GiteeUIUtil.avatarSize, accountList)
 
           loadingError = null
           showLoginLink = false
@@ -364,65 +365,107 @@ private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecor
     add(namesPanel)
   }
 
+//  override fun getListCellRendererComponent(list: JList<out GiteeAccountDecorator>,
+//                                            value: GiteeAccountDecorator,
+//                                            index: Int,
+//                                            isSelected: Boolean,
+//                                            cellHasFocus: Boolean): Component {
+////    UIUtil.setBackgroundRecursively(this, if (isSelected) list.selectionBackground else list.background)
+////    val textColor = if (isSelected) list.selectionForeground else list.foreground
+////    val grayTextColor = if (isSelected) list.selectionForeground else Gray._120
+//
+//    UIUtil.setBackgroundRecursively(this, GiteeUIUtil.List.WithTallRow.background(list, isSelected))
+//    val primaryTextColor = GiteeUIUtil.List.WithTallRow.foreground(list, isSelected)
+//    val secondaryTextColor = GiteeUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
+//
+//    accountName.apply {
+//      text = value.account.name
+////      setBold(if (value.fullName == null) value.projectDefault else false)
+////      foreground = if (value.fullName == null) primaryTextColor else secondaryTextColor
+//      setBold(if (value.details?.name == null) value.projectDefault else false)
+//      foreground = if (value.details?.name == null) primaryTextColor else secondaryTextColor
+//    }
+//
+//    serverName.apply {
+//      text = value.account.server.toString()
+//      foreground = secondaryTextColor
+//    }
+//
+//    profilePicture.apply {
+////      icon = value.profilePicture?.let {
+//////        val size = JBUI.scale(ACCOUNT_PICTURE_SIZE)
+//////        JBImageIcon(it.getScaledInstance(size, size, java.awt.Image.SCALE_FAST))
+////        IconUtil.createImageIcon(ImageLoader.scaleImage(it, JBUI.scale(ACCOUNT_PICTURE_SIZE)))
+////      } ?: GiteeIcons.DefaultAvatar_40
+//      icon = value.getIcon()
+//    }
+//
+//    fullName.apply {
+////      text = value.fullName
+////      setBold(value.projectDefault)
+////      isVisible = value.fullName != null
+//      text = value.details?.name
+//      setBold(value.projectDefault)
+//      isVisible = value.details?.name != null
+//      foreground = secondaryTextColor
+//    }
+//
+//    loadingError.apply {
+//      clear()
+//      value.loadingError?.let {
+//
+//        append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
+//        append(" ")
+//
+//        if (value.showLoginLink) append("Log In",
+//          if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
+//          else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
+//          LINK_TAG)
+//      }
+//    }
+//
+//    return this
+//  }
+
   override fun getListCellRendererComponent(list: JList<out GiteeAccountDecorator>,
                                             value: GiteeAccountDecorator,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-//    UIUtil.setBackgroundRecursively(this, if (isSelected) list.selectionBackground else list.background)
-//    val textColor = if (isSelected) list.selectionForeground else list.foreground
-//    val grayTextColor = if (isSelected) list.selectionForeground else Gray._120
-
-    UIUtil.setBackgroundRecursively(this, GiteeUIUtil.List.WithTallRow.background(list, isSelected))
-    val primaryTextColor = GiteeUIUtil.List.WithTallRow.foreground(list, isSelected)
-    val secondaryTextColor = GiteeUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
+    UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus()))
+    val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
+    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
 
     accountName.apply {
       text = value.account.name
-//      setBold(if (value.fullName == null) value.projectDefault else false)
-//      foreground = if (value.fullName == null) primaryTextColor else secondaryTextColor
       setBold(if (value.details?.name == null) value.projectDefault else false)
       foreground = if (value.details?.name == null) primaryTextColor else secondaryTextColor
     }
-
     serverName.apply {
       text = value.account.server.toString()
       foreground = secondaryTextColor
     }
-
     profilePicture.apply {
-//      icon = value.profilePicture?.let {
-////        val size = JBUI.scale(ACCOUNT_PICTURE_SIZE)
-////        JBImageIcon(it.getScaledInstance(size, size, java.awt.Image.SCALE_FAST))
-//        IconUtil.createImageIcon(ImageLoader.scaleImage(it, JBUI.scale(ACCOUNT_PICTURE_SIZE)))
-//      } ?: GiteeIcons.DefaultAvatar_40
       icon = value.getIcon()
     }
-
     fullName.apply {
-//      text = value.fullName
-//      setBold(value.projectDefault)
-//      isVisible = value.fullName != null
       text = value.details?.name
       setBold(value.projectDefault)
       isVisible = value.details?.name != null
-      foreground = secondaryTextColor
+      foreground = primaryTextColor
     }
-
     loadingError.apply {
       clear()
       value.loadingError?.let {
-
         append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
         append(" ")
-
         if (value.showLoginLink) append("Log In",
-          if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
-          else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
-          LINK_TAG)
+            if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE,
+                JBUI.CurrentTheme.Link.linkColor())
+            else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
+            LINK_TAG)
       }
     }
-
     return this
   }
 
@@ -463,5 +506,8 @@ private class GiteeAccountDecorator(val account: GiteeAccount, var projectDefaul
     return account.hashCode()
   }
 
-  fun getIcon() = details?.let { iconProvider?.getIcon(it) }
+  fun getIcon(): Icon? {
+    val url = details?.avatarUrl
+    return iconProvider?.getIcon(url)
+  }
 }

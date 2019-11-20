@@ -16,9 +16,9 @@
 
 package com.gitee.ui
 
-import com.gitee.util.GiteeCreatePullRequestWorker
-import com.gitee.util.GiteeCreatePullRequestWorker.BranchInfo
-import com.gitee.util.GiteeCreatePullRequestWorker.ForkInfo
+import com.gitee.GiteeCreatePullRequestWorker
+import com.gitee.GiteeCreatePullRequestWorker.BranchInfo
+import com.gitee.GiteeCreatePullRequestWorker.ForkInfo
 import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeProjectSettings
 import com.gitee.util.GiteeSettings
@@ -81,7 +81,7 @@ class GiteeCreatePullRequestDialog(val project: Project,
               GiteeNotifications.showYesNoDialog(
                 project,
                 "Can't Find Remote",
-                "Configure remote for '" + fork.path.user + "'?",
+                "Configure remote for '" + fork.path.owner + "'?",
                 ourDoNotAskOption
               )
           }

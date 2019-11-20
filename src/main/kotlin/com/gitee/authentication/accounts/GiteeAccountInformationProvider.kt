@@ -17,12 +17,12 @@ package com.gitee.authentication.accounts
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
-import com.gitee.api.data.GiteeUserDetailed
+import com.gitee.api.data.GiteeAuthenticatedUser
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInBackground
-import java.awt.Image
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -39,7 +39,7 @@ class GiteeAccountInformationProvider {
 
   private val informationCache = CacheBuilder.newBuilder()
     .expireAfterAccess(30, TimeUnit.MINUTES)
-    .build<GiteeAccount, GiteeUserDetailed>()
+    .build<GiteeAccount, GiteeAuthenticatedUser>()
 
   init {
     ApplicationManager.getApplication().messageBus
@@ -51,9 +51,22 @@ class GiteeAccountInformationProvider {
       })
   }
 
+//  @CalledInBackground
+//  @Throws(IOException::class)
+//  fun getInformation(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, account: GiteeAccount): GiteeUserDetailed {
+//    return informationCache.get(account) { executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server)) }
+//  }
+
   @CalledInBackground
   @Throws(IOException::class)
-  fun getInformation(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, account: GiteeAccount): GiteeUserDetailed {
+  fun getInformation(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, account: GiteeAccount): GiteeAuthenticatedUser {
     return informationCache.get(account) { executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server)) }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): GiteeAccountInformationProvider {
+      return service()
+    }
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.gitee.actions
 
-import com.gitee.api.GiteeRepositoryPath
+import com.gitee.api.GiteeRepositoryCoordinates
 import com.gitee.util.GiteeGitHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -35,7 +35,7 @@ import git4idea.GitUtil
 class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation) : GiteeOpenInBrowserActionGroup(), UpToDateLineNumberListener {
   private var myLineNumber = -1
 
-  override fun getData(dataContext: DataContext): Pair<Set<GiteeRepositoryPath>, Data>? {
+  override fun getData(dataContext: DataContext): Pair<Set<GiteeRepositoryCoordinates>, Data>? {
     if (myLineNumber < 0) return null
 
     val project = dataContext.getData(CommonDataKeys.PROJECT)

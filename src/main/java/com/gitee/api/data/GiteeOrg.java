@@ -16,13 +16,9 @@
 package com.gitee.api.data;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeOrg {
-  @Mandatory
   private String login;
   private Long id;
   private String url;

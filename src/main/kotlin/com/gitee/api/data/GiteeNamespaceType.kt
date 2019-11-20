@@ -16,6 +16,8 @@
 package com.gitee.api.data
 
 @Suppress("EnumEntryName")
-enum class GiteeNamespaceType {
-  personal, enterprise, group;
+enum class GiteeNamespaceType(val lang:String) {
+  personal("个人"),
+  enterprise("企业"),
+  group("组织");
 }

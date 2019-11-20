@@ -21,11 +21,9 @@ package com.gitee.api.data;
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/data/GithubAuthenticatedUser.java
  */
 public class GiteeAuthenticatedUser extends GiteeUserDetailed {
-	private Integer totalPrivateRepos;
-	private Integer ownedPrivateRepos;
 
 	public boolean canCreatePrivateRepo() {
-		return ownedPrivateRepos == null || ownedPrivateRepos < totalPrivateRepos;
+		return true;
 	}
 
 }

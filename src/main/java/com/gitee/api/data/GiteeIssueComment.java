@@ -15,46 +15,25 @@
  */
 package com.gitee.api.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Date;
 
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeIssueComment {
-	@Mandatory
 	private Long id;
 
 	private String url;
-//	@Mandatory
-//	private String htmlUrl;
 	private String body;
-//	@Mandatory
-//	private String bodyHtml;
 
-	@Mandatory
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
 	private Date createdAt;
-//	@Mandatory
-//	private Date updatedAt;
-
-	@Mandatory
 	private GiteeUser user;
 
 	public long getId() {
 		return id;
 	}
-
-//	@NotNull
-//	public String getHtmlUrl() {
-//		return htmlUrl;
-//	}
-
-//	@NotNull
-//	public String getBodyHtml() {
-//		return bodyHtml;
-//	}
 
 	@NotNull
 	public String getBody() {
@@ -65,11 +44,6 @@ public class GiteeIssueComment {
 	public Date getCreatedAt() {
 		return createdAt;
 	}
-
-//	@NotNull
-//	public Date getUpdatedAt() {
-//		return updatedAt;
-//	}
 
 	@NotNull
 	public GiteeUser getUser() {

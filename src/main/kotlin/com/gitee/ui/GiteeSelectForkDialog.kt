@@ -16,8 +16,8 @@
 
 package com.gitee.ui
 
-import com.gitee.api.GiteeFullPath
-import com.gitee.util.GiteeCreatePullRequestWorker.ForkInfo
+import com.gitee.GiteeCreatePullRequestWorker.ForkInfo
+import com.gitee.api.GiteeRepositoryPath
 import com.gitee.util.GiteeNotifications
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -31,7 +31,7 @@ import javax.swing.JComponent
  * @author JetBrains s.r.o.
  */
 class GiteeSelectForkDialog(private val project: Project,
-                            forks: List<GiteeFullPath>?,
+                            forks: List<GiteeRepositoryPath>?,
                             private val checkFork: Convertor<in String, out ForkInfo>) : DialogWrapper(project) {
 
   private val centerPanel: GiteeSelectForkPanel = GiteeSelectForkPanel()
@@ -40,7 +40,7 @@ class GiteeSelectForkDialog(private val project: Project,
 
   init {
     if (forks != null) {
-      centerPanel.setUsers(forks.map(GiteeFullPath::getUser))
+      centerPanel.setUsers(forks.map(GiteeRepositoryPath::owner))
     }
 
     title = "Select Base Fork Repository"

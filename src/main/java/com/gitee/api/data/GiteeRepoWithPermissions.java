@@ -17,11 +17,7 @@
 package com.gitee.api.data;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
-//example/GithubRepoWithPermissions.json
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeRepoWithPermissions extends GiteeRepo {
   private Permissions permissions;
@@ -31,11 +27,10 @@ public class GiteeRepoWithPermissions extends GiteeRepo {
     return permissions;
   }
 
-  @RestModel
   public static class Permissions {
-    @Mandatory private Boolean admin;
-    @Mandatory private Boolean pull;
-    @Mandatory private Boolean push;
+    private Boolean admin;
+    private Boolean pull;
+    private Boolean push;
 
     public boolean isAdmin() {
       return admin;

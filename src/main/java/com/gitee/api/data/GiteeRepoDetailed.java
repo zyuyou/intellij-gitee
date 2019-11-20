@@ -21,16 +21,12 @@ import org.jetbrains.io.mandatory.RestModel;
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeRepoDetailed extends GiteeRepoWithPermissions {
-  private Boolean allowSquashMerge;
-  private Boolean allowMergeCommit;
-  private Boolean allowRebaseMerge;
-  private GiteeOrg organization;
-
   private GiteeRepo parent;
   private GiteeRepo source;
 
-  private Integer networkCount;
-  private Integer subscribersCount;
+  private Boolean allowSquashMerge;
+  private Boolean allowMergeCommit;
+  private Boolean allowRebaseMerge;
 
   @Nullable
   public GiteeRepo getParent() {
@@ -40,5 +36,17 @@ public class GiteeRepoDetailed extends GiteeRepoWithPermissions {
   @Nullable
   public GiteeRepo getSource() {
     return source;
+  }
+
+  public boolean getAllowSquashMerge() {
+    return allowSquashMerge != null ? allowSquashMerge : false;
+  }
+
+  public boolean getAllowMergeCommit() {
+    return allowMergeCommit != null ? allowMergeCommit : false;
+  }
+
+  public boolean getAllowRebaseMerge() {
+    return allowRebaseMerge != null ? allowRebaseMerge : false;
   }
 }

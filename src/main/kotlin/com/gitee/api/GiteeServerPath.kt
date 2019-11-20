@@ -106,8 +106,16 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
     return builder.toString()
   }
 
+  fun toGraphQLUrl(): String {
+    return ""
+  }
+
+  fun isGiteeDotCom(): Boolean {
+    return host.equals(DEFAULT_HOST, true)
+  }
+
   private fun getPortUrlPart(): String {
-    return if (port != null) (":" + port.toString()) else ""
+    return if (port != null) (":$port") else ""
   }
 
   private fun getSchemaUrlPart(): String {

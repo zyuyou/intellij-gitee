@@ -15,11 +15,11 @@
  */
 package com.gitee.api.data;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.ArrayList;
@@ -30,52 +30,24 @@ import java.util.Map;
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeGist {
-	@Mandatory
 	private String id;
-
 	private String description;
 
-	@Mandatory
-	@SerializedName("public")
+	@JsonProperty("public")
 	private Boolean isPublic;
 
 	private String url;
 
-	@Mandatory
 	private String htmlUrl;
 	private String gitPullUrl;
 	private String gitPushUrl;
 
-	@Mandatory
 	private Map<String, GistFile> files;
 
 	private GiteeUser owner;
 
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
 	private Date createdAt;
-
-	@RestModel
-	public static class GistFile {
-		private Long size;
-
-		@Mandatory
-		private String content;
-
-		@Mandatory
-		private String raw_url;
-
-		private String type;
-		private String language;
-
-		@NotNull
-		public String getContent() {
-			return content;
-		}
-
-		@NotNull
-		public String getRawUrl() {
-			return raw_url;
-		}
-	}
 
 	@NotNull
 	public String getId() {
@@ -104,5 +76,23 @@ public class GiteeGist {
 	@Nullable
 	public GiteeUser getUser() {
 		return owner;
+	}
+
+	public static class GistFile {
+		private Long size;
+
+		private String content;
+
+		private String raw_url;
+
+		@NotNull
+		public String getContent() {
+			return content;
+		}
+
+		@NotNull
+		public String getRawUrl() {
+			return raw_url;
+		}
 	}
 }

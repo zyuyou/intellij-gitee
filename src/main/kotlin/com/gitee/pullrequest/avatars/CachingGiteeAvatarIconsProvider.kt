@@ -16,14 +16,11 @@
 package com.gitee.pullrequest.avatars
 
 import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.data.GiteeUser
 import com.gitee.icons.GiteeIcons
 import com.gitee.util.CachingGiteeUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBValue
@@ -35,22 +32,17 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 /**
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/pullrequest/avatars/CachingGiteeAvatarIconsProvider.kt
  * @param component which will be repainted when icons are loaded
  */
-internal class CachingGiteeAvatarIconsProvider(private val avatarsLoader: CachingGiteeUserAvatarLoader,
-                                               private val imagesResizer: GiteeImageResizer,
-                                               private val requestExecutor: GiteeApiRequestExecutor,
-                                               private val iconSize: JBValue,
-                                               private val component: Component) : Disposable {
+class CachingGiteeAvatarIconsProvider(private val avatarsLoader: CachingGiteeUserAvatarLoader,
+                                       private val imagesResizer: GiteeImageResizer,
+                                       private val requestExecutor: GiteeApiRequestExecutor,
+                                       private val iconSize: JBValue,
+                                       private val component: Component) : GiteeAvatarIconsProvider {
 
   private val scaleContext = ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
-  private val icons = mutableMapOf<GiteeUser, Icon>()
-
-  init {
-    LowMemoryWatcher.register(Runnable { icons.clear() }, this)
-  }
+  private val icons = mutableMapOf<String, Icon>()
 
   private fun createDefaultIcon(size: Int): Icon {
     val standardDefaultAvatar = GiteeIcons.DefaultAvatar
@@ -59,7 +51,7 @@ internal class CachingGiteeAvatarIconsProvider(private val avatarsLoader: Cachin
   }
 
   @CalledInAwt
-  fun getIcon(user: GiteeUser): Icon {
+  override fun getIcon(avatarUrl: String?): Icon {
     val iconSize = iconSize.get()
 
     // so that icons are rescaled when any scale changes (be it font size or current DPI)
@@ -68,21 +60,23 @@ internal class CachingGiteeAvatarIconsProvider(private val avatarsLoader: Cachin
       icons.clear()
     }
 
+    if (avatarUrl == null) return defaultIcon
+
     val modality = ModalityState.stateForComponent(component)
-    return icons.getOrPut(user) {
+    return icons.getOrPut(avatarUrl) {
       val icon = DelegatingIcon(defaultIcon)
       avatarsLoader
-        .requestAvatar(requestExecutor, user)
-        .thenCompose<Image?> {
-          if (it != null) imagesResizer.requestImageResize(it, iconSize, scaleContext)
-          else CompletableFuture.completedFuture(null)
-        }
-        .thenAccept {
-          if (it != null) runInEdt(modality) {
-            icon.delegate = IconUtil.createImageIcon(it)
-            component.repaint()
+          .requestAvatar(requestExecutor, avatarUrl)
+          .thenCompose<Image?> {
+            if (it != null) imagesResizer.requestImageResize(it, iconSize, scaleContext)
+            else CompletableFuture.completedFuture(null)
           }
-        }
+          .thenAccept {
+            if (it != null) runInEdt(modality) {
+              icon.delegate = IconUtil.createImageIcon(it)
+              component.repaint()
+            }
+          }
 
       icon
     }
@@ -94,13 +88,11 @@ internal class CachingGiteeAvatarIconsProvider(private val avatarsLoader: Cachin
     override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) = delegate.paintIcon(c, g, x, y)
   }
 
-  override fun dispose() {}
-
   // helper to avoid passing all the services to clients
   class Factory(private val avatarsLoader: CachingGiteeUserAvatarLoader,
                 private val imagesResizer: GiteeImageResizer,
                 private val requestExecutor: GiteeApiRequestExecutor) {
     fun create(iconSize: JBValue, component: Component) = CachingGiteeAvatarIconsProvider(avatarsLoader, imagesResizer,
-                                                                                           requestExecutor, iconSize, component)
+        requestExecutor, iconSize, component)
   }
 }

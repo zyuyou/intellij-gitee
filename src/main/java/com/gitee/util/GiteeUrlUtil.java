@@ -15,7 +15,7 @@
  */
 package com.gitee.util;
 
-import com.gitee.api.GiteeFullPath;
+import com.gitee.api.GiteeRepositoryPath;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +131,7 @@ public class GiteeUrlUtil {
 	 * git@gitee.com:user/repo.git -> user/repo
 	 */
 	@Nullable
-	public static GiteeFullPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
+	public static GiteeRepositoryPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
 		remoteUrl = removeProtocolPrefix(removeEndingDotGit(remoteUrl));
 		int index1 = remoteUrl.lastIndexOf('/');
 		if (index1 == -1) {
@@ -147,7 +147,7 @@ public class GiteeUrlUtil {
 		if (username.isEmpty() || reponame.isEmpty()) {
 			return null;
 		}
-		return new GiteeFullPath(username, reponame);
+		return new GiteeRepositoryPath(username, reponame);
 	}
 
 	@NotNull
@@ -162,10 +162,10 @@ public class GiteeUrlUtil {
 
 	@Nullable
 	public static String makeGiteeRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
-		GiteeFullPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
+		GiteeRepositoryPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
 		if (repo == null) {
 			return null;
 		}
-		return host + '/' + repo.getUser() + '/' + repo.getRepository();
+		return host + '/' + repo.getOwner() + '/' + repo.getRepository();
 	}
 }

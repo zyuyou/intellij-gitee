@@ -62,8 +62,8 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 
 		myRepoAuthor.setText(repository.getRepoAuthor());
 		myRepoName.setText(repository.getRepoName());
-		myAccessToken.setText(repository.getAccessToken());
-		myRefreshToken.setText(repository.getRefreshToken());
+		myAccessToken.setText(repository.getPasswordTokens().getFirst());
+		myRefreshToken.setText(repository.getPasswordTokens().getSecond());
 		myShowNotAssignedIssues.setSelected(!repository.isAssignedIssuesOnly());
 
 		DocumentListener buttonUpdater = new DocumentAdapter() {
@@ -133,17 +133,17 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 
 	@Override
 	public void apply() {
+		super.apply();
 		myRepository.setRepoName(getRepoName());
 		myRepository.setRepoAuthor(getRepoAuthor());
-		myRepository.setTokens(getAccessToken(), getRefreshToken());
+		myRepository.setPasswordTokens(getAccessToken(), getRefreshToken());
+		myRepository.storeCredentials();
 		myRepository.setAssignedIssuesOnly(isAssignedIssuesOnly());
-		super.apply();
 	}
 
 	private void generateToken() {
 		GiteeLoginDialog dialog = new GiteeLoginDialog(GiteeApiRequestExecutor.Factory.getInstance(), myProject);
 		dialog.withServer(getHost(), false);
-//    dialog.setClientName("Tasks Plugin");
 
 		if (dialog.showAndGet()) {
 			myAccessToken.setText(dialog.getAccessToken());

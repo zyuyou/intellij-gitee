@@ -26,12 +26,12 @@ import com.gitee.util.GiteeUrlUtil
 import com.gitee.util.GiteeUtil
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import git4idea.GitUtil
-import git4idea.actions.BasicAction
 import git4idea.commands.*
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT
 import git4idea.config.GitVcsSettings
@@ -50,10 +50,16 @@ import java.io.IOException
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubRebaseAction.java
  * @author JetBrains s.r.o.
  */
-class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
+class GiteeRebaseAction : AbstractAuthenticatingGiteeUrlGroupingAction(
   "Rebase my Gitee fork",
   "Rebase your Gitee forked repository relative to the origin",
   GiteeIcons.Gitee_icon) {
+
+  companion object {
+    private val LOG = GiteeUtil.LOG
+    private const val CANNOT_PERFORM_GITEE_REBASE = "Can't perform Gitee rebase"
+    private const val UPSTREAM_REMOTE = "upstream"
+  }
 
   override fun actionPerformed(e: AnActionEvent,
                                project: Project,
@@ -61,7 +67,7 @@ class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
                                remote: GitRemote,
                                remoteUrl: String,
                                account: GiteeAccount) {
-    BasicAction.saveAll()
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     val executor = GiteeApiRequestExecutorManager.getInstance().getExecutor(account, project) ?: return
 
@@ -71,12 +77,7 @@ class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
       GiteeNotifications.showError(project, CANNOT_PERFORM_GITEE_REBASE, "Invalid Gitee remote: $remoteUrl")
       return
     }
-    RebaseTask(project, executor, Git.getInstance(), account.server, repository, repoPath, "upstream/master").queue()
-  }
-
-  companion object {
-    private val LOG = GiteeUtil.LOG
-    private const val CANNOT_PERFORM_GITEE_REBASE = "Can't perform Gitee rebase"
+    RebaseTask(project, executor, Git.getInstance(), account.server, repository, repoPath).queue()
   }
 
   private class RebaseTask(project: Project,
@@ -84,8 +85,7 @@ class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
                            private val git: Git,
                            private val server: GiteeServerPath,
                            private val repository: GitRepository,
-                           private val repoPath: GiteeFullPath,
-                           private val onto: String) : Task.Backgroundable(project, "Rebasing Gitee Fork...") {
+                           private val repoPath: GiteeRepositoryPath) : Task.Backgroundable(project, "Rebasing Gitee Fork...") {
 
     override fun run(indicator: ProgressIndicator) {
       repository.update()
@@ -98,21 +98,30 @@ class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
         upstreamRemoteUrl = configureUpstreamRemote(indicator) ?: return
       }
 
-      if (isUpstreamWithSameUsername(indicator, upstreamRemoteUrl)) {
+      val userAndRepo = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
+      if (userAndRepo == null) {
+        GiteeNotifications.showError(myProject, CANNOT_PERFORM_GITEE_REBASE, "Can't validate upstream remote: $upstreamRemoteUrl");
+        return;
+      }
+
+      if (isUpstreamWithSameUsername(indicator, userAndRepo)) {
         GiteeNotifications.showError(myProject, CANNOT_PERFORM_GITEE_REBASE,
           "Configured upstream seems to be your own repository: $upstreamRemoteUrl")
         return
       }
 
+      val name = getDefaultBranchName(indicator, userAndRepo) ?: return
+      val onto = "$UPSTREAM_REMOTE/$name"
+
       LOG.info("Fetching upstream")
       indicator.text = "Fetching upstream..."
-      if (!fetchParent(indicator)) {
+      if (!fetchParent()) {
         return
       }
 
       LOG.info("Rebasing current branch")
       indicator.text = "Rebasing current branch..."
-      rebaseCurrentBranch(indicator)
+      rebaseCurrentBranch(indicator, onto)
     }
 
     private fun findUpstreamRemoteUrl(): String? {
@@ -127,20 +136,29 @@ class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
     }
 
 
-    private fun isUpstreamWithSameUsername(indicator: ProgressIndicator, upstreamRemoteUrl: String): Boolean {
+    private fun isUpstreamWithSameUsername(indicator: ProgressIndicator, userAndRepo: GiteeRepositoryPath): Boolean {
       try {
-        val userAndRepo = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl)
-        if (userAndRepo == null) {
-          GiteeNotifications.showError(myProject, CANNOT_PERFORM_GITEE_REBASE, "Can't validate upstream remote: $upstreamRemoteUrl")
-          return true
-        }
         val username = requestExecutor.execute(indicator, GiteeApiRequests.CurrentUser.get(server)).login
-        return userAndRepo.user == username
+        return userAndRepo.owner == username
       } catch (e: IOException) {
         GiteeNotifications.showError(myProject, CANNOT_PERFORM_GITEE_REBASE, "Can't get user information")
         return true
       }
+    }
 
+    private fun getDefaultBranchName(indicator: ProgressIndicator, userAndRepo: GiteeRepositoryPath): String? {
+      try {
+        val repo = requestExecutor.execute(indicator,
+            GiteeApiRequests.Repos.get(server, userAndRepo.owner, userAndRepo.repository))
+        if (repo == null) {
+          GiteeNotifications.showError(myProject, CANNOT_PERFORM_GITEE_REBASE, "Can't retrieve upstream information for $userAndRepo")
+          return null
+        }
+        return repo.defaultBranch
+      } catch (e: IOException) {
+        GiteeNotifications.showError(myProject, CANNOT_PERFORM_GITEE_REBASE, "Can't retrieve upstream information for $userAndRepo", e.message!!)
+        return null
+      }
     }
 
     private fun configureUpstreamRemote(indicator: ProgressIndicator): String? {
@@ -161,7 +179,7 @@ class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
         git.addRemote(repository, "upstream", parentRepoUrl).throwOnError()
       } catch (e: VcsException) {
         GiteeNotifications
-          .showError(myProject, CANNOT_PERFORM_GITEE_REBASE, "Could not configure \"upstream\" remote:\n" + e.message)
+          .showError(myProject, CANNOT_PERFORM_GITEE_REBASE, "Could not configure \"" + UPSTREAM_REMOTE + "\" remote:\n" + e.message)
         return null
       }
 
@@ -169,43 +187,42 @@ class GiteeRebaseAction : AbstractGiteeUrlGroupingAction(
       return parentRepoUrl
     }
 
-    private fun loadRepositoryInfo(indicator: ProgressIndicator, fullPath: GiteeFullPath): GiteeRepoDetailed? {
+    private fun loadRepositoryInfo(indicator: ProgressIndicator, fullPath: GiteeRepositoryPath): GiteeRepoDetailed? {
       return try {
-        val repo = requestExecutor.execute(indicator, GiteeApiRequests.Repos.get(server, fullPath.user, fullPath.repository))
-        if (repo == null) GiteeNotifications.showError(myProject, "Repository " + fullPath.toString() + " was not found", "")
+        val repo = requestExecutor.execute(indicator, GiteeApiRequests.Repos.get(server, fullPath.owner, fullPath.repository))
+        if (repo == null) GiteeNotifications.showError(myProject, "Repository $fullPath was not found", "")
         repo
       } catch (e: IOException) {
         GiteeNotifications.showError(myProject, "Can't load repository info", e)
         null
       }
-
     }
 
-    private fun fetchParent(indicator: ProgressIndicator): Boolean {
-      val remote = GitUtil.findRemoteByName(repository, "upstream")
+    private fun fetchParent(): Boolean {
+      val remote = GitUtil.findRemoteByName(repository, UPSTREAM_REMOTE)
       if (remote == null) {
         LOG.warn("Couldn't find remote  remoteName  in $repository")
         return false
       }
       return fetchSupport(myProject).fetch(repository, remote).showNotificationIfFailed()
-
     }
 
-    private fun rebaseCurrentBranch(indicator: ProgressIndicator) {
+    private fun rebaseCurrentBranch(indicator: ProgressIndicator, onto: String) {
       DvcsUtil.workingTreeChangeStarted(myProject, "Rebase").use { _ ->
         val rootsToSave = listOf(repository.root)
 
+        val saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy()
+
         val process = GitPreservingProcess(myProject, git, rootsToSave, "Rebasing", onto,
-          GitVcsSettings.UpdateChangesPolicy.STASH, indicator
-        ) {
-          doRebaseCurrentBranch(indicator)
-        }
+            saveMethod, indicator
+        ) { doRebaseCurrentBranch(indicator, onto) }
 
         process.execute()
       }
+
     }
 
-    private fun doRebaseCurrentBranch(indicator: ProgressIndicator) {
+    private fun doRebaseCurrentBranch(indicator: ProgressIndicator, onto: String) {
       val repositoryManager = GitUtil.getRepositoryManager(myProject)
       val rebaser = GitRebaser(myProject, git, indicator)
       val root = repository.root

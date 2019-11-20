@@ -17,8 +17,10 @@ package com.gitee.issue
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
+import com.gitee.api.GiteeRepositoryPath
 import com.gitee.api.GiteeServerPath
 import com.gitee.api.data.GiteeIssue
+import com.gitee.api.data.GiteeSearchedIssue
 import com.gitee.api.util.GiteeApiPagesLoader
 import com.intellij.openapi.progress.ProgressIndicator
 import java.io.IOException
@@ -40,6 +42,21 @@ object GiteeIssuesLoadingHelper {
       indicator,
       GiteeApiRequests.Repos.Issues.pages(server, owner, repo, if (withClosed) "all" else "open", assignee),
       maximum
+    )
+  }
+
+  @JvmOverloads
+  @JvmStatic
+  @Throws(IOException::class)
+  fun search(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, server: GiteeServerPath,
+             owner: String, repo: String, withClosed: Boolean, assignee: String? = null, query: String? = null)
+    : List<GiteeSearchedIssue> {
+
+    return GiteeApiPagesLoader.loadAll(executor, indicator,
+      GiteeApiRequests.Search.Issues.pages(
+        server,
+        GiteeRepositoryPath(owner, repo),
+        if (withClosed) null else "open", assignee, query)
     )
   }
 }

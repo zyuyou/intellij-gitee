@@ -25,7 +25,7 @@ import java.util.function.Predicate
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/util/GithubApiPagesLoader.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/util/GiteeApiPagesLoader.kt
  * @author JetBrains s.r.o.
  */
 object GiteeApiPagesLoader {
@@ -34,23 +34,34 @@ object GiteeApiPagesLoader {
   @JvmStatic
   fun <T> loadAll(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, pagesRequest: Request<T>): List<T> {
     val result = mutableListOf<T>()
+    loadAll(executor, indicator, pagesRequest) { result.addAll(it) }
+    return result
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
+  fun <T> loadAll(executor: GiteeApiRequestExecutor,
+                  indicator: ProgressIndicator,
+                  pagesRequest: Request<T>,
+                  pageItemsConsumer: (List<T>) -> Unit) {
+
     var request: GiteeApiRequest<GiteeResponsePage<T>>? = pagesRequest.initialRequest
 
     while (request != null) {
       val page = executor.execute(indicator, request)
-      result.addAll(page.list)
+      pageItemsConsumer(page.items)
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }
-    return result
   }
 
   @Throws(IOException::class)
   @JvmStatic
   fun <T> find(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, pagesRequest: Request<T>, predicate: Predicate<T>): T? {
     var request: GiteeApiRequest<GiteeResponsePage<T>>? = pagesRequest.initialRequest
+
     while (request != null) {
       val page = executor.execute(indicator, request)
-      page.list.find { predicate.test(it) }?.let { return it }
+      page.items.find { predicate.test(it) }?.let { return it }
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }
     return null
@@ -64,12 +75,10 @@ object GiteeApiPagesLoader {
 
     while (request != null) {
       val page = executor.execute(indicator, request)
-
-      for (item in page.list) {
+      for (item in page.items) {
         result.add(item)
         if (result.size == maximum) return result
       }
-
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }
     return result

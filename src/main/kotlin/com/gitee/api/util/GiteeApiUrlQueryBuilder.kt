@@ -15,7 +15,7 @@
  */
 package com.gitee.api.util
 
-import com.gitee.api.requests.GiteeRequestPagination
+import com.gitee.api.data.request.GiteeRequestPagination
 import com.intellij.util.io.URLUtil
 
 @DslMarker

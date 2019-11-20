@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2019.2.0</version>
+    <version>2019.3.0</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -11,24 +11,16 @@
     </description>
     <change-notes>
         <![CDATA[
-        <i>2019.2</i>
+        <i>2019.3.0</i>
         <ul>
-          <li>兼容IDEA 2019.2系列</li>
-        </ul>
-        <i>2019.1.1</i>
-        <ul>
-          <li>修复部分密码登录验证失败问题</li>
-        </ul>
-        <i>2018.3.5</i>
-        <ul>
-          <li>修改IDEA的task功能AccessTokens的授权问题</li>
-          <li>PR列表用户名称修改为Gitee的昵称</li>
-          <li>修复PR列表查看请求URL区分不同Namespace</li>
+          <li>Change repo list display name.</li>
+          <li>Fix task get issue fail.</li>
+          <li>Remove useless code and deprecated api.</li>
         </ul>
       ]]>
     </change-notes>
 
-    <idea-version since-build="192.1" until-build="192.*"/>
+    <idea-version since-build="193.*" until-build="*.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>
@@ -47,21 +39,49 @@
         <applicationService serviceImplementation="com.gitee.util.GiteeGitHelper"/>
         <applicationService serviceImplementation="com.gitee.util.CachingGiteeUserAvatarLoader"/>
         <applicationService serviceImplementation="com.gitee.util.GiteeImageResizer"/>
-        <applicationService serviceImplementation="com.gitee.extensions.GiteeAccountGitAuthenticationFailureManager"/>
 
-        <projectService serviceInterface="com.gitee.util.GiteeProjectSettings"
-                        serviceImplementation="com.gitee.util.GiteeProjectSettings"/>
+        <projectService serviceImplementation="com.gitee.extensions.GiteeAccountGitAuthenticationFailureManager"/>
+        <projectService serviceImplementation="com.gitee.util.GiteeProjectSettings"/>
+        <projectService serviceImplementation="com.gitee.util.GiteeSharedProjectSettings"/>
         <projectService serviceImplementation="com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder"/>
 
-        <projectService serviceImplementation="com.gitee.pullrequest.GiteePullRequestsToolWindowManager"/>
-        <projectService serviceImplementation="com.gitee.pullrequest.GiteePullRequestsComponentFactory"/>
+<!--        <projectService serviceImplementation="com.gitee.pullrequest.config.GiteePullRequestsProjectUISettings"/>-->
+<!--        <projectService serviceImplementation="com.gitee.ui.GiteePREditorContentSynchronizer"/>-->
 
         <vcsAnnotationGutterActionProvider implementation="com.gitee.extensions.GiteeAnnotationGutterActionProvider"/>
-        <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="com.gitee.ui.GiteeSettingsConfigurable"/>
+
+        <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
+                             instance="com.gitee.ui.GiteeSettingsConfigurable"/>
 
         <statistics.applicationUsagesCollector
             implementation="com.gitee.authentication.accounts.GiteeAccountsStatisticsCollector"/>
+
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+                implementation="com.gitee.ui.cloneDialog.GiteeCloneDialogExtension"/>
+
+<!--        <fileType name="GiteePullRequest" implementationClass="com.gitee.pullrequest.GiteePRFileType"/>-->
+<!--        <fileEditorProvider implementation="com.gitee.pullrequest.GiteePREditorProvider"/>-->
     </extensions>
+
+<!--    <applicationListeners>-->
+<!--        <listener class="com.gitee.pullrequest.GiteePRToolWindowTabsManager$AccountsListener"-->
+<!--                  topic="com.gitee.authentication.accounts.AccountRemovedListener"-->
+<!--                  activeInHeadlessMode="false" activeInTestMode="false"/>-->
+<!--        <listener class="com.gitee.pullrequest.GiteePRToolWindowTabsManager$AccountsListener"-->
+<!--                  topic="com.gitee.authentication.accounts.AccountTokenChangedListener"-->
+<!--                  activeInHeadlessMode="false" activeInTestMode="false"/>-->
+<!--    </applicationListeners>-->
+
+<!--    <projectListeners>-->
+<!--        <listener class="com.gitee.pullrequest.GiteePRToolWindowTabsManager$RemoteUrlsListener"-->
+<!--                  topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"-->
+<!--                  activeInHeadlessMode="false" activeInTestMode="false"/>-->
+<!--        <listener class="com.gitee.pullrequest.GiteePRToolWindowTabsManager$RemoteUrlsListener"-->
+<!--                  topic="git4idea.repo.GitRepositoryChangeListener"-->
+<!--                  activeInHeadlessMode="false" activeInTestMode="false"/>-->
+
+<!--        <listener class="com.gitee.ui.GiteePREditorContentSynchronizer$MyToolwindowListener" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener" />-->
+<!--    </projectListeners>-->
 
     <extensions defaultExtensionNs="Git4Idea">
         <GitHttpAuthDataProvider implementation="com.gitee.extensions.GiteeHttpAuthDataProvider"/>
@@ -74,14 +94,6 @@
         </action>
 
         <action id="Gitee.Rebase" class="com.gitee.actions.GiteeRebaseAction">
-            <add-to-group group-id="Git.Menu"/>
-        </action>
-
-        <action id="Gitee.Create.Pull.Request" class="com.gitee.actions.GiteeCreatePullRequestAction">
-            <add-to-group group-id="Git.Menu"/>
-        </action>
-
-        <action id="Gitee.View.Pull.Request" class="com.gitee.actions.GiteeViewPullRequestsAction">
             <add-to-group group-id="Git.Menu"/>
         </action>
 
@@ -102,16 +114,39 @@
             <add-to-group group-id="ConsoleEditorPopupMenu"/>
         </action>
 
-        <group id="Gitee.PullRequest.ToolWindow.List.Popup">
-            <action id="Gitee.PullRequest.Branch.Create"
-                    class="com.gitee.pullrequest.action.GiteePullRequestCreateBranchAction"/>
-            <reference id="Gitee.Open.In.Browser"/>
-            <action id="Gitee.PullRequest.List.Refresh"
-                    class="com.gitee.pullrequest.action.GiteePullRequestRefreshListAction"/>
-        </group>
-        <action id="Gitee.PullRequest.Preview.Refresh"
-                class="com.gitee.pullrequest.action.GiteePullRequestRefreshPreviewAction"
-                internal="true"/>
+<!--        <action id="Gitee.Create.Pull.Request" class="com.gitee.actions.GiteeCreatePullRequestAction">-->
+<!--            <add-to-group group-id="Git.Menu"/>-->
+<!--        </action>-->
+<!--        <action id="Gitee.View.Pull.Request" class="com.gitee.actions.GiteeViewPullRequestsAction">-->
+<!--            <add-to-group group-id="Git.Menu"/>-->
+<!--        </action>-->
+
+<!--        <group id="Gitee.PullRequest.ToolWindow.List.Popup">-->
+<!--            <action id="Gitee.PullRequest.Timeline.Show"-->
+<!--                    class="com.gitee.pullrequest.action.GiteePRShowTimelineAction"/>-->
+<!--            <action id="Gitee.PullRequest.Branch.Create"-->
+<!--                    class="com.gitee.pullrequest.action.GiteePullRequestCreateBranchAction"/>-->
+<!--            <reference id="Gitee.Open.In.Browser"/>-->
+<!--            <action id="Gitee.PullRequest.List.Reload"-->
+<!--                    class="com.gitee.pullrequest.action.GiteePRReloadListAction" use-shortcut-of="Refresh"/>-->
+<!--        </group>-->
+<!--        <group id="Gitee.PullRequest.Details.Popup">-->
+<!--            <action id="Gitee.PullRequest.Details.Reload"-->
+<!--                    class="com.gitee.pullrequest.action.GiteePRReloadDetailsAction" use-shortcut-of="Refresh"/>-->
+<!--        </group>-->
+<!--        <action id="Gitee.PullRequest.Comments.Reload"-->
+<!--                class="com.gitee.pullrequest.action.GiteePRReloadCommentsAction" use-shortcut-of="Refresh"/>-->
+<!--        <group id="Gitee.PullRequest.Timeline.Popup">-->
+<!--            <action id="Gitee.PullRequest.Timeline.Update"-->
+<!--                    class="com.gitee.pullrequest.action.GiteePRUpdateTimelineAction" use-shortcut-of="Refresh"/>-->
+<!--        </group>-->
+<!--        <group>-->
+<!--            <action id="Gitee.PullRequest.Zip.Commits.Toggle"-->
+<!--                    class="com.gitee.pullrequest.ui.changes.GiteePRChangesBrowser$ToggleZipCommitsAction"/>-->
+
+<!--            <add-to-group group-id="ChangesView.GroupBy" anchor="last"/>-->
+<!--        </group>-->
+
 
     </actions>
 </idea-plugin>

@@ -160,8 +160,19 @@ public class GiteeRepositoryHostingService extends GitRepositoryHostingService {
   private InteractiveGitHttpAuthDataProvider getProvider(@NotNull Project project, @NotNull String url, @Nullable String login) {
     Set<GiteeAccount> potentialAccounts = myAuthDataProvider.getSuitableAccounts(project, url, login);
 
-    if (potentialAccounts.isEmpty()) return null;
+//    if (potentialAccounts.isEmpty()) return null;
+//
+//    return new InteractiveGiteeHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
 
-    return new InteractiveGiteeHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
+    if (!potentialAccounts.isEmpty()) {
+      return new InteractiveSelectGiteeAccountHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
+    }
+
+    if (GiteeServerPath.Companion.getDEFAULT_SERVER().matches(url)) {
+      return new InteractiveCreateGiteeAccountHttpAuthDataProvider(project, myAuthenticationManager,
+          GiteeServerPath.Companion.getDEFAULT_SERVER(), login);
+    }
+
+    return null;
   }
 }

@@ -16,25 +16,15 @@
 package com.gitee.api.data;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
-import java.util.Date;
 import java.util.Objects;
 
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeNamespace {
-  @Mandatory
   private Long id;
-  @Mandatory
   private GiteeNamespaceType type;
-  @Mandatory
   private String name;
-  @Mandatory
   private String path;
-  @Mandatory
   private String htmlUrl;
 
   @NotNull

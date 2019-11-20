@@ -17,10 +17,8 @@ package com.gitee.api.data;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
-import java.util.Date;
 import java.util.Objects;
 
 @RestModel
@@ -28,31 +26,27 @@ import java.util.Objects;
 public class GiteeUser {
   @NotNull public static final GiteeUser UNKNOWN = createUnknownUser();
 
-  @Mandatory
-  private String login;
-  @Mandatory
-  private String name;
   private Long id;
+  private String login;
 
+  // https://gitee.com/api/v5/user/[name]
   private String url;
-  @Mandatory
+  // https://gitee.com/[zyuyou]
   private String htmlUrl;
 
-  private Integer followers;
-  private Integer following;
   private String avatarUrl;
-  private String blog;
 
-  private Date createdAt;
+  private String type;
+  private Boolean siteAdmin;
+
+  @NotNull
+  public String getNodeId() {
+    return "nodeId";
+  }
 
   @NotNull
   public String getLogin() {
     return login;
-  }
-
-  @NotNull
-  public String getName() {
-    return name;
   }
 
   @NotNull
@@ -63,13 +57,6 @@ public class GiteeUser {
   @Nullable
   public String getAvatarUrl() {
     return avatarUrl;
-  }
-
-  @NotNull
-  private static GiteeUser createUnknownUser() {
-    GiteeUser user = new GiteeUser();
-    user.login = "ghost";
-    return user;
   }
 
   @Override
@@ -87,4 +74,11 @@ public class GiteeUser {
     return Objects.hash(id);
   }
 
+  @NotNull
+  private static GiteeUser createUnknownUser() {
+    GiteeUser user = new GiteeUser();
+    user.id = -1L;
+    user.login = "ghost";
+    return user;
+  }
 }

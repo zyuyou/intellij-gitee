@@ -15,7 +15,7 @@
  */
 package com.gitee.util;
 
-import com.gitee.api.GiteeFullPath;
+import com.gitee.api.GiteeRepositoryPath;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -62,15 +62,15 @@ public class GiteeProjectSettings implements PersistentStateComponent<GiteeProje
   }
 
   @Nullable
-  public GiteeFullPath getCreatePullRequestDefaultRepo() {
+  public GiteeRepositoryPath getCreatePullRequestDefaultRepo() {
     if (myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER == null || myState.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME == null) {
       return null;
     }
-    return new GiteeFullPath(myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER, myState.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME);
+    return new GiteeRepositoryPath(myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER, myState.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME);
   }
 
-  public void setCreatePullRequestDefaultRepo(@NotNull GiteeFullPath repo) {
-    myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER = repo.getUser();
+  public void setCreatePullRequestDefaultRepo(@NotNull GiteeRepositoryPath repo) {
+    myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER = repo.getOwner();
     myState.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME = repo.getRepository();
   }
 }

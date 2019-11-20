@@ -16,10 +16,10 @@
 package com.gitee.authentication.accounts
 
 import com.gitee.api.GiteeServerPath
-import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.utils.getBooleanUsage
-import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.StringUtil
 
@@ -31,14 +31,18 @@ import com.intellij.openapi.util.text.StringUtil
  */
 class GiteeAccountsStatisticsCollector : ApplicationUsagesCollector() {
 
-  override fun getUsages(): Set<UsageDescriptor> {
+  override fun getVersion() = 2
+
+  override fun getMetrics(): Set<MetricEvent> {
     val accountManager = service<GiteeAccountManager>()
     val hasAccountsWithNonDefaultHost = accountManager.accounts.any {
       !StringUtil.equalsIgnoreCase(it.server.host, GiteeServerPath.DEFAULT_HOST)
     }
 
-    return setOf(getCountingUsage("gitee.accounts.count", accountManager.accounts.size, listOf(0, 1, 2)),
-      getBooleanUsage("gitee.accounts.not.default.host", hasAccountsWithNonDefaultHost))
+    return setOf(
+      newMetric("accounts", FeatureUsageData()
+        .addCount(accountManager.accounts.size)
+        .addData("has_enterprise", hasAccountsWithNonDefaultHost)))
   }
 
   override fun getGroupId(): String = "vcs.gitee"

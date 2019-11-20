@@ -1,23 +1,10 @@
-/*
- *  Copyright 2016-2019 码云 - Gitee
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui
 
-import com.gitee.api.data.GiteeIssueState
-import com.gitee.api.data.GiteePullRequest
+import com.gitee.api.data.pullrequest.GEPullRequestShort
+import com.gitee.api.data.pullrequest.GiteePullRequestState
 import com.gitee.icons.GiteeIcons
+import com.gitee.pullrequest.action.GiteePullRequestKeys
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.util.GiteeUIUtil
 import com.intellij.ide.CopyProvider
@@ -26,33 +13,29 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
-import java.awt.FlowLayout
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-/**
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/pullrequest/ui/GithubPullRequestsList.kt
- * @author JetBrains s.r.o.
- */
 internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteManager,
                                      avatarIconsProviderFactory: CachingGiteeAvatarIconsProvider.Factory,
-                                     model: ListModel<GiteePullRequest>)
-  : JBList<GiteePullRequest>(model), CopyProvider, DataProvider, Disposable {
+                                     model: ListModel<GEPullRequestShort>)
+  : JBList<GEPullRequestShort>(model), CopyProvider, DataProvider, Disposable {
 
-  private val avatarIconSize = JBValue.UIInteger("Gitee.PullRequests.List.Assignee.Avatar.Size", 20)
-  private val avatarIconsProvider = avatarIconsProviderFactory.create(avatarIconSize, this)
+  private val avatarIconsProvider = avatarIconsProviderFactory.create(GiteeUIUtil.avatarSize, this)
 
   init {
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -63,7 +46,6 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
     UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
     ScrollingUtil.installActions(this)
-    Disposer.register(this, avatarIconsProvider)
   }
 
   override fun getToolTipText(event: MouseEvent): String? {
@@ -82,16 +64,22 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
 
   override fun isCopyVisible(dataContext: DataContext) = false
 
-  override fun getData(dataId: String) = if (PlatformDataKeys.COPY_PROVIDER.`is`(dataId)) this else null
+  override fun getData(dataId: String): Any? = when {
+    PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
+    GiteePullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> selectedValue
+    else -> null
+  }
 
   override fun dispose() {}
 
-  private inner class PullRequestsListCellRenderer : ListCellRenderer<GiteePullRequest>, JPanel() {
+  private inner class PullRequestsListCellRenderer : ListCellRenderer<GEPullRequestShort>, JPanel() {
 
     private val stateIcon = JLabel()
     private val title = JLabel()
     private val info = JLabel()
-    private val labels = JPanel(FlowLayout(FlowLayout.LEFT, 4, 0))
+    private val labels = JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.X_AXIS)
+    }
     private val assignees = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.X_AXIS)
     }
@@ -103,13 +91,17 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
                            .insets("0", "0", "0", "0")
                            .fillX())
 
+      val gapAfter = "${JBUI.scale(5)}px"
       add(stateIcon, CC()
-        .gapAfter("${JBUI.scale(5)}px"))
+        .gapAfter(gapAfter))
       add(title, CC()
-        .minWidth("0px"))
+        .minWidth("pref/2px")
+        .gapAfter(gapAfter))
       add(labels, CC()
         .growX()
-        .pushX())
+        .pushX()
+        .minWidth("0px")
+        .gapAfter(gapAfter))
       add(assignees, CC()
         .spanY(2)
         .wrap())
@@ -119,31 +111,36 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
         .spanX(2))
     }
 
-    override fun getListCellRendererComponent(list: JList<out GiteePullRequest>,
-                                              value: GiteePullRequest,
+    override fun getListCellRendererComponent(list: JList<out GEPullRequestShort>,
+                                              value: GEPullRequestShort,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      UIUtil.setBackgroundRecursively(this, GiteeUIUtil.List.WithTallRow.background(list, isSelected))
-      val primaryTextColor = GiteeUIUtil.List.WithTallRow.foreground(list, isSelected)
-      val secondaryTextColor = GiteeUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
+      UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus()))
+      val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
+      val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
 
       stateIcon.apply {
-        icon = if (value.state == GiteeIssueState.open) GiteeIcons.PullRequestOpen else GiteeIcons.PullRequestClosed
+        icon = when (value.state) {
+          GiteePullRequestState.CLOSED -> GiteeIcons.PullRequestClosed
+          GiteePullRequestState.MERGED -> GiteeIcons.PullRequestMerged
+          GiteePullRequestState.OPEN -> GiteeIcons.PullRequestOpen
+        }
       }
       title.apply {
         text = value.title
         foreground = primaryTextColor
       }
-
       info.apply {
-        text = "#${value.number} ${value.user.name} on ${DateFormatUtil.formatDate(value.createdAt)}"
+        text = "#${value.number} ${value.author?.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
         foreground = secondaryTextColor
       }
-
       labels.apply {
         removeAll()
-        for (label in value.labels) add(GiteeUIUtil.createIssueLabelLabel(label))
+        for (label in value.labels) {
+          add(GiteeUIUtil.createIssueLabelLabel(label))
+          add(Box.createRigidArea(JBDimension(4, 0)))
+        }
       }
       assignees.apply {
         removeAll()
@@ -152,7 +149,7 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
             add(Box.createRigidArea(JBDimension(UIUtil.DEFAULT_HGAP, 0)))
           }
           add(JLabel().apply {
-            icon = assignee.let { avatarIconsProvider.getIcon(it) }
+            icon = avatarIconsProvider.getIcon(assignee.avatarUrl)
             toolTipText = assignee.login
           })
         }
@@ -164,7 +161,7 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
 
   private inner class RightClickSelectionListener : MouseAdapter() {
     override fun mousePressed(e: MouseEvent) {
-      if (JBSwingUtilities.isRightMouseButton(e)) {
+      if (SwingUtilities.isRightMouseButton(e)) {
         val row = locationToIndex(e.point)
         if (row != -1) selectionModel.setSelectionInterval(row, row)
       }

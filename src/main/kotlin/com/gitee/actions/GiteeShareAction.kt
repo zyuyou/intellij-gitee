@@ -19,6 +19,8 @@ package com.gitee.actions
 import com.gitee.GiteeBundle
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.GiteeApiRequests
+import com.gitee.api.data.request.GiteeRequestPagination
+import com.gitee.api.data.request.Type
 import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
@@ -36,6 +38,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -46,10 +49,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -63,7 +63,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.DialogManager
 import git4idea.GitUtil
-import git4idea.actions.BasicAction
 import git4idea.actions.GitInit
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -121,7 +120,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
     @JvmStatic
     fun shareProjectOnGitee(project: Project, file: VirtualFile?) {
-      BasicAction.saveAll()
+      FileDocumentManager.getInstance().saveAllDocuments();
 
       val gitRepository = GiteeGitHelper.findGitRepository(project, file)
 
@@ -161,7 +160,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
             val names = GiteeApiPagesLoader.loadAll(
               requestExecutor,
               progressManager.progressIndicator,
-              GiteeApiRequests.CurrentUser.Repos.pages(account.server, false)
+              GiteeApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER, pagination = GiteeRequestPagination.DEFAULT)
             ).mapSmartSet { it.name }
 
             user.canCreatePrivateRepo() to names
@@ -271,7 +270,8 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
             // ask for files to add
             val trackedFiles = ChangeListManager.getInstance(project).affectedFiles
-            val untrackedFiles = filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFiles())
+            val untrackedFiles =
+              filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
             trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
 
             val allFiles = ArrayList<VirtualFile>()

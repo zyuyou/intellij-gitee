@@ -43,6 +43,16 @@ public class GiteeIssueLabel {
   private String color;
 
   @NotNull
+  public String getNodeId() {
+    return "nodeId";
+  }
+
+  @NotNull
+  public String getUrl() {
+    return url;
+  }
+
+  @NotNull
   public String getName() {
     return name;
   }
@@ -50,5 +60,22 @@ public class GiteeIssueLabel {
   @NotNull
   public String getColor() {
     return color;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GiteeIssueLabel)) return false;
+
+    GiteeIssueLabel label = (GiteeIssueLabel)o;
+
+    if (!id.equals(label.id)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
   }
 }

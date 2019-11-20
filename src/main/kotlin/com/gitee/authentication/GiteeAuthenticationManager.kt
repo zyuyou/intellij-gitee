@@ -19,7 +19,6 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.authentication.ui.GiteeLoginDialog
@@ -128,7 +127,29 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
   }
 
-  private fun isAccountUnique(name: String, server: GiteeServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+  @CalledInAwt
+  @JvmOverloads
+  fun requestNewAccountForServer(server: GiteeServerPath, login: String, project: Project?, parentComponent: Component? = null): GiteeAccount? {
+    val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
+            .withServer(server.toUrl(), false)
+            .withCredentials(login, editableLogin = false)
+    DialogManager.show(dialog)
+    if (!dialog.isOK) return null
+
+    return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+  }
+
+  internal fun isAccountUnique(name: String, server: GiteeServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+
+  @CalledInAwt
+  internal fun removeAccount(giteeAccount: GiteeAccount) {
+    accountManager.accounts -= giteeAccount
+  }
+
+  @CalledInAwt
+  internal fun updateAccountToken(account: GiteeAccount, newToken: String) {
+    accountManager.updateAccountToken(account, newToken)
+  }
 
   private fun registerAccount(name: String, server: GiteeServerPath, token: String): GiteeAccount {
     val account = GiteeAccountManager.createAccount(name, server)

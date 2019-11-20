@@ -15,8 +15,13 @@
  */
 package com.gitee.api
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.gitee.api.data.GiteeResponsePage
-import com.google.gson.reflect.TypeToken
+import com.gitee.api.data.GiteeSearchResult
+import com.gitee.api.data.graphql.GiteeGQLQueryRequest
+import com.gitee.api.data.graphql.GiteeGQLResponse
+import com.gitee.exceptions.GiteeConfusingException
+import com.gitee.exceptions.GiteeJsonException
 import com.intellij.util.ThrowableConvertor
 import java.io.IOException
 
@@ -28,10 +33,11 @@ import java.io.IOException
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiRequest.kt
  * @author JetBrains s.r.o.
  */
-sealed class GiteeApiRequest<T>(val url: String) {
-
+sealed class GiteeApiRequest<out T>(val url: String) {
   var operationName: String? = null
   abstract val acceptMimeType: String?
+
+  open val tokenHeaderType = GiteeApiRequestExecutor.TokenHeaderType.TOKEN
 
   protected val headers = mutableMapOf<String, String>()
   val additionalHeaders: Map<String, String>
@@ -51,169 +57,269 @@ sealed class GiteeApiRequest<T>(val url: String) {
     abstract class Optional<T> @JvmOverloads constructor(url: String,
                                                          acceptMimeType: String? = null) : Get<T?>(url, acceptMimeType) {
       companion object {
-        inline fun <reified T> json(url: String): Optional<T> = Json(url, T::class.java)
+        inline fun <reified T> json(url: String, acceptMimeType: String? = null): Optional<T> =
+            Json(url, T::class.java, acceptMimeType)
       }
 
-      open class Json<T>(url: String, clazz: Class<T>) : Optional<T>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
-        private val typeToken = TypeToken.get(clazz)
+      open class Json<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+        : Optional<T>(url, acceptMimeType) {
 
-        override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+        override fun extractResult(response: GiteeApiResponse): T = parseJsonObject(response, clazz)
       }
     }
 
     companion object {
-      inline fun <reified T> json(url: String): Get<T> = Json(url, T::class.java)
-
       inline fun <reified T> json(url: String, acceptMimeType: String? = null): Get<T> =
-        Json(url, T::class.java, acceptMimeType)
+          Json(url, T::class.java, acceptMimeType)
 
+      inline fun <reified T> jsonPage(url: String, acceptMimeType: String? = null): Get<GiteeResponsePage<T>> =
+          JsonPage(url, T::class.java, acceptMimeType)
+
+      inline fun <reified T> jsonSearchPage(url: String, acceptMimeType: String? = null): Get<GiteeResponsePage<T>> =
+          JsonSearchPage(url, T::class.java, acceptMimeType)
+
+      // requests for Gitee
       inline fun <reified T> jsonList(url: String): Get<List<T>> = JsonList(url, T::class.java)
 
-      inline fun <reified T> jsonPage(url: String): Get<GiteeResponsePage<T>> = JsonPage(url, T::class.java)
-
-      inline fun <reified T> jsonPage2(url: String): Get<GiteeResponsePage<T>> = JsonPage2(url, T::class.java)
+//      inline fun <reified T> jsonPage2(url: String): Get<GiteeResponsePage<T>> = JsonPage2(url, T::class.java)
     }
 
-//    open class Json<T>(url: String, clazz: Class<T>) : Get<T>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
-//      private val typeToken = TypeToken.get(clazz)
-//
-//      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
-//    }
-
-    open class Json<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+    open class Json<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
       : Get<T>(url, acceptMimeType) {
 
-      private val typeToken = TypeToken.get(clazz)
-
-      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GiteeApiResponse): T = parseJsonObject(response, clazz)
     }
 
-    open class JsonList<T>(url: String, clazz: Class<T>) : Get<List<T>>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
-      @Suppress("UNCHECKED_CAST")
-      private val typeToken = TypeToken.getParameterized(List::class.java, clazz) as TypeToken<List<T>>
+    open class JsonList<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+      : Get<List<T>>(url, acceptMimeType) {
 
-      override fun extractResult(response: GiteeApiResponse): List<T> = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GiteeApiResponse): List<T> = parseJsonList(response, clazz)
     }
 
-    open class JsonPage<T>(url: String, clazz: Class<T>) : Get<GiteeResponsePage<T>>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
-      @Suppress("UNCHECKED_CAST")
-      private val pageTypeToken = TypeToken.getParameterized(GiteeResponsePage::class.java, clazz) as TypeToken<GiteeResponsePage<T>>
+    open class JsonPage<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+      : Get<GiteeResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GiteeApiResponse): GiteeResponsePage<T> {
-        return GiteeResponsePage.parseFromResult(parseJsonResponse(response, pageTypeToken), url)
+        return GiteeResponsePage.parseFromHeader(parseJsonList(response, clazz), url,
+            response.findHeader(GiteeResponsePage.HEADER_TOTAL_COUNT)?.toInt())
       }
     }
 
-    open class JsonPage2<T>(url: String, clazz: Class<T>) : Get<GiteeResponsePage<T>>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
-      @Suppress("UNCHECKED_CAST")
-      private val typeToken = TypeToken.getParameterized(List::class.java, clazz) as TypeToken<List<T>>
+    open class JsonSearchPage<T>(url: String,
+                                 private val clazz: Class<T>,
+                                 acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+      : Get<GiteeResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GiteeApiResponse): GiteeResponsePage<T> {
-        return GiteeResponsePage.parseFromResult(parseJsonResponse(response, typeToken), url)
+        return GiteeResponsePage.parseFromHeader(parseJsonSearchPage(response, clazz).items, url,
+            response.findHeader(GiteeResponsePage.HEADER_TOTAL_COUNT)?.toInt())
       }
     }
-
-//    open class JsonSearchPage<T>(url: String, clazz: Class<T>) : Get<GiteeResponsePage<T>>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
-//      private val typeToken = TypeToken.getParameterized(GiteeSearchResult::class.java, clazz) as TypeToken<GiteeSearchResult<T>>
-//
-//      override fun extractResult(response: GiteeApiResponse): GiteeResponsePage<T> {
-//        return GiteeResponsePage.parseFromHeader(parseJsonResponse(response, typeToken).items,
-//                                                  response.findHeader(GiteeResponsePage.HEADER_NAME))
-//      }
-//    }
   }
 
   abstract class Head<T> @JvmOverloads constructor(url: String,
                                                    override val acceptMimeType: String? = null) : GiteeApiRequest<T>(url)
 
-  abstract class WithBody<T>(url: String) : GiteeApiRequest<T>(url) {
+  abstract class WithBody<out T>(url: String) : GiteeApiRequest<T>(url) {
     abstract val body: String?
     abstract val bodyMimeType: String
   }
 
-  abstract class Post<T> @JvmOverloads constructor(override val body: String,
-                                                   override val bodyMimeType: String,
-                                                   url: String,
-                                                   override val acceptMimeType: String? = null) : GiteeApiRequest.WithBody<T>(url) {
+  abstract class Post<out T> @JvmOverloads constructor(override val bodyMimeType: String,
+                                                       url: String,
+                                                       override val acceptMimeType: String? = null) : GiteeApiRequest.WithBody<T>(url) {
     companion object {
-      inline fun <reified T> json(url: String, body: Any): Post<T> = Json(url, body, T::class.java)
-      inline fun <reified T> formUrlEncoded(url: String, body: Any): Post<T> = FormUrlEncoded(url, body, T::class.java)
+      inline fun <reified T> json(url: String, body: Any, acceptMimeType: String? = null): Post<T> =
+          Json(url, body, T::class.java, acceptMimeType)
+
+      inline fun <reified T> formUrlEncoded(url: String, body: Any, acceptMimeType: String? = null): Post<T> =
+          FormUrlEncoded(url, body, T::class.java, acceptMimeType)
     }
 
-    open class Json<T>(url: String, body: Any, clazz: Class<T>) : Post<T>(
-      GiteeApiContentHelper.toJson(body),
-      GiteeApiContentHelper.JSON_MIME_TYPE,
-      url,
-      GiteeApiContentHelper.JSON_MIME_TYPE
-    ) {
+    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>,
+                       acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+      : Post<T>(GiteeApiContentHelper.JSON_MIME_TYPE, url, acceptMimeType) {
 
-      private val typeToken = TypeToken.get(clazz)
+      override val body: String
+        get() = GiteeApiContentHelper.toJson(bodyObject)
 
-      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GiteeApiResponse): T = parseJsonObject(response, clazz)
     }
 
-    open class FormUrlEncoded<T>(url: String, body: Any, clazz: Class<T>) : Post<T>(
-      GiteeApiContentHelper.toFormUrlEncoded(body),
-      GiteeApiContentHelper.FORM_URLENCODED_MINE_TYPE,
-      url,
-      GiteeApiContentHelper.JSON_MIME_TYPE
-    ) {
+    open class FormUrlEncoded<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>,
+                                 acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)
+      : Post<T>(GiteeApiContentHelper.FORM_URLENCODED_MINE_TYPE, url, acceptMimeType) {
 
-      private val typeToken = TypeToken.get(clazz)
+      override val body: String
+        get() = GiteeApiContentHelper.toFormUrlEncoded(bodyObject)
 
-      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GiteeApiResponse): T = parseJsonObject(response, clazz)
+    }
+
+    abstract class GQLQuery<out T>(url: String,
+                                   private val queryName: String,
+                                   private val variablesObject: Any)
+      : Post<T>(GiteeApiContentHelper.JSON_MIME_TYPE, url) {
+
+      override val tokenHeaderType = GiteeApiRequestExecutor.TokenHeaderType.BEARER
+
+      override val body: String
+        get() {
+          val query = GiteeGQLQueryLoader.loadQuery(queryName)
+          val request = GiteeGQLQueryRequest(query, variablesObject)
+          return GiteeApiContentHelper.toJson(request, true)
+        }
+
+      class Parsed<out T>(url: String,
+                          requestFilePath: String,
+                          variablesObject: Any,
+                          private val clazz: Class<T>)
+        : GQLQuery<T>(url, requestFilePath, variablesObject) {
+        override fun extractResult(response: GiteeApiResponse): T {
+          val result: GiteeGQLResponse<out T> = parseGQLResponse(response, clazz)
+          val data = result.data
+          if (data != null) return data
+          else throw GiteeConfusingException(result.errors.toString())
+        }
+      }
+
+      class TraversedParsed<out T : Any>(url: String,
+                                         requestFilePath: String,
+                                         variablesObject: Any,
+                                         private val clazz: Class<out T>,
+                                         private vararg val pathFromData: String)
+        : GQLQuery<T>(url, requestFilePath, variablesObject) {
+
+        override fun extractResult(response: GiteeApiResponse): T {
+          return parseResponse(response, clazz, pathFromData)
+              ?: throw GiteeJsonException("Non-nullable entity is null or entity path is invalid")
+        }
+      }
+
+      class OptionalTraversedParsed<T>(url: String,
+                                       requestFilePath: String,
+                                       variablesObject: Any,
+                                       private val clazz: Class<T>,
+                                       private vararg val pathFromData: String)
+        : GQLQuery<T?>(url, requestFilePath, variablesObject) {
+        override fun extractResult(response: GiteeApiResponse): T? {
+          return parseResponse(response, clazz, pathFromData)
+        }
+      }
+
+      internal fun <T> parseResponse(response: GiteeApiResponse,
+                                     clazz: Class<T>,
+                                     pathFromData: Array<out String>): T? {
+        val result: GiteeGQLResponse<out JsonNode> = parseGQLResponse(response, JsonNode::class.java)
+        val data = result.data
+        if (data != null && !data.isNull) {
+          var node: JsonNode = data
+          for (path in pathFromData) {
+            node = node[path] ?: break
+          }
+          if (!node.isNull) return GiteeApiContentHelper.fromJson(node.toString(), clazz, true)
+        }
+        val errors = result.errors
+        if (errors != null) throw GiteeConfusingException(errors.toString()) else return null
+      }
     }
   }
 
-  abstract class Put<T> @JvmOverloads constructor(final override val body: String?,
-                                                  override val bodyMimeType: String,
+  abstract class Put<T> @JvmOverloads constructor(override val bodyMimeType: String,
                                                   url: String,
                                                   override val acceptMimeType: String? = null) : GiteeApiRequest.WithBody<T>(url) {
-    init {
-      if (body == null) headers["Content-Length"] = "0"
-    }
-
     companion object {
       inline fun <reified T> json(url: String, body: Any? = null): Put<T> = Json(url, body, T::class.java)
+
+      inline fun <reified T> jsonList(url: String, body: Any): Put<List<T>> = JsonList(url, body, T::class.java)
     }
 
-    open class Json<T>(url: String, body: Any?, clazz: Class<T>) : Put<T>(body?.let { GiteeApiContentHelper.toJson(it) },
-      GiteeApiContentHelper.JSON_MIME_TYPE,
-      url,
-      GiteeApiContentHelper.JSON_MIME_TYPE) {
-      private val typeToken = TypeToken.get(clazz)
+    open class Json<T>(url: String, private val bodyObject: Any?, private val clazz: Class<T>)
+      : Put<T>(GiteeApiContentHelper.JSON_MIME_TYPE, url, GiteeApiContentHelper.JSON_MIME_TYPE) {
+      init {
+        if (bodyObject == null) headers["Content-Length"] = "0"
+      }
 
-      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+      override val body: String?
+        get() = bodyObject?.let { GiteeApiContentHelper.toJson(it) }
+
+      override fun extractResult(response: GiteeApiResponse): T = parseJsonObject(response, clazz)
+    }
+
+    open class JsonList<T>(url: String, private val bodyObject: Any?, private val clazz: Class<T>)
+      : Put<List<T>>(GiteeApiContentHelper.JSON_MIME_TYPE, url, GiteeApiContentHelper.JSON_MIME_TYPE) {
+      init {
+        if (bodyObject == null) headers["Content-Length"] = "0"
+      }
+
+      override val body: String?
+        get() = bodyObject?.let { GiteeApiContentHelper.toJson(it) }
+
+      override fun extractResult(response: GiteeApiResponse): List<T> = parseJsonList(response, clazz)
     }
   }
 
-  abstract class Patch<T> @JvmOverloads constructor(override val body: String,
-                                                    override val bodyMimeType: String,
+  abstract class Patch<T> @JvmOverloads constructor(override val bodyMimeType: String,
                                                     url: String,
-                                                    override val acceptMimeType: String? = null) : GiteeApiRequest.WithBody<T>(url) {
+                                                    override val acceptMimeType: String? = null)
+    : GiteeApiRequest.WithBody<T>(url) {
+
     companion object {
       inline fun <reified T> json(url: String, body: Any): Patch<T> = Json(url, body, T::class.java)
     }
 
-    open class Json<T>(url: String, body: Any, clazz: Class<T>) : Patch<T>(GiteeApiContentHelper.toJson(body),
-      GiteeApiContentHelper.JSON_MIME_TYPE,
-      url,
-      GiteeApiContentHelper.JSON_MIME_TYPE) {
-      private val typeToken = TypeToken.get(clazz)
+    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>)
+      : Patch<T>(GiteeApiContentHelper.JSON_MIME_TYPE, url, GiteeApiContentHelper.JSON_MIME_TYPE) {
 
-      override fun extractResult(response: GiteeApiResponse): T = parseJsonResponse(response, typeToken)
+      override val body: String?
+        get() = bodyObject.let { GiteeApiContentHelper.toJson(it) }
+
+      override fun extractResult(response: GiteeApiResponse): T = parseJsonObject(response, clazz)
     }
   }
 
-  open class Delete(url: String) : GiteeApiRequest<Unit>(url) {
-    override val acceptMimeType: String? = null
+  abstract class Delete<T> @JvmOverloads constructor(override val bodyMimeType: String,
+                                                     url: String,
+                                                     override val acceptMimeType: String? = null) : GiteeApiRequest.WithBody<T>(url) {
 
-    override fun extractResult(response: GiteeApiResponse) {}
+    companion object {
+      inline fun <reified T> json(url: String, body: Any? = null): Delete<T> = Json(url, body, T::class.java)
+    }
+
+    open class Json<T>(url: String, private val bodyObject: Any? = null, private val clazz: Class<T>)
+      : Delete<T>(GiteeApiContentHelper.JSON_MIME_TYPE, url, GiteeApiContentHelper.JSON_MIME_TYPE) {
+      init {
+        if (bodyObject == null) headers["Content-Length"] = "0"
+      }
+
+      override val body: String?
+        get() = bodyObject?.let { GiteeApiContentHelper.toJson(it) }
+
+      override fun extractResult(response: GiteeApiResponse): T = parseJsonObject(response, clazz)
+    }
   }
 
   companion object {
-    private fun <T> parseJsonResponse(response: GiteeApiResponse, typeToken: TypeToken<T>): T {
-      return response.readBody(ThrowableConvertor { GiteeApiContentHelper.readJson(it, typeToken) })
+    private fun <T> parseJsonObject(response: GiteeApiResponse, clazz: Class<T>): T {
+      return response.readBody(ThrowableConvertor { GiteeApiContentHelper.readJsonObject(it, clazz) })
+    }
+
+    private fun <T> parseJsonList(response: GiteeApiResponse, clazz: Class<T>): List<T> {
+      return response.readBody(ThrowableConvertor { GiteeApiContentHelper.readJsonList(it, clazz) })
+    }
+
+    private fun <T> parseJsonSearchPage(response: GiteeApiResponse, clazz: Class<T>): GiteeSearchResult<T> {
+      return response.readBody(ThrowableConvertor {
+        @Suppress("UNCHECKED_CAST")
+        GiteeApiContentHelper.readJsonObject(it, GiteeSearchResult::class.java, clazz) as GiteeSearchResult<T>
+      })
+    }
+
+    private fun <T> parseGQLResponse(response: GiteeApiResponse, clazz: Class<out T>): GiteeGQLResponse<out T> {
+      return response.readBody(ThrowableConvertor {
+        @Suppress("UNCHECKED_CAST")
+        GiteeApiContentHelper.readJsonObject(it, GiteeGQLResponse::class.java, clazz, gqlNaming = true) as GiteeGQLResponse<T>
+      })
     }
   }
 }

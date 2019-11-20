@@ -15,12 +15,9 @@
  */
 package com.gitee.api.data;
 
-import com.gitee.api.GiteeFullPath;
-import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.util.text.StringUtil;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Date;
@@ -28,58 +25,30 @@ import java.util.Date;
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeRepo extends GiteeRepoBasic {
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
   private Date createdAt;
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
   private Date updatedAt;
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
   private Date pushedAt;
 
-//  private String path;
-
-//  private String forksUrl;
-//  private String keysUrl;
-//  private String collaboratorsUrl;
-//  private String hooksUrl;
-//  private String branchesUrl;
-//  private String tagsUrl;
-//  private String blobsUrl;
-//  private String stargazersUrl;
-//  private String contributorsUrl;
-//  private String commitsUrl;
-//  private String commentsUrl;
-//  private String issueCommentUrl;
-//  private String issuesUrl;
-//  private String pullsUrl;
-//  private String milestonesUrl;
-//  private String notificationsUrl;
-//  private String labelsUrl;
-//  private String releasesUrl;
-
-//  private Boolean recommand;
-
-  private String homepage;
-  private String language;
-
-  private Integer forksCount;
-  private Integer stargazersCount;
-  private Integer watchersCount;
-  private Integer openIssuesCount;
-
-//  private String masterBranch;
   private String defaultBranch;
 
-  private Boolean hasIssues;
-  private Boolean hasWiki;
-  private Boolean hasDownloads;
-  private Boolean hasPage;
-
-//  private Boolean pullRequestsEnabled;
-//  private String license;
-
-  private Boolean stared;
-  private Boolean watched;
+  private GiteeNamespace namespace;
 
   @Nullable
   public String getDefaultBranch() {
     return defaultBranch;
+  }
+
+  @NotNull
+  public String getCloneUrl() {
+    return super.getHtmlUrl();
+  }
+
+  @NotNull
+  public GiteeNamespace getNamespace() {
+    return namespace;
   }
 
 }

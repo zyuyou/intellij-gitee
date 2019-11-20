@@ -15,7 +15,7 @@
  */
 package com.gitee.util
 
-import com.gitee.api.GiteeFullPath
+import com.gitee.api.GiteeRepositoryCoordinates
 import com.gitee.api.GiteeRepositoryPath
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GiteeAuthenticationManager
@@ -48,8 +48,8 @@ class GiteeGitHelper(private val giteeSettings: GiteeSettings,
     }
   }
 
-  fun getRemoteUrl(server: GiteeServerPath, repoPath: GiteeFullPath): String {
-    return getRemoteUrl(server, repoPath.user, repoPath.repository)
+  fun getRemoteUrl(server: GiteeServerPath, repoPath: GiteeRepositoryPath): String {
+    return getRemoteUrl(server, repoPath.owner, repoPath.repository)
   }
 
   fun getRemoteUrl(server: GiteeServerPath, user: String, repo: String): String {
@@ -85,11 +85,11 @@ class GiteeGitHelper(private val giteeSettings: GiteeSettings,
 //    return repositoryPaths
 //  }
 
-  fun getPossibleRepositories(repository: GitRepository): Set<GiteeRepositoryPath> {
+  fun getPossibleRepositories(repository: GitRepository): Set<GiteeRepositoryCoordinates> {
     val knownServers = getKnownGiteeServers()
     return repository.getRemoteUrls().mapNotNull { url ->
       knownServers.find { it.matches(url) }
-        ?.let { server -> GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GiteeRepositoryPath(server, it) } }
+        ?.let { server -> GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GiteeRepositoryCoordinates(server, it) } }
     }.toSet()
   }
 

@@ -131,7 +131,10 @@ sealed class GiteeApiRequestExecutor {
 
       return try {
         createRequestBuilder(request)
-          .tuner { connection -> connection.addRequestProperty("Authorization", "token ${tokens.first}") }
+          .tuner { connection ->
+            request.additionalHeaders.forEach(connection::addRequestProperty)
+            connection.addRequestProperty("Authorization", "token ${tokens.first}")
+          }
           .execute(request, indicator)
 
       } catch (e: GiteeAccessTokenExpiredException) {
@@ -142,7 +145,10 @@ sealed class GiteeApiRequestExecutor {
         accountManager.updateAccountToken(account, "$newAccessToken&$newRefreshToken")
 
         return createRequestBuilder(request)
-          .tuner { connection -> connection.addRequestProperty("Authorization", "token $newAccessToken") }
+          .tuner { connection ->
+            request.additionalHeaders.forEach(connection::addRequestProperty)
+            connection.addRequestProperty("Authorization", "token $newAccessToken")
+          }
           .execute(request, indicator)
       }
     }
@@ -191,7 +197,9 @@ sealed class GiteeApiRequestExecutor {
         is GiteeApiRequest.Put -> HttpRequests.put(request.url, request.bodyMimeType)
         is GiteeApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GiteeApiRequest.Head -> HttpRequests.head(request.url)
-        is GiteeApiRequest.Delete -> HttpRequests.delete(request.url)
+        is GiteeApiRequest.Delete -> {
+          if (request.body == null) HttpRequests.delete(request.url) else HttpRequests.delete(request.url, request.bodyMimeType)
+        }
         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
       }
         .connectTimeout(giteeSettings.connectionTimeout)
@@ -214,6 +222,7 @@ sealed class GiteeApiRequestExecutor {
       jsonError ?: LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Unable to parse JSON error")
 
       throw when (connection.responseCode) {
+        HttpURLConnection.HTTP_NOT_FOUND,
         HttpURLConnection.HTTP_UNAUTHORIZED,
         HttpURLConnection.HTTP_PAYMENT_REQUIRED,
         HttpURLConnection.HTTP_FORBIDDEN -> {
@@ -279,17 +288,17 @@ sealed class GiteeApiRequestExecutor {
 
     @CalledInAny
     fun create(token: String, useProxy: Boolean = true): WithTokenAuth {
-      return GiteeApiRequestExecutor.WithTokenAuth(giteeSettings, token, useProxy)
+      return WithTokenAuth(giteeSettings, token, useProxy)
     }
 
     @CalledInAny
     fun create(tokens: Pair<String, String>, refreshTokenSupplier: (refreshToken: String) -> Triple<GiteeAccount, String, String>): WithTokensAuth {
-      return GiteeApiRequestExecutor.WithTokensAuth(giteeSettings, accountManager, tokens, refreshTokenSupplier)
+      return WithTokensAuth(giteeSettings, accountManager, tokens, refreshTokenSupplier)
     }
 
     @CalledInAny
     fun create(): WithPasswordOAuth2 {
-      return GiteeApiRequestExecutor.WithPasswordOAuth2(giteeSettings)
+      return WithPasswordOAuth2(giteeSettings)
     }
 
     companion object {
@@ -304,5 +313,9 @@ sealed class GiteeApiRequestExecutor {
 
   interface AuthDataChangeListener : EventListener {
     fun authDataChanged()
+  }
+
+  enum class TokenHeaderType {
+    TOKEN, BEARER
   }
 }

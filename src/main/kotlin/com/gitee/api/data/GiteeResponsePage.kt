@@ -23,40 +23,29 @@ import com.gitee.exceptions.GiteeConfusingException
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/data/GithubResponsePage.kt
  * @author JetBrains s.r.o.
  */
-class GiteeResponsePage<T> constructor(private var totalCount: Int,
-                                       var list: List<T>,
+class GiteeResponsePage<T> constructor(var items: List<T>,
                                        val nextLink: String? = null) {
 
   val hasNext = nextLink != null
 
   companion object {
+//    const val HEADER_NAME = "Link"
+
+    const val HEADER_TOTAL_COUNT = "total_count"
+
     @JvmStatic
     @Throws(GiteeConfusingException::class)
-    fun <T> parseFromResult(responsePage: GiteeResponsePage<T>, requestUrl: String): GiteeResponsePage<T> {
-      if (responsePage.list.size == responsePage.totalCount) return GiteeResponsePage(responsePage.totalCount, responsePage.list, null)
-
-      if (responsePage.list.isEmpty()) return GiteeResponsePage(responsePage.totalCount, responsePage.list, null)
+    fun <T> parseFromHeader(items: List<T>, requestUrl: String, totalCountHeaderValue: Int?): GiteeResponsePage<T> {
+      if (totalCountHeaderValue == null || items.size == totalCountHeaderValue) return GiteeResponsePage(items)
 
       val newNextLink = requestUrl.replace(Regex("([?&]+page=)(\\d+)")) {
         "${it.groupValues[1]}${it.groupValues[2].toInt() + 1}"
       }
 
-      return GiteeResponsePage(responsePage.totalCount, responsePage.list, newNextLink)
+      return GiteeResponsePage(items, newNextLink)
     }
 
-    @JvmStatic
-    @Throws(GiteeConfusingException::class)
-    fun <T> parseFromResult(list: List<T>, requestUrl: String): GiteeResponsePage<T> {
-      if (list.isEmpty()) return GiteeResponsePage(0, list, null)
-
-      val newNextLink = requestUrl.replace(Regex("([?&]+page=)(\\d+)")) {
-        "${it.groupValues[1]}${it.groupValues[2].toInt() + 1}"
-      }
-
-      return GiteeResponsePage(0, list, newNextLink)
-    }
-
-    fun <T> empty(nextLink: String? = null) = GiteeResponsePage<T>(0, emptyList(), nextLink = nextLink)
+    fun <T> empty(nextLink: String? = null) = GiteeResponsePage<T>(emptyList(), nextLink = nextLink)
   }
 }
 
