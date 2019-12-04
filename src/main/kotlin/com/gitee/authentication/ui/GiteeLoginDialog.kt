@@ -26,7 +26,7 @@ class GiteeLoginDialog @JvmOverloads constructor(executorFactory: GiteeApiReques
                                                  project: Project?,
                                                  parent: Component? = null,
                                                  isAccountUnique: (name: String, server: GiteeServerPath) -> Boolean = { _, _ -> true },
-                                                 title: String = "Log In to GitHub",
+                                                 title: String = "Log In to Gitee",
                                                  private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
