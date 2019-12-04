@@ -45,7 +45,10 @@ class GiteeHttpAuthDataProvider : GitHttpAuthDataProvider {
         val tokens = GiteeAuthenticationManager.getInstance().getTokensForAccount(account) ?: return null
 
         val username = service<GiteeAccountInformationProvider>().getInformation(
-          GiteeApiRequestExecutor.Factory.getInstance().create(tokens) { GiteeAuthenticationManager.getInstance().refreshNewTokens(account, it) },
+          GiteeApiRequestExecutor.Factory.getInstance().create(tokens) {
+//            GiteeAuthenticationManager.getInstance().refreshNewTokens(account, it)
+            newTokens -> GiteeAuthenticationManager.getInstance().updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
+          },
           DumbProgressIndicator(),
           account
         ).login

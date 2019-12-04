@@ -38,8 +38,8 @@ sealed class GiteeAuthorizationRequest {
 data class AuthorizationCreateRequest(private val scopes: List<String>,
                          private val username: String,
                          private val password: String,
-                         private val clientId: String = "fc439d90cb2ffc20cffeb70a6a4039e69847485e0fa56cfa0d1bf006098e24dd",
-                         private val clientSecret: String = "386f187646ee361049f69cd213424bdba5af03e820d10a68a68e5fb520902596") : GiteeAuthorizationRequest() {
+                         private val clientId: String? = "fc439d90cb2ffc20cffeb70a6a4039e69847485e0fa56cfa0d1bf006098e24dd",
+                         private val clientSecret: String? = "386f187646ee361049f69cd213424bdba5af03e820d10a68a68e5fb520902596") : GiteeAuthorizationRequest() {
 
   override fun toString(): String {
     return listOf(

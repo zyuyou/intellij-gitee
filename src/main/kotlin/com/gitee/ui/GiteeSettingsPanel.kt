@@ -16,7 +16,6 @@
 package com.gitee.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.ui.GiteeAccountsPanel
 import com.gitee.util.CachingGiteeUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
@@ -86,7 +85,10 @@ class GiteeSettingsPanel(project: Project,
 
     settings.applicationAccounts.accounts = accountsTokenMap.keys
 //    accountsTokenMap.filterValues { it != null }.forEach(settings.applicationAccounts::updateAccountToken)
-    accountsTokenMap.filterValues { it != null }.mapValues { "${it.value?.first}&${it.value?.second}" }.forEach(settings.applicationAccounts::updateAccountToken)
+    accountsTokenMap
+      .filterValues { it != null }
+      .mapValues { "${it.value?.first}&${it.value?.second}" }
+      .forEach(settings.applicationAccounts::updateAccountToken)
 
     settings.projectAccount.account = defaultAccount
 

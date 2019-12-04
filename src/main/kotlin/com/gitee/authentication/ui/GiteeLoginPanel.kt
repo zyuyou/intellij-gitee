@@ -15,25 +15,35 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
+import javax.swing.JPasswordField
 import javax.swing.JTextField
 
 class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
                       isAccountUnique: (name: String, server: GiteeServerPath) -> Boolean,
                       val project: Project?,
                       isDialogMode: Boolean = true) : Wrapper() {
-  private var clientName: String = GiteeTokenCreator.DEFAULT_CLIENT_NAME
+
   private val serverTextField = ExtendableTextField(GiteeServerPath.DEFAULT_HOST, 0)
+  private var clientIdTextField = JBTextField(GiteeTokenCreator.DEFAULT_CLIENT_ID, 5)
+  private var clientSecretTextField = JPasswordField(GiteeTokenCreator.DEFAULT_CLIENT_SECRET, 5)
+
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GiteeCredentialsUI
-  private var passwordUi = GiteeCredentialsUI.PasswordUI(serverTextField, clientName, ::switchToTokenUI, executorFactory, isAccountUnique,
-                                                          isDialogMode)
-  private var tokenUi = GiteeCredentialsUI.TokenUI(executorFactory, isAccountUnique, serverTextField, ::switchToPasswordUI, isDialogMode)
+
+  private var passwordUi = GiteeCredentialsUI.PasswordUI(
+    serverTextField, clientIdTextField, clientSecretTextField, ::switchToTokenUI, executorFactory, isAccountUnique, isDialogMode
+  )
+
+  private var tokenUi = GiteeCredentialsUI.TokenUI(
+    executorFactory, isAccountUnique, serverTextField, ::switchToPasswordUI, isDialogMode
+  )
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
@@ -60,13 +70,15 @@ class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
   fun getPreferredFocus() = currentUi.getPreferredFocus()
 
   fun doValidateAll(): List<ValidationInfo> {
-    return listOf(DialogValidationUtils.chain(
+    return listOf(
       DialogValidationUtils.chain(
-        { DialogValidationUtils.notBlank(serverTextField, "Server cannot be empty") },
-        serverPathValidator(serverTextField)),
-      currentUi.getValidator()),
-                  { tokenAcquisitionError })
-      .mapNotNull { it() }
+        DialogValidationUtils.chain(
+          { DialogValidationUtils.notBlank(serverTextField, "Server cannot be empty") },
+          serverPathValidator(serverTextField)),
+        currentUi.getValidator()
+      ),
+      { tokenAcquisitionError }
+    ).mapNotNull { it() }
   }
 
   private fun serverPathValidator(textField: JTextField): Validator {
@@ -114,13 +126,18 @@ class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
       }
   }
 
-  fun getServer(): GiteeServerPath = GiteeServerPath.from(
-    serverTextField.text.trim())
+  fun getServer(): GiteeServerPath =
+    GiteeServerPath.from(serverTextField.text.trim(), clientIdTextField.text.trim(), clientSecretTextField.text.trim())
 
   fun setServer(path: String, editable: Boolean = true) {
     serverTextField.apply {
       text = path
       isEditable = editable
+    }
+
+    if (GiteeServerPath.from(path).host == GiteeServerPath.DEFAULT_HOST) {
+      clientIdTextField.isEditable = false
+      clientSecretTextField.isEditable = false
     }
   }
 

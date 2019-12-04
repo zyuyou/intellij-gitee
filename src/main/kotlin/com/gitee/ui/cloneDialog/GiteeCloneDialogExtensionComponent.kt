@@ -381,7 +381,9 @@ internal class GiteeCloneDialogExtensionComponent(
 
   private fun buildGiteeLoginPanel(account: GiteeAccount?,
                                    errorPanel: JPanel): GiteeLoginPanel {
+
     val alwaysUnique: (name: String, server: GiteeServerPath) -> Boolean = { _, _ -> true }
+
     return GiteeLoginPanel(
         apiExecutorFactory,
         if (account == null) authenticationManager::isAccountUnique else alwaysUnique,
@@ -408,7 +410,7 @@ internal class GiteeCloneDialogExtensionComponent(
               }
               if (loginToken != null) {
                 val login = loginToken.first
-                val token = loginToken.second
+                val token = "${loginToken.second}&${loginToken.third}"
                 if (account != null) {
                   authenticationManager.updateAccountToken(account, token)
                 }

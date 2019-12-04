@@ -15,14 +15,17 @@
  */
 package com.gitee.api
 
+import com.gitee.api.GiteeApiRequestExecutor.Factory.Companion.getInstance
+import com.gitee.api.GiteeServerPath.Companion.from
+import com.gitee.api.data.GiteeAuthorization
 import com.gitee.api.data.GiteeErrorMessage
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.*
 import com.gitee.util.GiteeSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -73,6 +76,16 @@ sealed class GiteeApiRequestExecutor {
       }
     }, disposable)
 
+  class WithPasswordOAuth2 internal constructor(giteeSettings: GiteeSettings) : Base(giteeSettings) {
+
+    @Throws(IOException::class, ProcessCanceledException::class)
+    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
+      indicator.checkCanceled()
+
+      return createRequestBuilder(request).execute(request, indicator)
+    }
+  }
+
   class WithTokenAuth internal constructor(giteeSettings: GiteeSettings,
                                            token: String,
                                            private val useProxy: Boolean) : Base(giteeSettings) {
@@ -89,7 +102,6 @@ sealed class GiteeApiRequestExecutor {
       indicator.checkCanceled()
       return createRequestBuilder(request)
         .tuner { connection ->
-//          connection.addRequestProperty("Authorization", "token $token")
           request.additionalHeaders.forEach(connection::addRequestProperty)
           connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token")
         }
@@ -98,20 +110,8 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-  class WithPasswordOAuth2 internal constructor(giteeSettings: GiteeSettings) : Base(giteeSettings) {
-
-    @Throws(IOException::class, ProcessCanceledException::class)
-    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
-      indicator.checkCanceled()
-
-      return createRequestBuilder(request).execute(request, indicator)
-    }
-  }
-
-  class WithTokensAuth internal constructor(giteeSettings: GiteeSettings,
-                                            private val accountManager: GiteeAccountManager,
-                                            tokens: Pair<String, String>,
-                                            private val refreshTokenSupplier: (refreshToken: String) -> Triple<GiteeAccount, String, String>) : Base(giteeSettings) {
+  class WithTokensAuth internal constructor(giteeSettings: GiteeSettings, tokens: Pair<String, String>,
+                                            private val authDataChangedSupplier: (tokens: Pair<String, String>) -> Unit) : Base(giteeSettings) {
 
     @Volatile
     internal var tokens: Pair<String, String> = tokens
@@ -140,14 +140,22 @@ sealed class GiteeApiRequestExecutor {
       } catch (e: GiteeAccessTokenExpiredException) {
         if (tokens.second == "") throw e
 
-        val (account, newAccessToken, newRefreshToken) = refreshTokenSupplier(tokens.second)
-        tokens = newAccessToken to newRefreshToken
-        accountManager.updateAccountToken(account, "$newAccessToken&$newRefreshToken")
+        val serverPath = from(request.url)
+
+        val authorization: GiteeAuthorization = GiteeTokenCreator(
+          from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
+          getInstance().create(),
+          DumbProgressIndicator()
+        ).updateMaster(tokens.second)
+
+        tokens = authorization.accessToken to authorization.refreshToken
+
+        authDataChangedSupplier(tokens)
 
         return createRequestBuilder(request)
           .tuner { connection ->
             request.additionalHeaders.forEach(connection::addRequestProperty)
-            connection.addRequestProperty("Authorization", "token $newAccessToken")
+            connection.addRequestProperty("Authorization", "token ${authorization.accessToken}")
           }
           .execute(request, indicator)
       }
@@ -278,8 +286,7 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-  class Factory internal constructor(private val giteeSettings: GiteeSettings,
-                                     private val accountManager: GiteeAccountManager) {
+  class Factory internal constructor(private val giteeSettings: GiteeSettings) {
 
     @CalledInAny
     fun create(token: String): WithTokenAuth {
@@ -292,8 +299,8 @@ sealed class GiteeApiRequestExecutor {
     }
 
     @CalledInAny
-    fun create(tokens: Pair<String, String>, refreshTokenSupplier: (refreshToken: String) -> Triple<GiteeAccount, String, String>): WithTokensAuth {
-      return WithTokensAuth(giteeSettings, accountManager, tokens, refreshTokenSupplier)
+    fun create(tokens: Pair<String, String>, authDataChangedSupplier: (tokens: Pair<String, String>) -> Unit): WithTokensAuth {
+      return WithTokensAuth(giteeSettings, tokens, authDataChangedSupplier)
     }
 
     @CalledInAny

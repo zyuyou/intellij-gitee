@@ -18,10 +18,11 @@ package com.gitee.tasks;
 import com.gitee.api.GiteeApiRequestExecutor;
 import com.gitee.api.GiteeApiRequests;
 import com.gitee.api.GiteeServerPath;
-import com.gitee.api.data.*;
+import com.gitee.api.data.GiteeIssue;
+import com.gitee.api.data.GiteeIssueBase;
+import com.gitee.api.data.GiteeIssueComment;
+import com.gitee.api.data.GiteeIssueState;
 import com.gitee.api.util.GiteeApiPagesLoader;
-import com.gitee.authentication.accounts.GiteeAccountManager;
-import com.gitee.authentication.util.GiteeTokenCreator;
 import com.gitee.exceptions.GiteeAuthenticationException;
 import com.gitee.exceptions.GiteeJsonException;
 import com.gitee.exceptions.GiteeRateLimitExceededException;
@@ -31,21 +32,22 @@ import com.gitee.issue.GiteeIssuesLoadingHelper;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Task;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import kotlin.Pair;
-import kotlin.Triple;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -287,8 +289,7 @@ public class GiteeRepository extends BaseRepository {
     GiteeIssue issue = executor.execute(indicator, GiteeApiRequests.Repos.Issues.get(getServer(), getRepoAuthor(), getRepoName(), numericId));
     if (issue == null) return null;
 
-    List<GiteeIssueComment> comments = GiteeApiPagesLoader
-      .loadAll(executor, indicator, GiteeApiRequests.Repos.Issues.Comments.pages(issue.getCommentsUrl()));
+    List<GiteeIssueComment> comments = GiteeApiPagesLoader.loadAll(executor, indicator, GiteeApiRequests.Repos.Issues.Comments.pages(issue.getCommentsUrl()));
     return createTask(issue, comments);
   }
 
@@ -311,8 +312,7 @@ public class GiteeRepository extends BaseRepository {
     String repoName = getRepoName();
 
     ProgressIndicator indicator = getProgressIndicator();
-    executor.execute(indicator,
-        GiteeApiRequests.Repos.Issues.updateState(server, repoAuthor, repoName, task.getNumber(), isOpen));
+    executor.execute(indicator, GiteeApiRequests.Repos.Issues.updateState(server, repoAuthor, repoName, task.getNumber(), isOpen));
   }
 
   @NotNull
@@ -386,22 +386,27 @@ public class GiteeRepository extends BaseRepository {
 
   @NotNull
   private GiteeApiRequestExecutor getExecutor() {
-    return GiteeApiRequestExecutor.Factory.getInstance().create(getPasswordTokens(), (refreshToken) -> {
-        GiteeAuthorization authorization;
-
-        try {
-          authorization = new GiteeTokenCreator(
-            getServer(),
-            GiteeApiRequestExecutor.Factory.getInstance().create(),
-            new DumbProgressIndicator()
-          ).updateMaster(refreshToken);
-
-          return new Triple<>(GiteeAccountManager.Companion.createAccount(getUser(), getServer()), authorization.getAccessToken(), authorization.getRefreshToken());
-        } catch (IOException e) {
-          return null;
-        }
-      }
-    );
+//    return GiteeApiRequestExecutor.Factory.getInstance().create(getPasswordTokens(), (refreshToken) -> {
+//        GiteeAuthorization authorization;
+//
+//        try {
+//          authorization = new GiteeTokenCreator(
+//            getServer(),
+//            GiteeApiRequestExecutor.Factory.getInstance().create(),
+//            new DumbProgressIndicator()
+//          ).updateMaster(refreshToken);
+//
+//          return new Triple<>(GiteeAccountManager.Companion.createAccount(getUser(), getServer()), authorization.getAccessToken(), authorization.getRefreshToken());
+//        } catch (IOException e) {
+//          return null;
+//        }
+//      }
+//    );
+    return GiteeApiRequestExecutor.Factory.getInstance().create(getPasswordTokens(), (tokens) -> {
+      setPasswordTokens(tokens.getFirst(), tokens.getSecond());
+      storeCredentials();
+      return Unit.INSTANCE;
+    });
   }
 
   @NotNull
@@ -413,7 +418,7 @@ public class GiteeRepository extends BaseRepository {
 
   @NotNull
   private GiteeServerPath getServer() {
-    return GiteeServerPath.Companion.from(getUrl());
+    return GiteeServerPath.Companion.from(getUrl(), null, null);
   }
 
   @Override

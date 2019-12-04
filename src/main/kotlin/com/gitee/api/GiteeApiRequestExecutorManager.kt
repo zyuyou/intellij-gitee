@@ -51,28 +51,6 @@ class GiteeApiRequestExecutorManager internal constructor(private val accountMan
     if (tokens == null) executors.remove(account) else executors[account]?.tokens = tokens
   }
 
-//  @CalledInAwt
-//  fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor? {
-//    return authenticationManager.getOrRequestTokensForAccount(account, project)?.let { it ->
-//      requestExecutorFactory.create(it) { authenticationManager.refreshNewTokens(account, it) }
-//    }
-//  }
-//
-//  @CalledInAwt
-//  fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor? {
-//    return authenticationManager.getOrRequestTokensForAccount(account, null, parentComponent)?.let { it ->
-//      requestExecutorFactory.create(it) { authenticationManager.refreshNewTokens(account, it) }
-//    }
-//  }
-
-//  @CalledInAwt
-//  @Throws(GiteeMissingTokenException::class)
-//  fun getExecutor(account: GiteeAccount): GiteeApiRequestExecutor {
-//    return authenticationManager.getTokensForAccount(account)?.let { it ->
-//      requestExecutorFactory.create(it) { authenticationManager.refreshNewTokens(account, it) }
-//    } ?: throw GiteeMissingTokenException(account)
-//  }
-
   @CalledInAwt
   fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithTokensAuth? {
     return getOrTryToCreateExecutor(account) { authenticationManager.requestNewTokens(account, project) }
@@ -89,15 +67,6 @@ class GiteeApiRequestExecutorManager internal constructor(private val accountMan
     return getOrTryToCreateExecutor(account) { throw GiteeMissingTokenException(account) }!!
   }
 
-//  private fun getOrTryToCreateExecutor(account: GiteeAccount,
-//                                       missingTokenHandler: () -> String?): GiteeApiRequestExecutor.WithTokenAuth? {
-//
-//    return executors.getOrPut(account) {
-//      (authenticationManager.getTokenForAccount(account) ?: missingTokenHandler())
-//        ?.let(requestExecutorFactory::create) ?: return null
-//    }
-//  }
-
   private fun getOrTryToCreateExecutor(account: GiteeAccount,
                                        missingTokensHandler: () -> Pair<String, String>?): GiteeApiRequestExecutor.WithTokensAuth? {
 
@@ -106,13 +75,12 @@ class GiteeApiRequestExecutorManager internal constructor(private val accountMan
     return executors.getOrPut(account) {
       (authenticationManager.getTokensForAccount(account) ?: missingTokensHandler())
         ?.let { tokens ->
-          requestExecutorFactory.create(tokens) { refreshToken ->
-            authenticationManager.refreshNewTokens(account, refreshToken)
+          requestExecutorFactory.create(tokens) { newTokens ->
+            authenticationManager.updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
           }
         } ?: return null
     }
   }
-
 
   companion object {
     @JvmStatic

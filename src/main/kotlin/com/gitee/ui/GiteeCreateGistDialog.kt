@@ -20,17 +20,9 @@ import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeAccountCombobox
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.panel.PanelGridBuilder
-import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI.PanelFactory.grid
-import com.intellij.util.ui.UI.PanelFactory.panel
-import com.intellij.util.ui.UIUtil
-import javax.swing.Box
+import com.intellij.ui.layout.panel
 import javax.swing.JComponent
 import javax.swing.JTextArea
 
@@ -40,24 +32,65 @@ import javax.swing.JTextArea
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubCreateGistDialog.java
  * @author JetBrains s.r.o.
  */
-class GiteeCreateGistDialog(val project: Project,
-                            _accounts: Set<GiteeAccount>,
-                            _defaultAccount: GiteeAccount?,
-                            _fileName: String?,
-                            _secret: Boolean,
-                            _openInBrowser: Boolean,
-                            _copyLink: Boolean) : DialogWrapper(project) {
+class GiteeCreateGistDialog(project: Project,
+                            accounts: Set<GiteeAccount>,
+                            defaultAccount: GiteeAccount?,
+                            fileName: String?,
+                            secret: Boolean,
+                            openInBrowser: Boolean,
+                            copyLink: Boolean) : DialogWrapper(project, true) {
 
-  private val fileNameField: JBTextField? = _fileName?.let { JBTextField(it) }
-  private val descriptionTextArea = JTextArea()
-  private val secretCheckBox = JBCheckBox("Secret", _secret)
-  private val openInBrowserCheckBox = JBCheckBox("Open in browser", _openInBrowser)
-  private val copyLinkCheckBox = JBCheckBox("Copy URL", _copyLink)
-  private val accountSelector = GiteeAccountCombobox(_accounts, _defaultAccount, null)
+  private val fileNameField: JBTextField? = fileName?.let { JBTextField(it) }
+  private val descriptionField = JTextArea()
+  private val secretCheckBox = JBCheckBox("Secret", secret)
+  private val browserCheckBox = JBCheckBox("Open in browser", openInBrowser)
+  private val copyLinkCheckBox = JBCheckBox("Copy URL", copyLink)
+  private val accountSelector = GiteeAccountCombobox(accounts, defaultAccount, null)
+
+  val fileName: String?
+    get() = fileNameField?.text
+
+  val description: String
+    get() = descriptionField.text
+
+  val isSecret: Boolean
+    get() = secretCheckBox.isSelected
+
+  val isOpenInBrowser: Boolean
+    get() = browserCheckBox.isSelected
+
+  val isCopyURL: Boolean
+    get() = copyLinkCheckBox.isSelected
+
+  val account: GiteeAccount
+    get() = accountSelector.selectedItem as GiteeAccount
 
   init {
     title = "Create Gist"
     init()
+  }
+
+  override fun createCenterPanel() = panel {
+    fileNameField?.let {
+      row("Filename:") {
+        it(pushX, growY)
+      }
+    }
+    row("Description:") {
+      scrollPane(descriptionField)
+    }
+    row("") {
+      cell {
+        secretCheckBox()
+        browserCheckBox()
+        copyLinkCheckBox()
+      }
+    }
+    if (accountSelector.isEnabled) {
+      row("Create for:") {
+        accountSelector(pushX, growX)
+      }
+    }
   }
 
   override fun getHelpId(): String? {
@@ -69,67 +102,6 @@ class GiteeCreateGistDialog(val project: Project,
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    return descriptionTextArea
+    return descriptionField
   }
-
-  override fun createCenterPanel(): JComponent? {
-    val checkBoxes = JBBox.createHorizontalBox()
-    checkBoxes.add(secretCheckBox)
-    checkBoxes.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)))
-    checkBoxes.add(openInBrowserCheckBox)
-    checkBoxes.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)))
-    checkBoxes.add(copyLinkCheckBox)
-
-    val descriptionPane = JBScrollPane(descriptionTextArea).apply {
-      preferredSize = JBDimension(270, 60)
-      minimumSize = JBDimension(270, 60)
-    }
-
-    return com.intellij.ui.layout.panel {
-      if (fileNameField != null) {
-        row("Filename:") {
-          fileNameField.invoke()
-        }
-      }
-
-      row("Description:") {
-        descriptionPane()
-      }
-
-      row("") {
-        checkBoxes()
-      }
-
-      if (accountSelector.isEnabled) {
-        row("Create for:") {
-          accountSelector()
-        }
-      }
-    }
-  }
-
-  fun getDescription(): String {
-    return descriptionTextArea.text
-  }
-
-  fun isSecret(): Boolean {
-    return secretCheckBox.isSelected
-  }
-
-  fun isOpenInBrowser(): Boolean {
-    return openInBrowserCheckBox.isSelected
-  }
-
-  fun isCopyURL(): Boolean {
-    return copyLinkCheckBox.isSelected
-  }
-
-  fun getAccount(): GiteeAccount {
-    return accountSelector.selectedItem as GiteeAccount
-  }
-
-  fun getFileName(): String? {
-    return fileNameField?.text
-  }
-
 }

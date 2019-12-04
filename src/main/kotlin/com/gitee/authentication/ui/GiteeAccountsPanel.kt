@@ -32,7 +32,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -67,8 +66,6 @@ internal class GiteeAccountsPanel(private val project: Project,
                                   private val imageResizer: GiteeImageResizer)
   : BorderLayoutPanel(), Disposable {
 
-  private val accountIconSize = JBValue.UIInteger("Gitee.Profile.Avatar.Size", 40)
-
   private val accountListModel = CollectionListModel<GiteeAccountDecorator>().apply {
     // disable link handler when there are no errors
     addListDataListener(object : ListDataListener {
@@ -79,15 +76,11 @@ internal class GiteeAccountsPanel(private val project: Project,
   }
 
   private val accountList = JBList<GiteeAccountDecorator>(accountListModel).apply {
-//    cellRenderer = GiteeAccountDecoratorRenderer()
-
     val decoratorRenderer = GiteeAccountDecoratorRenderer()
     cellRenderer = decoratorRenderer
     UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(decoratorRenderer))
 
     selectionMode = ListSelectionModel.SINGLE_SELECTION
-//    selectionForeground = UIUtil.getListForeground()
-//    selectionBackground = JBColor(0xE9EEF5, 0x464A4D)
 
     emptyText.apply {
       appendText("No Gitee accounts added.")
@@ -257,7 +250,7 @@ internal class GiteeAccountsPanel(private val project: Project,
     }
 
     val executor = executorFactory.create(tokens) {
-      project.service<GiteeAuthenticationManager>().refreshNewTokens(accountData.account, it)
+      newTokens -> GiteeAuthenticationManager.getInstance().updateAccountToken(accountData.account, "${newTokens.first}&${newTokens.second}")
     }
 
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
@@ -270,9 +263,6 @@ internal class GiteeAccountsPanel(private val project: Project,
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
           details = loadedDetails
-//          iconProvider = CachingGiteeAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList).apply {
-//            Disposer.register(this@GiteeAccountsPanel, this)
-//          }
           iconProvider = CachingGiteeAvatarIconsProvider(avatarLoader, imageResizer, executor, GiteeUIUtil.avatarSize, accountList)
 
           loadingError = null
@@ -318,16 +308,6 @@ internal class GiteeAccountsPanel(private val project: Project,
 
   override fun dispose() {}
 
-//  companion object {
-//    private fun layoutRecursively(component: Component) {
-//      if (component is JComponent) {
-//        component.doLayout()
-//        for (child in component.components) {
-//          layoutRecursively(child)
-//        }
-//      }
-//    }
-//  }
 }
 
 private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecorator>, JPanel() {
@@ -364,68 +344,6 @@ private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecor
     add(profilePicture)
     add(namesPanel)
   }
-
-//  override fun getListCellRendererComponent(list: JList<out GiteeAccountDecorator>,
-//                                            value: GiteeAccountDecorator,
-//                                            index: Int,
-//                                            isSelected: Boolean,
-//                                            cellHasFocus: Boolean): Component {
-////    UIUtil.setBackgroundRecursively(this, if (isSelected) list.selectionBackground else list.background)
-////    val textColor = if (isSelected) list.selectionForeground else list.foreground
-////    val grayTextColor = if (isSelected) list.selectionForeground else Gray._120
-//
-//    UIUtil.setBackgroundRecursively(this, GiteeUIUtil.List.WithTallRow.background(list, isSelected))
-//    val primaryTextColor = GiteeUIUtil.List.WithTallRow.foreground(list, isSelected)
-//    val secondaryTextColor = GiteeUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
-//
-//    accountName.apply {
-//      text = value.account.name
-////      setBold(if (value.fullName == null) value.projectDefault else false)
-////      foreground = if (value.fullName == null) primaryTextColor else secondaryTextColor
-//      setBold(if (value.details?.name == null) value.projectDefault else false)
-//      foreground = if (value.details?.name == null) primaryTextColor else secondaryTextColor
-//    }
-//
-//    serverName.apply {
-//      text = value.account.server.toString()
-//      foreground = secondaryTextColor
-//    }
-//
-//    profilePicture.apply {
-////      icon = value.profilePicture?.let {
-//////        val size = JBUI.scale(ACCOUNT_PICTURE_SIZE)
-//////        JBImageIcon(it.getScaledInstance(size, size, java.awt.Image.SCALE_FAST))
-////        IconUtil.createImageIcon(ImageLoader.scaleImage(it, JBUI.scale(ACCOUNT_PICTURE_SIZE)))
-////      } ?: GiteeIcons.DefaultAvatar_40
-//      icon = value.getIcon()
-//    }
-//
-//    fullName.apply {
-////      text = value.fullName
-////      setBold(value.projectDefault)
-////      isVisible = value.fullName != null
-//      text = value.details?.name
-//      setBold(value.projectDefault)
-//      isVisible = value.details?.name != null
-//      foreground = secondaryTextColor
-//    }
-//
-//    loadingError.apply {
-//      clear()
-//      value.loadingError?.let {
-//
-//        append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
-//        append(" ")
-//
-//        if (value.showLoginLink) append("Log In",
-//          if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
-//          else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
-//          LINK_TAG)
-//      }
-//    }
-//
-//    return this
-//  }
 
   override fun getListCellRendererComponent(list: JList<out GiteeAccountDecorator>,
                                             value: GiteeAccountDecorator,
@@ -480,9 +398,6 @@ private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecor
  * Account + auxillary info + info loading error
  */
 private class GiteeAccountDecorator(val account: GiteeAccount, var projectDefault: Boolean) {
-//  var fullName: String? = null
-//  var profilePicture: Image? = null
-
   var details: GiteeAuthenticatedUser? = null
   var iconProvider: CachingGiteeAvatarIconsProvider? = null
 

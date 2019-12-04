@@ -53,6 +53,7 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 
 	public GiteeRepositoryEditor(final Project project, final GiteeRepository repository, Consumer<? super GiteeRepository> changeListener) {
 		super(project, repository, changeListener);
+
 		myUrlLabel.setVisible(false);
 		myUsernameLabel.setVisible(false);
 		myUserNameText.setVisible(false);
@@ -76,6 +77,16 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		myURLText.getDocument().addDocumentListener(buttonUpdater);
 		myRepoAuthor.getDocument().addDocumentListener(buttonUpdater);
 		myRepoName.getDocument().addDocumentListener(buttonUpdater);
+	}
+
+	@Override
+	protected void afterTestConnection(boolean connectionSuccessful) {
+		super.afterTestConnection(connectionSuccessful);
+
+		if (connectionSuccessful) {
+			myAccessToken.setText(myRepository.getPasswordTokens().getFirst());
+			myRefreshToken.setText(myRepository.getPasswordTokens().getSecond());
+		}
 	}
 
 	@Nullable

@@ -499,7 +499,7 @@ object GiteeApiRequests {
     fun create(server: GiteeServerPath, scopes: List<String>, login: String, password: CharArray) =
       Post.formUrlEncoded<GiteeAuthorization>(
         getBaseUrl(server, urlSuffix),
-        AuthorizationCreateRequest(scopes, login, String(password))
+        AuthorizationCreateRequest(scopes, login, String(password), server.clientId, server.clientSecret)
       ).withOperationName("create authorization")
 
     @JvmStatic

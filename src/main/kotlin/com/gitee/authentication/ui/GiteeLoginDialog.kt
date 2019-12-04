@@ -29,6 +29,7 @@ class GiteeLoginDialog @JvmOverloads constructor(executorFactory: GiteeApiReques
                                                  title: String = "Log In to GitHub",
                                                  private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
+
   private var giteeLoginPanel = GiteeLoginPanel(executorFactory, isAccountUnique, project).apply {
     putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
   }
@@ -77,12 +78,13 @@ class GiteeLoginDialog @JvmOverloads constructor(executorFactory: GiteeApiReques
   override fun doOKAction() {
     val emptyProgressIndicator = EmptyProgressIndicator(ModalityState.stateForComponent(giteeLoginPanel))
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
-    giteeLoginPanel.acquireLoginAndToken(emptyProgressIndicator).handleOnEdt { loginToken, throwable ->
+
+    giteeLoginPanel.acquireLoginAndToken(emptyProgressIndicator).handleOnEdt { loginInfo, throwable ->
       if (throwable != null && !GiteeAsyncUtil.isCancellation(throwable)) startTrackingValidation()
-      if (loginToken != null) {
-        login = loginToken.first
-        accessToken = loginToken.second
-        refreshToken = loginToken.third
+      if (loginInfo != null) {
+        login = loginInfo.first
+        accessToken = loginInfo.second
+        refreshToken = loginInfo.third
         close(OK_EXIT_CODE, true)
       }
     }

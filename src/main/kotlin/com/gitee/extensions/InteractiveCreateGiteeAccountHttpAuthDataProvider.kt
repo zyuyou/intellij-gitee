@@ -14,35 +14,26 @@ internal class InteractiveCreateGiteeAccountHttpAuthDataProvider(private val pro
                                                                  private val authenticationManager: GiteeAuthenticationManager,
                                                                  private val serverPath: GiteeServerPath,
                                                                  private val login: String? = null)
-    : InteractiveGitHttpAuthDataProvider {
+  : InteractiveGitHttpAuthDataProvider {
 
-    @CalledInAwt
-    override fun getAuthData(parentComponent: Component?): AuthData? {
-        if (login == null) {
-            val account = authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
-                    ?: return null
+  @CalledInAwt
+  override fun getAuthData(parentComponent: Component?): AuthData? {
+    if (login == null) {
+      val account = authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
+        ?: return null
 
-//      val token = getToken(account, parentComponent) ?: return null
-//      return GiteeHttpAuthDataProvider.GiteeAccountAuthData(account, GiteeUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
-            val tokens = getTokens(account, parentComponent) ?: return null
-            return GiteeHttpAuthDataProvider.GiteeAccountAuthData(account, account.name, tokens.first)
-        } else {
-            val account = authenticationManager.requestNewAccountForServer(serverPath, login, project, parentComponent)
-                    ?: return null
+      val tokens = getTokens(account, parentComponent) ?: return null
+      return GiteeHttpAuthDataProvider.GiteeAccountAuthData(account, account.name, tokens.first)
+    } else {
+      val account = authenticationManager.requestNewAccountForServer(serverPath, login, project, parentComponent)
+        ?: return null
 
-//            val token = getToken(account, parentComponent) ?: return null
-//            return GiteeHttpAuthDataProvider.GiteeAccountAuthData(account, login, token)
-          val tokens = getTokens(account, parentComponent) ?: return null
-          return GiteeHttpAuthDataProvider.GiteeAccountAuthData(account, login, tokens.first)
+      val tokens = getTokens(account, parentComponent) ?: return null
+      return GiteeHttpAuthDataProvider.GiteeAccountAuthData(account, login, tokens.first)
 
-        }
     }
+  }
 
-//    private fun getToken(account: GiteeAccount, parentComponent: Component?) =
-//            authenticationManager.getTokenForAccount(account)
-//                    ?: authenticationManager.requestNewToken(account, project, parentComponent)
-
-    private fun getTokens(account: GiteeAccount, parentComponent: Component?) =
-            authenticationManager.getOrRefreshTokensForAccount(account)
-                    ?: authenticationManager.requestNewTokens(account, project, parentComponent)
+  private fun getTokens(account: GiteeAccount, parentComponent: Component?) =
+    authenticationManager.getOrRefreshTokensForAccount(account) ?: authenticationManager.requestNewTokens(account, project, parentComponent)
 }

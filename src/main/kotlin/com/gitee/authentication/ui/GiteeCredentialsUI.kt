@@ -59,14 +59,17 @@ sealed class GiteeCredentialsUI {
   }
 
   internal class PasswordUI(private val serverTextField: ExtendableTextField,
-                            private val clientName: String,
+                            private val clientIdTextField: JBTextField,
+                            private val clientSecretTextField: JPasswordField,
                             switchUi: () -> Unit,
                             private val executorFactory: GiteeApiRequestExecutor.Factory,
                             private val isAccountUnique: (login: String, server: GiteeServerPath) -> Boolean,
                             private val dialogMode: Boolean) : GiteeCredentialsUI() {
+
+    private val switchUiLink = LinkLabel.create("Use Token", switchUi)
+
     private val loginTextField = JBTextField()
     private val passwordField = JPasswordField()
-    private val switchUiLink = LinkLabel.create("Use Token", switchUi)
 
     fun setLogin(login: String, editable: Boolean = true) {
       loginTextField.text = login
@@ -87,10 +90,12 @@ sealed class GiteeCredentialsUI {
     override fun getPanel(): JPanel = panel {
       buildTitleAndLinkRow(this, dialogMode, switchUiLink)
       row("Server:") { serverTextField(pushX, growX) }
+      row("AppId:") { clientIdTextField(pushX, growX) }
+      row("AppSecret:") { clientSecretTextField(pushX, growX) }
       row("Login:") { loginTextField(pushX, growX) }
       row("Password:") {
         passwordField(comment = "Password is not saved and used only to acquire Gitee token",
-                      constraints = *arrayOf(pushX, growX))
+          constraints = *arrayOf(pushX, growX))
       }
       row("") {
         cell {
@@ -106,36 +111,12 @@ sealed class GiteeCredentialsUI {
 
     override fun getValidator() = DialogValidationUtils.chain(
       { DialogValidationUtils.notBlank(loginTextField, "Login cannot be empty") },
-      { DialogValidationUtils.notBlank(passwordField, "Password cannot be empty") })
-
-
-//    override fun createExecutor(): GiteeApiRequestExecutor.WithBasicAuth {
-//      val modalityState = ModalityState.stateForComponent(passwordField)
-//
-//
-//      return executorFactory.create(loginTextField.text, passwordField.password, Supplier {
-//        invokeAndWaitIfNeeded(modalityState) {
-//          Messages.showInputDialog(passwordField,
-//                                   "Authentication code:",
-//                                   "Gitee Two-Factor Authentication",
-//                                   null)
-//        }
-//      })
-//    }
+      { DialogValidationUtils.notBlank(passwordField, "Password cannot be empty") }
+    )
 
     override fun createExecutor(): GiteeApiRequestExecutor.WithPasswordOAuth2 {
       return executorFactory.create()
     }
-
-//    override fun acquireLoginAndToken(server: GiteeServerPath,
-//                                      executor: GiteeApiRequestExecutor,
-//                                      indicator: ProgressIndicator): Pair<String, String> {
-//
-//      val login = loginTextField.text.trim()
-//      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-//      val token = GiteeTokenCreator(server, executor, indicator).createMaster(clientName).token
-//      return login to token
-//    }
 
     override fun acquireLoginAndToken(server: GiteeServerPath,
                                       executor: GiteeApiRequestExecutor,
@@ -172,8 +153,8 @@ sealed class GiteeCredentialsUI {
                          private val serverTextField: ExtendableTextField,
                          switchUi: () -> Unit,
                          private val dialogMode: Boolean) : GiteeCredentialsUI() {
-    private val GIST_SCOPE_PATTERN = Regex("(?:^|, )repo(?:,|$)")
-    private val REPO_SCOPE_PATTERN = Regex("(?:^|, )gist(?:,|$)")
+//    private val GIST_SCOPE_PATTERN = Regex("(?:^|, )repo(?:,|$)")
+//    private val REPO_SCOPE_PATTERN = Regex("(?:^|, )gist(?:,|$)")
 
     private val accessTokenTextField = JBTextField()
     private val refreshTokenTextField = JBTextField()
@@ -183,11 +164,6 @@ sealed class GiteeCredentialsUI {
 
     fun setToken(token: String) {
       accessTokenTextField.text = token
-    }
-
-    fun setTokens(tokens: Pair<String, String>) {
-      accessTokenTextField.text = tokens.first
-      refreshTokenTextField.text = tokens.second
     }
 
     override fun getPanel() = panel {
@@ -212,34 +188,6 @@ sealed class GiteeCredentialsUI {
     }
 
     override fun createExecutor() = factory.create(accessTokenTextField.text)
-
-//    override fun acquireLoginAndToken(server: GiteeServerPath,
-//                                      executor: GiteeApiRequestExecutor,
-//                                      indicator: ProgressIndicator): Pair<String, String> {
-//      var scopes: String? = null
-//      val login = executor.execute(indicator,
-//                                   object : GiteeApiRequest.Get.Json<GiteeAuthenticatedUser>(
-//                                     GiteeApiRequests.getUrl(server,
-//                                                              GiteeApiRequests.CurrentUser.urlSuffix),
-//                                     GiteeAuthenticatedUser::class.java) {
-//                                     override fun extractResult(response: GiteeApiResponse): GiteeAuthenticatedUser {
-//                                       scopes = response.findHeader("X-OAuth-Scopes")
-//                                       return super.extractResult(response)
-//                                     }
-//                                   }.withOperationName("get profile information")).login
-//      if (scopes.isNullOrEmpty()
-//          || !GIST_SCOPE_PATTERN.containsMatchIn(scopes!!)
-//          || !REPO_SCOPE_PATTERN.containsMatchIn(scopes!!)) {
-//        throw GiteeAuthenticationException("Access token should have `repo` and `gist` scopes.")
-//      }
-//
-//      fixedLogin?.let {
-//        if (it != login) throw GiteeAuthenticationException("Token should match username \"$it\"")
-//      }
-//
-//      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-//      return login to tokenTextField.text
-//    }
 
     override fun acquireLoginAndToken(server: GiteeServerPath,
                                       executor: GiteeApiRequestExecutor,

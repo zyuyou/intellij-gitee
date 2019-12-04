@@ -42,7 +42,11 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
                                                      @field:Attribute("port")
                                                      val port: Int? = null,
                                                      @field:Attribute("suffix")
-                                                     val suffix: String? = null) {
+                                                     val suffix: String? = null,
+                                                     @field:Attribute("clientid")
+                                                     val clientId: String? = null,
+                                                     @field:Attribute("clientsecret")
+                                                     val clientSecret: String? = null) {
 
   companion object {
     const val DEFAULT_HOST: String = "gitee.com"
@@ -55,7 +59,7 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
     private val URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?", Pattern.CASE_INSENSITIVE)
 
     @Throws(GiteeParseException::class)
-    fun from(uri: String): GiteeServerPath {
+    fun from(uri: String, clientId: String? = null, clientSecret: String? = null): GiteeServerPath {
       val matcher: Matcher = URL_REGEX.matcher(uri)
 
       if (!matcher.matches()) throw GiteeParseException("Not a valid URL")
@@ -78,7 +82,7 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
 
       val suffix: String? = StringUtil.nullize(matcher.group(5))
 
-      return GiteeServerPath(httpSchema, host, port, suffix)
+      return GiteeServerPath(httpSchema, host, port, suffix, clientId, clientSecret)
     }
   }
 

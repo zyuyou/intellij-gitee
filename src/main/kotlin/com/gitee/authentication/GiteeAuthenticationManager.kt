@@ -22,7 +22,6 @@ import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.authentication.ui.GiteeLoginDialog
-import com.gitee.authentication.util.GiteeTokenCreator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
@@ -61,24 +60,11 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     // no refresh_token return null
     if (tokens.second == "") return null
 
-    executorFactory.create(tokens) { refreshNewTokens(account, it) }.execute(DumbProgressIndicator(), GiteeApiRequests.CurrentUser.get(account.server))
+    executorFactory.create(tokens) {
+      newTokens -> accountManager.updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
+    }.execute(DumbProgressIndicator(), GiteeApiRequests.CurrentUser.get(account.server))
 
     return accountManager.getTokensForAccount(account)
-  }
-
-//  @CalledInAwt
-//  @JvmOverloads
-//  internal fun getOrRequestTokensForAccount(account: GiteeAccount,
-//                                            project: Project?,
-//                                            parentComponent: Component? = null): Pair<String, String>? {
-//
-//    return getTokensForAccount(account) ?: requestNewTokens(account, project, parentComponent)
-//  }
-
-  @CalledInAny
-  internal fun refreshNewTokens(account: GiteeAccount, refreshToken: String) : Triple<GiteeAccount, String, String> {
-    val authorization = GiteeTokenCreator(account.server, executorFactory.create(), DumbProgressIndicator()).updateMaster(refreshToken)
-    return Triple(account, authorization.accessToken, authorization.refreshToken)
   }
 
   @CalledInAwt
@@ -102,17 +88,9 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
   @CalledInAwt
   @JvmOverloads
   fun requestNewAccount(project: Project?, parentComponent: Component? = null): GiteeAccount? {
-//    fun isAccountUnique(name: String, server: GiteeServerPath) =
-//      accountManager.accounts.none { it.name == name && it.server == server }
-
     val dialog = GiteeLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
-
-//    val account = GiteeAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
-//    accountManager.accounts += account
-//    accountManager.updateAccountToken(account, "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
-//    return account
 
     return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
   }

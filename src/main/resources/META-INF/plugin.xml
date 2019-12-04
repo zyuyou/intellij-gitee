@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2019.3.0</version>
+    <version>2019.3.2</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -11,7 +11,11 @@
     </description>
     <change-notes>
         <![CDATA[
-        <i>2019.3.0</i>
+        <i>2019.3.2</i>
+        <ul>
+          <li>Fix account tokens refresh error.</li>
+        </ul>
+        <i>2019.3.1</i>
         <ul>
           <li>Change repo list display name.</li>
           <li>Fix task get issue fail.</li>
