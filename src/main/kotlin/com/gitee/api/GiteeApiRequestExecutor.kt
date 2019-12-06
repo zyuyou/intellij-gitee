@@ -140,7 +140,7 @@ sealed class GiteeApiRequestExecutor {
       } catch (e: GiteeAccessTokenExpiredException) {
         if (tokens.second == "") throw e
 
-        val serverPath = from(request.url)
+        val serverPath = from(request.url.substringBefore('?'))
 
         val authorization: GiteeAuthorization = GiteeTokenCreator(
           from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
