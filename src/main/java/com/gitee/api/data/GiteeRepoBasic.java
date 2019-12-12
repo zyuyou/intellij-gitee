@@ -86,6 +86,11 @@ public class GiteeRepoBasic {
 
   @NotNull
   public String getUserName() {
+    return fullName.split("/")[0];
+  }
+
+  @NotNull
+  public String getHumanUserName() {
     return humanName.split("/")[0];
   }
 

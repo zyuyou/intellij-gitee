@@ -434,17 +434,21 @@ internal class GiteeCloneDialogExtensionComponent(
     }
     val giteeRepoPath = getGiteeRepoPath(searchField.text)
     if (giteeRepoPath != null) {
-      selectedUrl = giteeGitHelper.getRemoteUrl(giteeRepoPath.serverPath,
-          giteeRepoPath.repositoryPath.owner,
-          giteeRepoPath.repositoryPath.repository)
+      selectedUrl = giteeGitHelper.getRemoteUrl(
+        giteeRepoPath.serverPath,
+        giteeRepoPath.repositoryPath.owner,
+        giteeRepoPath.repositoryPath.repository
+      )
       repositoryList.emptyText.appendText("Clone '$selectedUrl'")
       return
     }
     val selectedValue = repositoryList.selectedValue
     if (selectedValue is GiteeRepositoryListItem.Repo) {
-      selectedUrl = giteeGitHelper.getRemoteUrl(selectedValue.account.server,
-          selectedValue.repo.userName,
-          selectedValue.repo.name)
+      selectedUrl = giteeGitHelper.getRemoteUrl(
+        selectedValue.account.server,
+        selectedValue.repo.userName,
+        selectedValue.repo.name
+      )
       return
     }
     selectedUrl = null
