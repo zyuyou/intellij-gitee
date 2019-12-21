@@ -27,6 +27,7 @@ import javax.swing.*
 
 sealed class GiteeCredentialsUI {
   abstract fun getPanel(): JPanel
+  abstract fun getPanel2(): JPanel
   abstract fun getPreferredFocus(): JComponent
   abstract fun getValidator(): Validator
   abstract fun createExecutor(): GiteeApiRequestExecutor
@@ -62,11 +63,15 @@ sealed class GiteeCredentialsUI {
                             private val clientIdTextField: JBTextField,
                             private val clientSecretTextField: JPasswordField,
                             switchUi: () -> Unit,
+                            editCustomAppInfo: () -> Unit,
+                            useDefaultAppInfo: () -> Unit,
                             private val executorFactory: GiteeApiRequestExecutor.Factory,
                             private val isAccountUnique: (login: String, server: GiteeServerPath) -> Boolean,
                             private val dialogMode: Boolean) : GiteeCredentialsUI() {
 
     private val switchUiLink = LinkLabel.create("Use Token", switchUi)
+    private val editCustomClientLink = LinkLabel.create("Edit Custom App Info", editCustomAppInfo)
+    private val useDefaultClientLink = LinkLabel.create("Use Default App Info", useDefaultAppInfo)
 
     private val loginTextField = JBTextField()
     private val passwordField = JPasswordField()
@@ -87,16 +92,36 @@ sealed class GiteeCredentialsUI {
       serverTextField.setEnterPressedAction(actionListener)
     }
 
-    override fun getPanel(): JPanel = panel {
+    override fun getPanel2(): JPanel = panel {
       buildTitleAndLinkRow(this, dialogMode, switchUiLink)
       row("Server:") { serverTextField(pushX, growX) }
-      row("AppId:") { clientIdTextField(pushX, growX) }
-      row("AppSecret:") { clientSecretTextField(pushX, growX) }
       row("Login:") { loginTextField(pushX, growX) }
       row("Password:") {
         passwordField(comment = "Password is not saved and used only to acquire Gitee token",
           constraints = *arrayOf(pushX, growX))
       }
+      row("AppId:") { clientIdTextField(pushX, growX) }
+      row("AppSecret:") { clientSecretTextField(pushX, growX) }
+      row("") { cell { useDefaultClientLink() } }
+      row("") {
+        cell {
+          loginButton()
+          cancelButton()
+        }
+      }
+    }.apply {
+      border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+    }
+
+    override fun getPanel(): JPanel = panel {
+      buildTitleAndLinkRow(this, dialogMode, switchUiLink)
+      row("Server:") { serverTextField(pushX, growX) }
+      row("Login:") { loginTextField(pushX, growX) }
+      row("Password:") {
+        passwordField(comment = "Password is not saved and used only to acquire Gitee token",
+          constraints = *arrayOf(pushX, growX))
+      }
+      row("") { cell { editCustomClientLink() } }
       row("") {
         cell {
           loginButton()
@@ -179,6 +204,10 @@ sealed class GiteeCredentialsUI {
       }
     }.apply {
       border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+    }
+
+    override fun getPanel2(): JPanel {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun getPreferredFocus() = accessTokenTextField

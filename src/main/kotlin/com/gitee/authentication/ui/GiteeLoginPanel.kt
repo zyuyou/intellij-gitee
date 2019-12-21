@@ -38,7 +38,7 @@ class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
   private lateinit var currentUi: GiteeCredentialsUI
 
   private var passwordUi = GiteeCredentialsUI.PasswordUI(
-    serverTextField, clientIdTextField, clientSecretTextField, ::switchToTokenUI, executorFactory, isAccountUnique, isDialogMode
+    serverTextField, clientIdTextField, clientSecretTextField, ::switchToTokenUI, ::editCustomAppInfo, ::useDefaultAppInfo, executorFactory, isAccountUnique, isDialogMode
   )
 
   private var tokenUi = GiteeCredentialsUI.TokenUI(
@@ -58,6 +58,16 @@ class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
 
   private fun switchToTokenUI() {
     applyUi(tokenUi)
+  }
+
+  private fun editCustomAppInfo() {
+    setContent(currentUi.getPanel2())
+    currentUi.getPreferredFocus().requestFocus()
+  }
+
+  private fun useDefaultAppInfo() {
+    setContent(currentUi.getPanel())
+    currentUi.getPreferredFocus().requestFocus()
   }
 
   private fun applyUi(ui: GiteeCredentialsUI) {
@@ -87,8 +97,7 @@ class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
       try {
         GiteeServerPath.from(text)
         null
-      }
-      catch (e: Exception) {
+      } catch (e: Exception) {
         ValidationInfo("$text is not a valid server path:\n${e.message}", textField)
       }
     }
@@ -98,8 +107,7 @@ class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
     if (busy) {
       if (!serverTextField.extensions.contains(progressExtension))
         serverTextField.addExtension(progressExtension)
-    }
-    else {
+    } else {
       serverTextField.removeExtension(progressExtension)
     }
     serverTextField.isEnabled = !busy
@@ -127,7 +135,7 @@ class GiteeLoginPanel(executorFactory: GiteeApiRequestExecutor.Factory,
   }
 
   fun getServer(): GiteeServerPath =
-    GiteeServerPath.from(serverTextField.text.trim(), clientIdTextField.text.trim(), clientSecretTextField.text.trim())
+    GiteeServerPath.from(serverTextField.text.trim(), clientIdTextField.text.trim(), String(clientSecretTextField.password))
 
   fun setServer(path: String, editable: Boolean = true) {
     serverTextField.apply {
