@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2019.3.3</version>
+    <version>2019.3.4</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -11,13 +11,13 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2019.3.4</i>
+        <ul>
+          <li>Make Gitee's third-party app info invisable by default.</li>
+        </ul>
         <i>2019.3.3</i>
         <ul>
           <li>Fix get clone url error.</li>
-        </ul>
-        <i>2019.3.2</i>
-        <ul>
-          <li>Fix account tokens refresh error.</li>
         </ul>
       ]]>
     </change-notes>
