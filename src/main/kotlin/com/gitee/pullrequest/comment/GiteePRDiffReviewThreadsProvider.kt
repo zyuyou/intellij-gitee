@@ -11,6 +11,6 @@ interface GiteePRDiffReviewThreadsProvider {
   fun install(viewer: DiffViewerBase, change: Change)
 
   companion object {
-    val KEY = Key.create<GiteePRDiffReviewThreadsProvider>("Github.PullRequest.Diff.Comments")
+    val KEY = Key.create<GiteePRDiffReviewThreadsProvider>("Gitee.PullRequest.Diff.Comments")
   }
 }

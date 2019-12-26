@@ -109,7 +109,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
     loadingModel.future = contextValue.value
 
     return GiteeLoadingPanel(loadingModel, contentContainer, uiDisposable,
-      GiteeLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from GitHub")).apply {
+      GiteeLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from Gitee")).apply {
       resetHandler = ActionListener {
         contextValue.drop()
         loadingModel.future = contextValue.value
@@ -141,7 +141,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
 
     if (ghprVirtualFile == null) {
       val content = ghprEditorContent ?: error("editor content should be created by this time")
-      ghprVirtualFile = VCSContentVirtualFile(content) { "GitHub Pull Requests" }
+      ghprVirtualFile = VCSContentVirtualFile(content) { "Gitee Pull Requests" }
       ghprVirtualFile?.putUserData(VCSContentVirtualFile.TabSelector) {
         GiteeUIUtil.findAndSelectGitHubContent(project, true)
       }

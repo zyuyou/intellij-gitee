@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
 internal class GiteePRFileType : FileType {
-  override fun getName() = "GithubPullRequest"
-  override fun getDescription() = "Github Pull Request"
+  override fun getName() = "GiteePullRequest"
+  override fun getDescription() = "Gitee Pull Request"
   override fun getDefaultExtension() = ""
   override fun getIcon(): Icon? = GiteeIcons.PullRequestOpen
   override fun isBinary() = true

@@ -68,7 +68,7 @@ internal class GiteePRAccountsComponent(private val authManager: GiteeAuthentica
   private fun showLoginPanel() {
     setCenteredContent(GiteeUIUtil.createNoteWithAction(::requestNewAccount).apply {
       append("Log in", SimpleTextAttributes.LINK_ATTRIBUTES, Runnable { requestNewAccount() })
-      append(" to GitHub to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(" to Gitee to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     })
   }
 
@@ -80,7 +80,7 @@ internal class GiteePRAccountsComponent(private val authManager: GiteeAuthentica
   private fun showChooseAccountPanel(accounts: List<GiteeAccount>) {
     setCenteredContent(GiteeUIUtil.createNoteWithAction { chooseAccount(accounts) }.apply {
       append("Select", SimpleTextAttributes.LINK_ATTRIBUTES, Runnable { chooseAccount(accounts) })
-      append(" GitHub account to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(" Gitee account to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     })
   }
 

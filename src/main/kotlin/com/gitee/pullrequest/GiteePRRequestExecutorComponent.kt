@@ -52,7 +52,7 @@ class GiteePRRequestExecutorComponent(private val requestExecutorManager: GiteeA
     catch (e: Exception) {
       setCenteredContent(GiteeUIUtil.createNoteWithAction(::createRequestExecutorWithUserInput).apply {
         append("Log in", SimpleTextAttributes.LINK_ATTRIBUTES, Runnable { createRequestExecutorWithUserInput() })
-        append(" to GitHub to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        append(" to Gitee to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       })
     }
   }

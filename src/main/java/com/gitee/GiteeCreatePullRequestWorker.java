@@ -134,7 +134,7 @@ public class GiteeCreatePullRequestWorker {
       fork.setRemoteName(path.getOwner());
     }
     catch (VcsException e) {
-      GiteeNotifications.showError(myProject, "Can't add remote", "Failed to add GitHub remote: '" + url + "'. " + e.getMessage());
+      GiteeNotifications.showError(myProject, "Can't add remote", "Failed to add Gitee remote: '" + url + "'. " + e.getMessage());
     }
   }
 
@@ -212,7 +212,7 @@ public class GiteeCreatePullRequestWorker {
   private void doLoadForksFromGitee(@NotNull ProgressIndicator indicator) throws IOException {
     GiteeRepoDetailed repo = myExecutor.execute(indicator,
                                                  GiteeApiRequests.Repos.get(myServer, myPath.getOwner(), myPath.getRepository()));
-    if (repo == null) throw new GiteeConfusingException("Can't find github repo " + myPath.toString());
+    if (repo == null) throw new GiteeConfusingException("Can't find gitee repo " + myPath.toString());
 
     doAddFork(repo, indicator);
     if (repo.getParent() != null) {
@@ -236,7 +236,7 @@ public class GiteeCreatePullRequestWorker {
   private String doLoadDefaultBranch(@NotNull final GiteeRepositoryPath fork, @NotNull ProgressIndicator indicator) throws IOException {
     GiteeRepo repo = myExecutor.execute(indicator,
                                          GiteeApiRequests.Repos.get(myServer, fork.getOwner(), fork.getRepository()));
-    if (repo == null) throw new GiteeConfusingException("Can't find github repo " + fork.toString());
+    if (repo == null) throw new GiteeConfusingException("Can't find gitee repo " + fork.toString());
     return repo.getDefaultBranch();
   }
 
@@ -511,7 +511,7 @@ public class GiteeCreatePullRequestWorker {
 
     Convertor<String, ForkInfo> getForkPath = user ->
       myProgressManager.runProcessWithProgressSynchronously(() -> findRepositoryByUser(myProgressManager.getProgressIndicator(), user),
-                                                            "Access to GitHub", false, myProject);
+                                                            "Access to Gitee", false, myProject);
 
     GiteeSelectForkDialog dialog = new GiteeSelectForkDialog(myProject, myAvailableForks, getForkPath);
     DialogManager.show(dialog);

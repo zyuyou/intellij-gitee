@@ -29,7 +29,7 @@ public final class GiteeIcons {
 
   public static final Icon DefaultAvatar = load("/icons/defaultAvatar.svg"); // 16x16
   public static final Icon PullRequestClosed = load("/icons/pullRequestClosed.svg"); // 16x16
-  public static final Icon PullRequestMerged = load("/org/jetbrains/plugins/github/pullRequestMerged.svg"); // 16x16
+  public static final Icon PullRequestMerged = load("/icons/pullRequestMerged.svg"); // 16x16
   public static final Icon PullRequestOpen = load("/icons/pullRequestOpen.svg"); // 16x16
   public static final Icon PullRequestsToolWindow = load("/icons/pullRequestsToolWindow.svg"); // 13x13
   public static final Icon Review = load("/icons/review.svg"); // 16x16

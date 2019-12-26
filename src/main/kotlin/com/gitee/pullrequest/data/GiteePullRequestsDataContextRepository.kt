@@ -45,7 +45,7 @@ internal class GiteePullRequestsDataContextRepository(private val project: Proje
                  gitRemoteCoordinates: GitRemoteUrlCoordinates): GiteePullRequestsDataContext {
     val fullPath = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(gitRemoteCoordinates.url)
                    ?: throw IllegalArgumentException(
-                     "Invalid GitHub Repository URL - ${gitRemoteCoordinates.url} is not a GitHub repository")
+                     "Invalid Gitee Repository URL - ${gitRemoteCoordinates.url} is not a Gitee repository")
 
     indicator.text = "Loading account information"
     val accountDetails = accountInformationProvider.getInformation(requestExecutor, indicator, account)

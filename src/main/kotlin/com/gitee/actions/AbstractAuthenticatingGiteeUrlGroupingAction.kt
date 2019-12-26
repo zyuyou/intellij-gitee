@@ -46,7 +46,7 @@ abstract class AbstractAuthenticatingGiteeUrlGroupingAction(text: String?, descr
     val dialog = GiteeChooseAccountDialog(project,
                                            null,
                                            accounts,
-                                           "Choose GitHub account for: $remoteUrl",
+                                           "Choose Gitee account for: $remoteUrl",
                                            false,
                                            true)
     DialogManager.show(dialog)

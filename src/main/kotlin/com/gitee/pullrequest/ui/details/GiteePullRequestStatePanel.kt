@@ -68,7 +68,7 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
   }
   private val mergeButton = JBOptionButton(null, null)
 
-  private val browseButton = LinkLabel.create("Open on GitHub") {
+  private val browseButton = LinkLabel.create("Open on Gitee") {
     model.value?.run { BrowserUtil.browse(url) }
   }.apply {
     icon = AllIcons.Ide.External_link_arrow
@@ -78,7 +78,7 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
   private val buttonsPanel = NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
 
-    if (Registry.`is`("github.action.pullrequest.state.useapi")) {
+    if (Registry.`is`("gitee.action.pullrequest.state.useapi")) {
       add(mergeButton)
       add(closeButton)
       add(reopenButton)
