@@ -167,8 +167,8 @@ open class GiteeOpenInBrowserActionGroup
           return
         }
 
-        val githubUrl = makeUrlToOpen(editor, relativePath, hash, path)
-        if (githubUrl != null) BrowserUtil.browse(githubUrl)
+        val giteeUrl = makeUrlToOpen(editor, relativePath, hash, path)
+        if (giteeUrl != null) BrowserUtil.browse(giteeUrl)
       }
 
       private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {

@@ -143,7 +143,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
       val content = ghprEditorContent ?: error("editor content should be created by this time")
       ghprVirtualFile = VCSContentVirtualFile(content) { "Gitee Pull Requests" }
       ghprVirtualFile?.putUserData(VCSContentVirtualFile.TabSelector) {
-        GiteeUIUtil.findAndSelectGitHubContent(project, true)
+        GiteeUIUtil.findAndSelectGiteeContent(project, true)
       }
     }
 

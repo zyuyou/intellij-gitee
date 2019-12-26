@@ -226,7 +226,7 @@ object GiteeUIUtil {
     return result
   }
 
-  fun findAndSelectGitHubContent(project: Project, select: Boolean) {
+  fun findAndSelectGiteeContent(project: Project, select: Boolean) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS) ?: return
 
     val manager = toolWindow.contentManager

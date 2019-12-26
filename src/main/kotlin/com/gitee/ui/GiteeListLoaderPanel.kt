@@ -124,11 +124,11 @@ internal abstract class GiteeListLoaderPanel<L : GiteeListLoader>(protected val 
   companion object {
     private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
       if (error is GiteeStatusCodeException && error.error != null) {
-        val githubError = error.error!!
-        val builder = StringBuilder(githubError.message)
-        if (githubError.errors.isNotEmpty()) {
+        val giteeError = error.error!!
+        val builder = StringBuilder(giteeError.message)
+        if (giteeError.errors.isNotEmpty()) {
           builder.append(": ").append(newLineSeparator)
-          for (e in githubError.errors) {
+          for (e in giteeError.errors) {
             builder.append(e.message ?: "${e.code} error in ${e.resource} field ${e.field}").append(newLineSeparator)
           }
         }

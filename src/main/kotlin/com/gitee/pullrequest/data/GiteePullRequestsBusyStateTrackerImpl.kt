@@ -10,7 +10,7 @@ import java.util.*
 
 class GiteePullRequestsBusyStateTrackerImpl : GiteePullRequestsBusyStateTracker {
   private val busySet = ContainerUtil.newConcurrentSet<Long>()
-  private val busyChangeEventDispatcher = EventDispatcher.create(GithubPullRequestBusyStateListener::class.java)
+  private val busyChangeEventDispatcher = EventDispatcher.create(GiteePullRequestBusyStateListener::class.java)
 
   @CalledInAwt
   override fun acquire(pullRequest: Long): Boolean {
@@ -30,14 +30,14 @@ class GiteePullRequestsBusyStateTrackerImpl : GiteePullRequestsBusyStateTracker 
 
   @CalledInAwt
   override fun addPullRequestBusyStateListener(disposable: Disposable, listener: (Long) -> Unit) =
-    busyChangeEventDispatcher.addListener(object : GithubPullRequestBusyStateListener {
+    busyChangeEventDispatcher.addListener(object : GiteePullRequestBusyStateListener {
       override fun busyStateChanged(pullRequest: Long) {
         listener(pullRequest)
       }
     }, disposable)
 
 
-  private interface GithubPullRequestBusyStateListener : EventListener {
+  private interface GiteePullRequestBusyStateListener : EventListener {
     fun busyStateChanged(pullRequest: Long)
   }
 }
