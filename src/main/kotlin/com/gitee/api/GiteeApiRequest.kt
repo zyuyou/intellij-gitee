@@ -81,7 +81,6 @@ sealed class GiteeApiRequest<out T>(val url: String) {
       // requests for Gitee
       inline fun <reified T> jsonList(url: String): Get<List<T>> = JsonList(url, T::class.java)
 
-//      inline fun <reified T> jsonPage2(url: String): Get<GiteeResponsePage<T>> = JsonPage2(url, T::class.java)
     }
 
     open class Json<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GiteeApiContentHelper.JSON_MIME_TYPE)

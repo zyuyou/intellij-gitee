@@ -16,6 +16,7 @@
 
 package com.gitee.api.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.gitee.api.data.util.GiteeLink;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -26,44 +27,38 @@ import org.jetbrains.io.mandatory.RestModel;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class GiteePullRequest {
-  @Mandatory
-  private long number;
-  @Mandatory
-  private GiteeIssueState state;
-
-  @Mandatory
-  private String title;
-  private String body;
+  private long id;
   private String url;
-  @Mandatory
-  private String htmlUrl;
-  @Mandatory
-  private String diffUrl;
-  @Mandatory
-  private String patchUrl;
-  @Mandatory
-  private String issueUrl;
-  @Mandatory
+  private long number;
+  private String title;
+  private GiteeIssueState state;
+  private GiteeUser user;
+
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
   private Date createdAt;
-  @Mandatory
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
   private Date updatedAt;
-  @Mandatory
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
+  private Date closedAt;
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
+  private Date mergedAt;
+
   private List<GiteeUser> assignees; // 审查人员
-  @Mandatory
   private List<GiteeUser> testers;   // 测试人员
 
-  //  @Mandatory
   private List<GiteeIssueLabel> labels;
 
-  private Date closedAt;
-  private Date mergedAt;
-  @Mandatory
-  private GiteeUser user;
-  @Mandatory
+  private String body;
+
+  private String htmlUrl;
+  private String diffUrl;
+  private String patchUrl;
+  private String issueUrl;
+
   private Tag head;
-  @Mandatory
   private Tag base;
 
   @Mandatory
@@ -74,28 +69,10 @@ public class GiteePullRequest {
     return url;
   }
 
-  @NotNull
-  public String getHtmlUrl() {
-    return htmlUrl;
-  }
 
-  @NotNull
-  public String getDiffUrl() {
-    return diffUrl;
-  }
-
-  @NotNull
-  public String getPatchUrl() {
-    return patchUrl;
-  }
 
   public long getNumber() {
     return number;
-  }
-
-  @NotNull
-  public GiteeIssueState getState() {
-    return state;
   }
 
   @NotNull
@@ -104,8 +81,8 @@ public class GiteePullRequest {
   }
 
   @NotNull
-  public String getBody() {
-    return body;
+  public GiteeIssueState getState() {
+    return state;
   }
 
   @NotNull
@@ -145,11 +122,27 @@ public class GiteePullRequest {
 
   @NotNull
   public List<GiteeIssueLabel> getLabels() {
-    if (labels == null) {
-      return Collections.emptyList();
-    } else {
-      return labels;
-    }
+    return Objects.requireNonNullElse(labels, Collections.emptyList());
+  }
+
+  @NotNull
+  public String getHtmlUrl() {
+    return htmlUrl;
+  }
+
+  @NotNull
+  public String getDiffUrl() {
+    return diffUrl;
+  }
+
+  @NotNull
+  public String getPatchUrl() {
+    return patchUrl;
+  }
+
+  @NotNull
+  public String getBody() {
+    return body;
   }
 
   @NotNull

@@ -64,6 +64,7 @@ internal class GiteePullRequestsDataContextRepository(private val project: Proje
     val dataLoader = GiteePullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor,
                                                       gitRemoteCoordinates.repository, gitRemoteCoordinates.remote,
                                                       account.server, repoDetails.fullPath)
+
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(number: Long) {
         runInEdt {

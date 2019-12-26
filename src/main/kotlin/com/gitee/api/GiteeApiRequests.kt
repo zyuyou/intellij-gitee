@@ -303,6 +303,12 @@ object GiteeApiRequests {
     }
 
     object PullRequests : Entity("/pulls") {
+      @JvmStatic
+      fun get(server: GiteeServerPath, username: String, repoName: String, state: String? = null, pagination: GiteeRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, GiteeApiUrlQueryBuilder.urlQuery { param("state", state); param(pagination) }))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GiteePullRequest>(url).withOperationName("get pull request")
 
       @JvmStatic
       fun getDiff(serverPath: GiteeServerPath, username: String, repoName: String, number: Long) =
@@ -363,7 +369,7 @@ object GiteeApiRequests {
                       headSha: String) =
           Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
               GiteePullRequestMergeRebaseRequest(headSha))
-              .withOperationName("rebase and merge pull request ${number}")
+              .withOperationName("rebase and merge pull request $number")
 
       @JvmStatic
       fun getListETag(server: GiteeServerPath, repoPath: GiteeRepositoryPath) =

@@ -33,11 +33,11 @@ internal class GiteePRListLoaderImpl(progressManager: ProgressManager,
                                      private val listModel: CollectionListModel<GEPullRequestShort>,
                                      private val searchQueryHolder: GiteePullRequestSearchQueryHolder)
   : GiteeGQLPagedListLoader<GEPullRequestShort>(progressManager,
-                                             SimpleGiteeGQLPagesLoader(requestExecutor, { p ->
-                                               GiteeGQLRequests.PullRequest.search(serverPath, buildQuery(repoPath, searchQueryHolder.query),
-                                                                                p)
-                                             })),
-    GiteePRListLoader {
+  SimpleGiteeGQLPagesLoader(requestExecutor, { p ->
+    GiteeGQLRequests.PullRequest.search(serverPath, buildQuery(repoPath, searchQueryHolder.query),
+      p)
+  })),
+  GiteePRListLoader {
 
   override val hasLoadedItems: Boolean
     get() = !listModel.isEmpty
@@ -120,13 +120,12 @@ internal class GiteePRListLoaderImpl(progressManager: ProgressManager,
         val indicator = NonReusableEmptyProgressIndicator()
         progressIndicator = indicator
         scheduler = JobScheduler.getScheduler().scheduleWithFixedDelay({
-                                                                         try {
-                                                                           lastETag = loadListETag(indicator)
-                                                                         }
-                                                                         catch (e: Exception) {
-                                                                           //ignore
-                                                                         }
-                                                                       }, 30, 30, TimeUnit.SECONDS)
+          try {
+            lastETag = loadListETag(indicator)
+          } catch (e: Exception) {
+            //ignore
+          }
+        }, 30, 30, TimeUnit.SECONDS)
       }
     }
 
