@@ -16,8 +16,8 @@
 
 package com.gitee.util
 
-import com.gitee.api.data.GELabel
-import com.gitee.api.data.GEUser
+import com.gitee.api.data.GiteeIssueLabel
+import com.gitee.api.data.GiteeUser
 import com.gitee.pullrequest.GiteePRAccountsComponent
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.intellij.CommonBundle
@@ -63,12 +63,12 @@ object GiteeUIUtil {
     focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
   }
 
-  fun createIssueLabelLabel(label: GELabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
+  fun createIssueLabelLabel(label: GiteeIssueLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)
     foreground = getLabelForeground(background)
   }.andOpaque()
 
-  fun getLabelBackground(label: GELabel): JBColor {
+  fun getLabelBackground(label: GiteeIssueLabel): JBColor {
     val apiColor = ColorUtil.fromHex(label.color)
     return JBColor(apiColor, ColorUtil.darker(apiColor, 3))
   }
@@ -110,6 +110,7 @@ object GiteeUIUtil {
     }
   }
 
+  // PullRequest详情编辑按钮弹出菜单
   fun <T> showChooserPopup(popupTitle: String, parentComponent: JComponent,
                            cellRendererFactory: (JList<SelectableWrapper<T>>) -> SelectionListCellRenderer<T>,
                            currentList: List<T>,
@@ -283,14 +284,14 @@ object GiteeUIUtil {
     abstract fun getIcon(value: T): Icon
 
     class Users(private val iconsProvider: CachingGiteeAvatarIconsProvider)
-      : SelectionListCellRenderer<GEUser>() {
-      override fun getText(value: GEUser) = value.login
-      override fun getIcon(value: GEUser) = iconsProvider.getIcon(value.avatarUrl)
+      : SelectionListCellRenderer<GiteeUser>() {
+      override fun getText(value: GiteeUser) = value.login
+      override fun getIcon(value: GiteeUser) = iconsProvider.getIcon(value.avatarUrl)
     }
 
-    class Labels : SelectionListCellRenderer<GELabel>() {
-      override fun getText(value: GELabel) = value.name
-      override fun getIcon(value: GELabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
+    class Labels : SelectionListCellRenderer<GiteeIssueLabel>() {
+      override fun getText(value: GiteeIssueLabel) = value.name
+      override fun getIcon(value: GiteeIssueLabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
     }
   }
 }

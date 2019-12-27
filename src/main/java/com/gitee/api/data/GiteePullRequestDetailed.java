@@ -15,6 +15,7 @@
  */
 package com.gitee.api.data;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.mandatory.RestModel;
 
 @RestModel
@@ -34,6 +35,11 @@ public class GiteePullRequestDetailed extends GiteePullRequest {
   private Integer deletions;
   private Integer changedFiles;
 
+  private String bodyHtml;
+
+  private Tag head;
+  private Tag base;
+
   public boolean getMerged() {
     return merged;
   }
@@ -44,5 +50,34 @@ public class GiteePullRequestDetailed extends GiteePullRequest {
 
   public boolean getRebaseable() {
     return rebaseable != null && rebaseable;
+  }
+
+  @NotNull
+  public String getBodyHTML() {
+    return bodyHtml;
+  }
+
+  @NotNull
+  public Tag getHead() {
+    return head;
+  }
+
+  @NotNull
+  public Tag getBase() {
+    return base;
+  }
+
+  @NotNull
+  public String getHeadLabel() {
+    if(head.getRepo() != null){
+      return head.getRepo().getFullName() + ":" + head.getRef();
+    }
+
+    return ":" + head.getRef();
+  }
+
+  @NotNull
+  public String getBaseRefName() {
+    return base.getRef();
   }
 }

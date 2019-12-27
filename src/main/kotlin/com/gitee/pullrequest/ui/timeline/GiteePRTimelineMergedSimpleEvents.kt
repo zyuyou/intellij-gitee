@@ -1,17 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui.timeline
 
-import com.gitee.api.data.GELabel
 import com.gitee.api.data.GEUser
+import com.gitee.api.data.GiteeIssueLabel
 import com.gitee.api.data.pullrequest.GiteePullRequestReviewer
 import com.gitee.api.data.pullrequest.timeline.*
 
 class GiteePRTimelineMergedSimpleEvents : GiteePRTimelineMergedEvents<GiteePRTimelineEvent.Simple>(), GiteePRTimelineEvent.Simple {
 
-  private val _addedLabels = mutableSetOf<GELabel>()
-  val addedLabels: Set<GELabel> get() = _addedLabels
-  private val _removedLabels = mutableSetOf<GELabel>()
-  val removedLabels: Set<GELabel> get() = _removedLabels
+  private val _addedLabels = mutableSetOf<GiteeIssueLabel>()
+  val addedLabels: Set<GiteeIssueLabel> get() = _addedLabels
+  private val _removedLabels = mutableSetOf<GiteeIssueLabel>()
+  val removedLabels: Set<GiteeIssueLabel> get() = _removedLabels
 
   private val _assignedPeople = mutableSetOf<GEUser>()
   val assignedPeople: Set<GEUser> get() = _assignedPeople

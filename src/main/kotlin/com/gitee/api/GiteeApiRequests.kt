@@ -261,11 +261,6 @@ object GiteeApiRequests {
           param(pagination)
         }))
 
-      @JvmStatic
-      fun updateAssignees(server: GiteeServerPath, username: String, repoName: String, id: String, assignees: Collection<String>) =
-          Patch.json<GiteeIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id),
-              GiteeAssigneesCollectionRequest(assignees))
-
       object Comments : Entity("/comments") {
         @JvmStatic
         fun create(repository: GiteeRepositoryCoordinates, issueId: Long, body: String) =
@@ -303,12 +298,23 @@ object GiteeApiRequests {
     }
 
     object PullRequests : Entity("/pulls") {
+      fun search(server: GiteeServerPath, repoPath: GiteeRepositoryPath, query: String)
+        : GiteeApiRequest<GiteeResponsePage<GiteePullRequest>> {
+
+        return get(getUrl(server, Repos.urlSuffix, "/${repoPath.owner}/${repoPath.repository}", urlSuffix, query))
+      }
+
       @JvmStatic
       fun get(server: GiteeServerPath, username: String, repoName: String, state: String? = null, pagination: GiteeRequestPagination? = null) =
         get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, GiteeApiUrlQueryBuilder.urlQuery { param("state", state); param(pagination) }))
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GiteePullRequest>(url).withOperationName("get pull request")
+
+      @JvmStatic
+      fun get(server: GiteeServerPath, username: String, repoName: String, number: Long) =
+        Get.Optional.json<GiteePullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"), GiteeApiContentHelper.V3_HTML_JSON_MIME_TYPE)
+          .withOperationName("get information for pull request $username/$repoName")
 
       @JvmStatic
       fun getDiff(serverPath: GiteeServerPath, username: String, repoName: String, number: Long) =
@@ -390,6 +396,30 @@ object GiteeApiRequests {
                 GiteeReviewersCollectionRequest(reviewers, listOf<String>()))
       }
 
+      object Testers : Entity("/testers") {
+        @JvmStatic
+        fun add(server: GiteeServerPath, username: String, repoName: String, number: Long, testers: Collection<String>) =
+          Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
+            GiteeTestersCollectionRequest(testers.joinToString(",")))
+
+        @JvmStatic
+        fun remove(server: GiteeServerPath, username: String, repoName: String, number: Long, testers: Collection<String>) =
+          Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
+            GiteeApiUrlQueryBuilder.urlQuery { param("testers", testers.joinToString(",")) }))
+      }
+
+      object Assignees : Entity("/assignees") {
+        @JvmStatic
+        fun add(server: GiteeServerPath, username: String, repoName: String, number: Long, assignees: Collection<String>) =
+          Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
+            GiteeAssigneesCollectionRequest(assignees.joinToString(",")))
+
+        @JvmStatic
+        fun remove(server: GiteeServerPath, username: String, repoName: String, number: Long, assignees: Collection<String>) =
+          Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
+            GiteeApiUrlQueryBuilder.urlQuery { param("assignees", assignees.joinToString(",")) }))
+      }
+
       object Commits : Entity("/commits") {
         @JvmStatic
         fun pages(server: GiteeServerPath, username: String, repoName: String, number: Long) =
@@ -399,10 +429,8 @@ object GiteeApiRequests {
         fun pages(url: String) = GiteeApiPagesLoader.Request(get(url), ::get)
 
         @JvmStatic
-        fun get(server: GiteeServerPath, username: String, repoName: String, number: Long,
-                pagination: GiteeRequestPagination? = null) =
-          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
-            GiteeApiUrlQueryBuilder.urlQuery { param(pagination) }))
+        fun get(server: GiteeServerPath, username: String, repoName: String, number: Long, pagination: GiteeRequestPagination? = null) =
+          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix, GiteeApiUrlQueryBuilder.urlQuery { param(pagination) }))
 
         @JvmStatic
         fun get(url: String) = Get.jsonPage<GiteeCommit>(url)

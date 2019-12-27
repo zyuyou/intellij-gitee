@@ -2,10 +2,10 @@
 package com.gitee.api.data.pullrequest.timeline
 
 import com.gitee.api.data.GEActor
-import com.gitee.api.data.GELabel
+import com.gitee.api.data.GiteeIssueLabel
 import java.util.*
 
 class GiteePRLabeledEvent(override val actor: GEActor?,
                           override val createdAt: Date,
-                          val label: GELabel)
+                          val label: GiteeIssueLabel)
   : GiteePRTimelineEvent.Simple

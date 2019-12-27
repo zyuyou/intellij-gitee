@@ -4,10 +4,10 @@ package com.gitee.api.data.request;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-public class GiteeAssigneesCollectionRequest {
-  @NotNull private final String assignees;
+public class GiteeTestersCollectionRequest {
+  @NotNull private final String testers;
 
-  public GiteeAssigneesCollectionRequest(@NotNull String assignees) {
-    this.assignees = assignees;
+  public GiteeTestersCollectionRequest(@NotNull String testers) {
+    this.testers = testers;
   }
 }

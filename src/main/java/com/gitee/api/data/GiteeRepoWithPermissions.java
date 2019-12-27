@@ -20,14 +20,14 @@ import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("UnusedDeclaration")
 public class GiteeRepoWithPermissions extends GiteeRepo {
-  private Permissions permissions;
+  private Permission permission;
 
   @NotNull
-  public Permissions getPermissions() {
-    return permissions;
+  public Permission getPermission() {
+    return permission;
   }
 
-  public static class Permissions {
+  public static class Permission {
     private Boolean admin;
     private Boolean pull;
     private Boolean push;

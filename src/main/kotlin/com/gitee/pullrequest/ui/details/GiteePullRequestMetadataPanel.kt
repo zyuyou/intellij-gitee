@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui.details
 
-import com.gitee.api.data.GELabel
-import com.gitee.api.data.GEUser
-import com.gitee.api.data.pullrequest.GEPullRequest
+import com.gitee.api.data.GiteeIssueLabel
+import com.gitee.api.data.GiteePullRequestDetailed
+import com.gitee.api.data.GiteeUser
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
 import com.gitee.pullrequest.data.service.GiteePullRequestsMetadataService
@@ -28,7 +28,7 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 internal class GiteePullRequestMetadataPanel(private val project: Project,
-                                             private val model: SingleValueModel<GEPullRequest?>,
+                                             private val model: SingleValueModel<GiteePullRequestDetailed?>,
                                              private val securityService: GiteePullRequestsSecurityService,
                                              private val busyStateTracker: GiteePullRequestsBusyStateTracker,
                                              private val metadataService: GiteePullRequestsMetadataService,
@@ -78,33 +78,33 @@ internal class GiteePullRequestMetadataPanel(private val project: Project,
 
   override fun dispose() {}
 
+  // PR详情测试人员列表
   private inner class ReviewersListPanelHandle
-    : LabeledListPanelHandle<GEUser>(model, securityService, busyStateTracker, "No Reviewers", "Reviewers:") {
-    override fun extractItems(details: GEPullRequest): List<GEUser> = details.reviewRequests.map { it.requestedReviewer }
-      .filterIsInstance(GEUser::class.java)
+    : LabeledListPanelHandle<GiteeUser>(model, securityService, busyStateTracker, "No Reviewers", "Reviewers:") {
+    override fun extractItems(details: GiteePullRequestDetailed): List<GiteeUser> = details.testers
 
-    override fun getItemComponent(item: GEUser) = createUserLabel(item)
+    override fun getItemComponent(item: GiteeUser) = createUserLabel(item)
 
     override fun editList() {
       val details = model.value ?: return
-      val reviewers = details.reviewRequests.map { it.requestedReviewer }.filterIsInstance<GEUser>()
       GiteeUIUtil
         .showChooserPopup("Reviewers", editButton, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GiteeUIUtil.avatarSize, list)
           GiteeUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-        }, reviewers, metadataService.collaboratorsWithPushAccess)
+        }, details.testers, metadataService.collaboratorsWithPushAccess)
         .handleOnEdt(getAdjustmentHandler(details.number, "reviewer") { indicator, delta ->
           metadataService.adjustReviewers(indicator, details.number, delta)
         })
     }
   }
 
+  // PR详情审查人员列表
   private inner class AssigneesListPanelHandle
-    : LabeledListPanelHandle<GEUser>(model, securityService, busyStateTracker, "Unassigned", "Assignees:") {
+    : LabeledListPanelHandle<GiteeUser>(model, securityService, busyStateTracker, "Unassigned", "Assignees:") {
 
-    override fun extractItems(details: GEPullRequest): List<GEUser> = details.assignees
+    override fun extractItems(details: GiteePullRequestDetailed): List<GiteeUser> = details.assignees
 
-    override fun getItemComponent(item: GEUser) = createUserLabel(item)
+    override fun getItemComponent(item: GiteeUser) = createUserLabel(item)
 
     override fun editList() {
       val details = model.value ?: return
@@ -112,25 +112,26 @@ internal class GiteePullRequestMetadataPanel(private val project: Project,
         .showChooserPopup("Assignees", editButton, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GiteeUIUtil.avatarSize, list)
           GiteeUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-        }, details.assignees, metadataService.issuesAssignees)
+        }, details.assignees, metadataService.collaboratorsWithPushAccess)
         .handleOnEdt(getAdjustmentHandler(details.number, "assignee") { indicator, delta ->
           metadataService.adjustAssignees(indicator, details.number, delta)
         })
     }
   }
 
-  private fun createUserLabel(user: GEUser) = JLabel(user.login,
+  private fun createUserLabel(user: GiteeUser) = JLabel(user.login,
                                                      avatarIconsProvider.getIcon(user.avatarUrl),
                                                      SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }
 
+  // PR详情标签列表
   private inner class LabelsListPanelHandle
-    : LabeledListPanelHandle<GELabel>(model, securityService, busyStateTracker, "No Labels", "Labels:") {
+    : LabeledListPanelHandle<GiteeIssueLabel>(model, securityService, busyStateTracker, "No Labels", "Labels:") {
 
-    override fun extractItems(details: GEPullRequest): List<GELabel>? = details.labels
+    override fun extractItems(details: GiteePullRequestDetailed): List<GiteeIssueLabel>? = details.labels
 
-    override fun getItemComponent(item: GELabel) = createLabelLabel(item)
+    override fun getItemComponent(item: GiteeIssueLabel) = createLabelLabel(item)
 
     override fun editList() {
       val details = model.value ?: return
@@ -142,7 +143,7 @@ internal class GiteePullRequestMetadataPanel(private val project: Project,
     }
   }
 
-  private fun createLabelLabel(label: GELabel) = Wrapper(GiteeUIUtil.createIssueLabelLabel(label)).apply {
+  private fun createLabelLabel(label: GiteeIssueLabel) = Wrapper(GiteeUIUtil.createIssueLabelLabel(label)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP + 1, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP + 2, UIUtil.DEFAULT_HGAP / 2)
   }
 

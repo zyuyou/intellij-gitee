@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui.details
 
-import com.gitee.api.data.pullrequest.GEPullRequest
+import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
 import com.gitee.pullrequest.data.service.GiteePullRequestsMetadataService
@@ -29,7 +29,7 @@ import javax.swing.JPanel
 
 
 internal class GiteePullRequestDetailsPanel(project: Project,
-                                            model: SingleValueModel<GEPullRequest?>,
+                                            model: SingleValueModel<GiteePullRequestDetailed?>,
                                             securityService: GiteePullRequestsSecurityService,
                                             busyStateTracker: GiteePullRequestsBusyStateTracker,
                                             metadataService: GiteePullRequestsMetadataService,
@@ -41,8 +41,7 @@ internal class GiteePullRequestDetailsPanel(project: Project,
     override fun isStatusVisible() = model.value == null
   }
 
-  private val metaPanel = GiteePullRequestMetadataPanel(project, model, securityService, busyStateTracker, metadataService,
-                                                         avatarIconsProviderFactory).apply {
+  private val metaPanel = GiteePullRequestMetadataPanel(project, model, securityService, busyStateTracker, metadataService, avatarIconsProviderFactory).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)
   }
   private val descriptionPanel = GiteePullRequestDescriptionPanel(model).apply {

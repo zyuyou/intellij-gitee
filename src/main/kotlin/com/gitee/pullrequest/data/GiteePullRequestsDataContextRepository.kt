@@ -4,7 +4,7 @@ package com.gitee.pullrequest.data
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeRepositoryCoordinates
-import com.gitee.api.data.pullrequest.GEPullRequestShort
+import com.gitee.api.data.GiteePullRequest
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.pullrequest.data.GiteePullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
@@ -53,14 +53,14 @@ internal class GiteePullRequestsDataContextRepository(private val project: Proje
 
     indicator.text = "Loading repository information"
     val repoDetails = requestExecutor.execute(indicator, GiteeApiRequests.Repos.get(account.server, fullPath.owner, fullPath.repository))
-                      ?: throw IllegalArgumentException(
-                        "Repository $fullPath does not exist at ${account.server} or you don't have access.")
+                      ?: throw IllegalArgumentException("Repository $fullPath does not exist at ${account.server} or you don't have access.")
 
     val messageBus = messageBusFactory.createMessageBus(this)
 
-    val listModel = CollectionListModel<GEPullRequestShort>()
+    val listModel = CollectionListModel<GiteePullRequest>()
     val searchHolder = GiteePullRequestSearchQueryHolderImpl()
-    val listLoader = GiteePRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
+//    val listLoader = GiteePRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
+    val listLoader = GiteeFakePRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
     val dataLoader = GiteePullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor,
                                                       gitRemoteCoordinates.repository, gitRemoteCoordinates.remote,
                                                       account.server, repoDetails.fullPath)

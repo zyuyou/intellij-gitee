@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui.details
 
-import com.gitee.api.data.pullrequest.GEPullRequest
+import com.gitee.api.data.GiteeIssueState
+import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.api.data.pullrequest.GiteePullRequestMergeableState
-import com.gitee.api.data.pullrequest.GiteePullRequestState
 import com.gitee.icons.GiteeIcons
 import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
 import com.gitee.pullrequest.data.service.GiteePullRequestsSecurityService
@@ -14,7 +14,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.VerticalFlowLayout
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -24,7 +23,7 @@ import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GEPullRequest?>,
+internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GiteePullRequestDetailed?>,
                                           private val securityService: GiteePullRequestsSecurityService,
                                           private val busyStateTracker: GiteePullRequestsBusyStateTracker,
                                           private val stateService: GiteePullRequestsStateService)
@@ -69,7 +68,7 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
   private val mergeButton = JBOptionButton(null, null)
 
   private val browseButton = LinkLabel.create("Open on Gitee") {
-    model.value?.run { BrowserUtil.browse(url) }
+    model.value?.run { BrowserUtil.browse(htmlUrl) }
   }.apply {
     icon = AllIcons.Ide.External_link_arrow
     setHorizontalTextPosition(SwingConstants.LEFT)
@@ -78,14 +77,15 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
   private val buttonsPanel = NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
 
-    if (Registry.`is`("gitee.action.pullrequest.state.useapi")) {
-      add(mergeButton)
-      add(closeButton)
-      add(reopenButton)
-    }
-    else {
-      add(browseButton)
-    }
+//    if (Registry.`is`("gitee.action.pullrequest.state.useapi")) {
+//      add(mergeButton)
+//      add(closeButton)
+//      add(reopenButton)
+//    }
+//    else {
+//      add(browseButton)
+//    }
+    add(browseButton)
   }
 
   private var state: State? by equalVetoingObservable<State?>(null) {
@@ -102,7 +102,7 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
     fun update() {
       state = model.value?.let {
         State(it.number, it.state, GiteePullRequestMergeableState.MERGEABLE,
-              it.viewerCanUpdate, it.viewerDidAuthor,
+              true, true,
               securityService.isMergeAllowed(),
               securityService.isRebaseMergeAllowed(),
               securityService.isSquashMergeAllowed(),
@@ -132,7 +132,7 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
     }
     else {
       when (state.state) {
-        GiteePullRequestState.OPEN -> {
+        GiteeIssueState.open -> {
           when (state.mergeable) {
             GiteePullRequestMergeableState.MERGEABLE -> {
               stateLabel.icon = AllIcons.RunConfigurations.TestPassed
@@ -149,12 +149,12 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
           }
           accessDeniedPanel.isVisible = !state.editAllowed
         }
-        GiteePullRequestState.CLOSED -> {
+        GiteeIssueState.closed -> {
           stateLabel.icon = GiteeIcons.PullRequestClosed
           stateLabel.text = "Pull request is closed"
           accessDeniedPanel.isVisible = false
         }
-        GiteePullRequestState.MERGED -> {
+        GiteeIssueState.merged -> {
           stateLabel.icon = GiteeIcons.PullRequestMerged
           stateLabel.text = "Pull request is merged"
           accessDeniedPanel.isVisible = false
@@ -181,13 +181,13 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
       browseButton.isVisible = false
     }
     else {
-      reopenButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GiteePullRequestState.CLOSED
+      reopenButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GiteeIssueState.closed
       reopenAction.isEnabled = reopenButton.isVisible && !state.busy
 
-      closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GiteePullRequestState.OPEN
+      closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GiteeIssueState.open
       closeAction.isEnabled = closeButton.isVisible && !state.busy
 
-      mergeButton.isVisible = state.editAllowed && state.state == GiteePullRequestState.OPEN
+      mergeButton.isVisible = state.editAllowed && state.state == GiteeIssueState.open
       val mergeable = mergeButton.isVisible && state.mergeable == GiteePullRequestMergeableState.MERGEABLE && !state.busy && !state.mergeForbidden
       mergeAction.isEnabled = mergeable
       rebaseMergeAction.isEnabled = mergeable
@@ -212,7 +212,7 @@ internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GE
   override fun dispose() {}
 
   private data class State(val number: Long,
-                           val state: GiteePullRequestState,
+                           val state: GiteeIssueState,
                            val mergeable: GiteePullRequestMergeableState,
                            val editAllowed: Boolean,
                            val currentUserIsAuthor: Boolean,

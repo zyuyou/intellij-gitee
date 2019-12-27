@@ -5,8 +5,8 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeRepositoryPath
 import com.gitee.api.GiteeServerPath
-import com.gitee.api.data.GELabel
-import com.gitee.api.data.GEUser
+import com.gitee.api.data.GiteeIssueLabel
+import com.gitee.api.data.GiteeUser
 import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.pullrequest.data.GiteePullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import com.gitee.util.CollectionDelta
@@ -37,29 +37,28 @@ class GiteePullRequestsMetadataServiceImpl internal constructor(progressManager:
       .loadAll(requestExecutor, indicator,
                GiteeApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository))
       .filter { it.permissions.isPush }
-      .map { GEUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
+      .map { it as GiteeUser }
   }
 
-  override val collaboratorsWithPushAccess: CompletableFuture<List<GEUser>>
+  override val collaboratorsWithPushAccess: CompletableFuture<List<GiteeUser>>
     get() = GiteeAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { collaboratorsValue.value } }
 
   private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GiteeApiPagesLoader
       .loadAll(requestExecutor, indicator,
                GiteeApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository))
-      .map { GEUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
 
-  override val issuesAssignees: CompletableFuture<List<GEUser>>
+  override val issuesAssignees: CompletableFuture<List<GiteeUser>>
     get() = GiteeAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { assigneesValue.value } }
+
   private val labelsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GiteeApiPagesLoader
       .loadAll(requestExecutor, indicator,
                GiteeApiRequests.Repos.Labels.pages(serverPath, repoPath.owner, repoPath.repository))
-      .map { GELabel(it.nodeId, it.url, it.name, it.color) }
   }
 
-  override val labels: CompletableFuture<List<GELabel>>
+  override val labels: CompletableFuture<List<GiteeIssueLabel>>
     get() = GiteeAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { labelsValue.value } }
 
   override fun resetData() {
@@ -69,20 +68,21 @@ class GiteePullRequestsMetadataServiceImpl internal constructor(progressManager:
   }
 
   @CalledInBackground
-  override fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GEUser>) {
+  override fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GiteeUser>) {
     if (delta.isEmpty) return
 
+    // 更新PR测试人
     if (delta.removedItems.isNotEmpty()) {
       indicator.text2 = "Removing reviewers"
       requestExecutor.execute(indicator,
-                              GiteeApiRequests.Repos.PullRequests.Reviewers
+                              GiteeApiRequests.Repos.PullRequests.Testers
                                 .remove(serverPath, repoPath.owner, repoPath.repository, pullRequest,
                                         delta.removedItems.map { it.login }))
     }
     if (delta.newItems.isNotEmpty()) {
       indicator.text2 = "Adding reviewers"
       requestExecutor.execute(indicator,
-                              GiteeApiRequests.Repos.PullRequests.Reviewers
+                              GiteeApiRequests.Repos.PullRequests.Testers
                                 .add(serverPath, repoPath.owner, repoPath.repository, pullRequest,
                                      delta.newItems.map { it.login }))
     }
@@ -90,19 +90,37 @@ class GiteePullRequestsMetadataServiceImpl internal constructor(progressManager:
   }
 
   @CalledInBackground
-  override fun adjustAssignees(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GEUser>) {
+  override fun adjustAssignees(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GiteeUser>) {
     if (delta.isEmpty) return
 
-    requestExecutor.execute(indicator,
-                            GiteeApiRequests.Repos.Issues.updateAssignees(serverPath, repoPath.owner, repoPath.repository,
-                                                                           pullRequest.toString(), delta.newCollection.map { it.login }))
+    // 更新PR审查人
+//    requestExecutor.execute(indicator,
+//                            GiteeApiRequests.Repos.Issues.updateAssignees(serverPath, repoPath.owner, repoPath.repository,
+//                                                                           pullRequest.toString(), delta.newCollection.map { it.login }))
+    if (delta.removedItems.isNotEmpty()) {
+      indicator.text2 = "Removing assignees"
+      requestExecutor.execute(indicator,
+                              GiteeApiRequests.Repos.PullRequests.Assignees
+                                .remove(serverPath, repoPath.owner, repoPath.repository, pullRequest,
+                                        delta.removedItems.map { it.login }))
+    }
+
+    if (delta.newItems.isNotEmpty()) {
+      indicator.text2 = "Adding assignees"
+      requestExecutor.execute(indicator,
+                              GiteeApiRequests.Repos.PullRequests.Assignees
+                                .add(serverPath, repoPath.owner, repoPath.repository, pullRequest,
+                                    delta.newItems.map { it.login }))
+    }
+
     messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
   }
 
   @CalledInBackground
-  override fun adjustLabels(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GELabel>) {
+  override fun adjustLabels(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GiteeIssueLabel>) {
     if (delta.isEmpty) return
 
+    // 更新PR标签列表
     requestExecutor.execute(indicator,
                             GiteeApiRequests.Repos.Issues.Labels
                               .replace(serverPath, repoPath.owner, repoPath.repository, pullRequest.toString(),

@@ -41,7 +41,7 @@ class GiteePullRequestCreateBranchAction : DumbAwareAction("Create New Local Bra
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = GiteeAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
+          val sha = GiteeAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).head.sha
           GiteeAsyncUtil.awaitFuture(indicator, dataProvider.branchFetchRequest)
 
           indicator.text = "Creating branch"
@@ -64,7 +64,7 @@ class GiteePullRequestCreateBranchAction : DumbAwareAction("Create New Local Bra
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = GiteeAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
+          val sha = GiteeAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).head.sha
           GiteeAsyncUtil.awaitFuture(indicator, dataProvider.branchFetchRequest)
 
           indicator.text = "Checking out branch"

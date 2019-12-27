@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui
 
-import com.gitee.pullrequest.data.GiteePRListLoader
+import com.gitee.pullrequest.data.GiteeFakePRListLoader
 import com.gitee.pullrequest.data.GiteePullRequestsDataLoader
 import com.gitee.ui.GiteeListLoaderPanel
 import com.gitee.ui.HtmlInfoPanel
@@ -13,11 +13,11 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class GiteePRListLoaderPanel(listLoader: GiteePRListLoader,
-                                   private val dataLoader: GiteePullRequestsDataLoader,
-                                   contentComponent: JComponent,
-                                   filterComponent: JComponent)
-  : GiteeListLoaderPanel<GiteePRListLoader>(listLoader, contentComponent), Disposable {
+internal class GiteePRListLoaderPanel(listLoader: GiteeFakePRListLoader,
+                                      private val dataLoader: GiteePullRequestsDataLoader,
+                                      contentComponent: JComponent,
+                                      filterComponent: JComponent)
+  : GiteeListLoaderPanel<GiteeFakePRListLoader>(listLoader, contentComponent), Disposable {
 
   private lateinit var progressStripe: ProgressStripe
 

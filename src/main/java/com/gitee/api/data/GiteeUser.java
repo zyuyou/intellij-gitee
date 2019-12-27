@@ -39,6 +39,8 @@ public class GiteeUser {
   private String type;
   private Boolean siteAdmin;
 
+
+
   @NotNull
   public String getNodeId() {
     return "nodeId";
@@ -58,6 +60,7 @@ public class GiteeUser {
   public String getAvatarUrl() {
     return avatarUrl;
   }
+
 
   @Override
   public boolean equals(Object o) {

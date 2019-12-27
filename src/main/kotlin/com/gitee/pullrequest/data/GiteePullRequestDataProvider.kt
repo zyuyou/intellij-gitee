@@ -2,7 +2,7 @@
 package com.gitee.pullrequest.data
 
 import com.gitee.api.data.GiteeCommit
-import com.gitee.api.data.pullrequest.GEPullRequest
+import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.api.data.pullrequest.GEPullRequestReviewThread
 import com.gitee.pullrequest.data.model.GiteePRDiffReviewThreadMapping
 import com.intellij.openapi.Disposable
@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture
 interface GiteePullRequestDataProvider {
   val number: Long
 
-  val detailsRequest: CompletableFuture<GEPullRequest>
+  val detailsRequest: CompletableFuture<GiteePullRequestDetailed>
   val branchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GiteeCommit>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>

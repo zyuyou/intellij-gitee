@@ -15,13 +15,12 @@
  */
 package com.gitee.api.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Date;
-import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -29,21 +28,15 @@ public class GiteeCommit extends GiteeCommitSha {
   private GiteeUser author;
   private GiteeUser committer;
 
-  @Mandatory
   private GitCommit commit;
 
-  @Mandatory
-  private List<GiteeCommitSha> parents;
+//  private List<GiteeCommitSha> parents;
 
   @RestModel
   public static class GitCommit {
     private String url;
-    @Mandatory
     private String message;
-
-    @Mandatory
     private GitUser author;
-    @Mandatory
     private GitUser committer;
 
     @NotNull
@@ -64,11 +57,9 @@ public class GiteeCommit extends GiteeCommitSha {
 
   @RestModel
   public static class GitUser {
-    @Mandatory
     private String name;
-    @Mandatory
     private String email;
-    @Mandatory
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
     private Date date;
 
     @NotNull
@@ -97,10 +88,10 @@ public class GiteeCommit extends GiteeCommitSha {
     return committer;
   }
 
-  @NotNull
-  public List<GiteeCommitSha> getParents() {
-    return parents;
-  }
+//  @NotNull
+//  public List<GiteeCommitSha> getParents() {
+//    return parents;
+//  }
 
   @NotNull
   public GitCommit getCommit() {

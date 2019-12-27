@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui.timeline
 
+import com.gitee.api.data.GiteePullRequest
 import com.gitee.api.data.pullrequest.GEPullRequest
-import com.gitee.api.data.pullrequest.GEPullRequestShort
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.ui.util.HtmlEditorPane
 import com.gitee.ui.util.SingleValueModel
@@ -20,16 +20,16 @@ import net.miginfocom.swing.MigLayout
 import javax.swing.Box
 import javax.swing.JPanel
 
-internal class GiteePRHeaderPanel(private val model: SingleValueModel<GEPullRequestShort>,
+internal class GiteePRHeaderPanel(private val model: SingleValueModel<GiteePullRequest>,
                                   avatarIconsProvider: CachingGiteeAvatarIconsProvider)
   : JPanel() {
 
-  private val authorAvatar = LinkLabel<Any>("", avatarIconsProvider.getIcon(model.value.author?.avatarUrl), LinkListener { _, _ ->
-    model.value.author?.url?.let { BrowserUtil.browse(it) }
+  private val authorAvatar = LinkLabel<Any>("", avatarIconsProvider.getIcon(model.value.user?.avatarUrl), LinkListener { _, _ ->
+    model.value.user?.htmlUrl?.let { BrowserUtil.browse(it) }
   })
 
   //language=html
-  private val createText = HtmlEditorPane("<a href='${model.value.author?.url}'>${model.value.author?.login ?: "unknown"}</a> " +
+  private val createText = HtmlEditorPane("<a href='${model.value.user?.htmlUrl}'>${model.value.user?.login ?: "unknown"}</a> " +
                                           "created ${GiteeUIUtil.formatActionDate(model.value.createdAt)}").apply {
     foreground = UIUtil.getContextHelpForeground()
   }

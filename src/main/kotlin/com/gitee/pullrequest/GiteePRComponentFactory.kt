@@ -2,7 +2,7 @@
 package com.gitee.pullrequest
 
 import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.data.pullrequest.GEPullRequest
+import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.pullrequest.action.GiteePRActionDataContext
 import com.gitee.pullrequest.action.GiteePullRequestKeys
@@ -194,6 +194,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
       dataContext.stateService,
       avatarIconsProviderFactory)
     Disposer.register(disposable, detailsPanel)
+
     val detailsLoadingPanel = GiteeLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
       GiteeLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
         "Can't load details")).apply {
@@ -352,8 +353,8 @@ internal class GiteePRComponentFactory(private val project: Project) {
   }
 
   private fun createDetailsLoadingModel(dataProviderModel: SingleValueModel<GiteePullRequestDataProvider?>,
-                                        parentDisposable: Disposable): GiteeCompletableFutureLoadingModel<GEPullRequest> {
-    val model = GiteeCompletableFutureLoadingModel<GEPullRequest>()
+                                        parentDisposable: Disposable): GiteeCompletableFutureLoadingModel<GiteePullRequestDetailed> {
+    val model = GiteeCompletableFutureLoadingModel<GiteePullRequestDetailed>()
 
     var listenerDisposable: Disposable? = null
 

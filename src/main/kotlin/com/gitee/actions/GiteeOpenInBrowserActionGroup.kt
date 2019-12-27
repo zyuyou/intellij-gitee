@@ -80,8 +80,7 @@ open class GiteeOpenInBrowserActionGroup
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is GitFileRevision) return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath)
-    if (repository == null) return null
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath) ?: return null
 
     val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
@@ -109,8 +108,7 @@ open class GiteeOpenInBrowserActionGroup
   private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): Pair<Set<GiteeRepositoryCoordinates>, Data>? {
     val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile)
-    if (repository == null) return null
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile) ?: return null
 
     val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null

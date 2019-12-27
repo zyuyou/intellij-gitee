@@ -10,7 +10,7 @@ class GiteePullRequestsSecurityServiceImpl(private val sharedProjectSettings: Gi
                                            private val currentUser: GiteeAuthenticatedUser,
                                            private val repo: GiteeRepoDetailed) : GiteePullRequestsSecurityService {
   override fun isCurrentUser(user: GiteeUser) = user == currentUser
-  override fun isCurrentUserWithPushAccess() = repo.permissions.isPush || repo.permissions.isAdmin
+  override fun isCurrentUserWithPushAccess() = repo.permission.isPush || repo.permission.isAdmin
 
   override fun isMergeAllowed() = repo.allowMergeCommit
   override fun isRebaseMergeAllowed() = repo.allowRebaseMerge

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui
 
-import com.gitee.api.data.pullrequest.GEPullRequestShort
-import com.gitee.api.data.pullrequest.GiteePullRequestState
+import com.gitee.api.data.GiteeIssueState
+import com.gitee.api.data.GiteePullRequest
 import com.gitee.icons.GiteeIcons
 import com.gitee.pullrequest.action.GiteePullRequestKeys
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
@@ -32,8 +32,8 @@ import javax.swing.*
 
 internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteManager,
                                      avatarIconsProviderFactory: CachingGiteeAvatarIconsProvider.Factory,
-                                     model: ListModel<GEPullRequestShort>)
-  : JBList<GEPullRequestShort>(model), CopyProvider, DataProvider, Disposable {
+                                     model: ListModel<GiteePullRequest>)
+  : JBList<GiteePullRequest>(model), CopyProvider, DataProvider, Disposable {
 
   private val avatarIconsProvider = avatarIconsProviderFactory.create(GiteeUIUtil.avatarSize, this)
 
@@ -72,7 +72,7 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
 
   override fun dispose() {}
 
-  private inner class PullRequestsListCellRenderer : ListCellRenderer<GEPullRequestShort>, JPanel() {
+  private inner class PullRequestsListCellRenderer : ListCellRenderer<GiteePullRequest>, JPanel() {
 
     private val stateIcon = JLabel()
     private val title = JLabel()
@@ -111,8 +111,8 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
         .spanX(2))
     }
 
-    override fun getListCellRendererComponent(list: JList<out GEPullRequestShort>,
-                                              value: GEPullRequestShort,
+    override fun getListCellRendererComponent(list: JList<out GiteePullRequest>,
+                                              value: GiteePullRequest,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
@@ -122,9 +122,9 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
 
       stateIcon.apply {
         icon = when (value.state) {
-          GiteePullRequestState.CLOSED -> GiteeIcons.PullRequestClosed
-          GiteePullRequestState.MERGED -> GiteeIcons.PullRequestMerged
-          GiteePullRequestState.OPEN -> GiteeIcons.PullRequestOpen
+          GiteeIssueState.closed -> GiteeIcons.PullRequestClosed
+          GiteeIssueState.merged -> GiteeIcons.PullRequestMerged
+          GiteeIssueState.open -> GiteeIcons.PullRequestOpen
         }
       }
       title.apply {
@@ -132,7 +132,7 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
         foreground = primaryTextColor
       }
       info.apply {
-        text = "#${value.number} ${value.author?.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
+        text = "#${value.number} ${value.user?.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
         foreground = secondaryTextColor
       }
       labels.apply {

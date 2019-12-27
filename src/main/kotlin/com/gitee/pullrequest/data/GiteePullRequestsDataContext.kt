@@ -3,7 +3,7 @@ package com.gitee.pullrequest.data
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeRepositoryCoordinates
-import com.gitee.api.data.pullrequest.GEPullRequestShort
+import com.gitee.api.data.GiteePullRequest
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.pullrequest.data.service.GiteePullRequestsMetadataService
 import com.gitee.pullrequest.data.service.GiteePullRequestsSecurityService
@@ -21,9 +21,9 @@ internal class GiteePullRequestsDataContext(val gitRepositoryCoordinates: GitRem
                                             val account: GiteeAccount,
                                             val requestExecutor: GiteeApiRequestExecutor,
                                             val messageBus: MessageBus,
-                                            val listModel: ListModel<GEPullRequestShort>,
+                                            val listModel: ListModel<GiteePullRequest>,
                                             val searchHolder: GiteePullRequestSearchQueryHolder,
-                                            val listLoader: GiteePRListLoader,
+                                            val listLoader: GiteeFakePRListLoader,
                                             val dataLoader: GiteePullRequestsDataLoader,
                                             val securityService: GiteePullRequestsSecurityService,
                                             val busyStateTracker: GiteePullRequestsBusyStateTracker, //TODO: move to ui

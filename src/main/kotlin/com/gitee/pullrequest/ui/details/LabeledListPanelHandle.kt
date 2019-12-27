@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui.details
 
-import com.gitee.api.data.pullrequest.GEPullRequest
+import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
 import com.gitee.pullrequest.data.service.GiteePullRequestsSecurityService
 import com.gitee.ui.WrapLayout
@@ -25,7 +25,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GEPullRequest?>,
+internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GiteePullRequestDetailed?>,
                                                   private val securityService: GiteePullRequestsSecurityService,
                                                   private val busyStateTracker: GiteePullRequestsBusyStateTracker,
                                                   emptyText: String, notEmptyText: String)
@@ -103,7 +103,7 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
       isOpaque = false
     }
 
-  abstract fun extractItems(details: GEPullRequest): List<T>?
+  abstract fun extractItems(details: GiteePullRequestDetailed): List<T>?
 
   abstract fun getItemComponent(item: T): JComponent
 

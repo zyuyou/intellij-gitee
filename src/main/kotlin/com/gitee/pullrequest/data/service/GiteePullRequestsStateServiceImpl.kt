@@ -7,7 +7,7 @@ import com.gitee.api.GiteeRepositoryPath
 import com.gitee.api.GiteeServerPath
 import com.gitee.api.data.GiteeCommit
 import com.gitee.api.data.GiteeIssueState
-import com.gitee.api.data.pullrequest.GEPullRequest
+import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.pullrequest.action.ui.GiteeMergeCommitMessageDialog
 import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
 import com.gitee.pullrequest.data.GiteePullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
@@ -92,7 +92,7 @@ class GiteePullRequestsStateServiceImpl internal constructor(private val project
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
-      private lateinit var details: GEPullRequest
+      private lateinit var details: GiteePullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
@@ -111,7 +111,7 @@ class GiteePullRequestsStateServiceImpl internal constructor(private val project
         indicator.text2 = "Merging"
         requestExecutor.execute(indicator, GiteeApiRequests.Repos.PullRequests.merge(serverPath, repoPath, details.number,
                                                                                       commitMessage.first, commitMessage.second,
-                                                                                      details.headRefOid))
+                                                                                      details.head.sha))
         messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 
@@ -135,7 +135,7 @@ class GiteePullRequestsStateServiceImpl internal constructor(private val project
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
-      private lateinit var details: GEPullRequest
+      private lateinit var details: GiteePullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
@@ -144,7 +144,7 @@ class GiteePullRequestsStateServiceImpl internal constructor(private val project
 
         indicator.text2 = "Merging"
         requestExecutor.execute(indicator, GiteeApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, details.number,
-                                                                                            details.headRefOid))
+                                                                                            details.head.sha))
         messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 
@@ -169,7 +169,7 @@ class GiteePullRequestsStateServiceImpl internal constructor(private val project
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
-      private lateinit var details: GEPullRequest
+      private lateinit var details: GiteePullRequestDetailed
       private lateinit var commits: List<GiteeCommit>
 
 
@@ -195,7 +195,7 @@ class GiteePullRequestsStateServiceImpl internal constructor(private val project
         indicator.text2 = "Merging"
         requestExecutor.execute(indicator, GiteeApiRequests.Repos.PullRequests.squashMerge(serverPath, repoPath, details.number,
                                                                                             commitMessage.first, commitMessage.second,
-                                                                                            details.headRefOid))
+                                                                                            details.head.sha))
         messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 

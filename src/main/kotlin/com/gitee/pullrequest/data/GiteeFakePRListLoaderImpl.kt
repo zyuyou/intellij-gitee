@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.data
 
-import com.gitee.api.*
-import com.gitee.api.data.pullrequest.GEPullRequestShort
-import com.gitee.api.data.request.search.GiteeIssueSearchType
-import com.gitee.api.util.GiteeApiSearchQueryBuilder
-import com.gitee.api.util.SimpleGiteeGQLPagesLoader
+import com.gitee.api.GiteeApiRequestExecutor
+import com.gitee.api.GiteeApiRequests
+import com.gitee.api.GiteeRepositoryPath
+import com.gitee.api.GiteeServerPath
+import com.gitee.api.data.GiteePullRequest
+import com.gitee.api.data.request.GiteeRequestPagination
+import com.gitee.api.util.GiteeApiUrlQueryBuilder
+import com.gitee.api.util.SimpleGiteeFakeGQLPagesLoader
 import com.gitee.pullrequest.search.GiteePullRequestSearchQuery
 import com.gitee.pullrequest.search.GiteePullRequestSearchQueryHolder
 import com.gitee.pullrequest.ui.SimpleEventListener
@@ -26,17 +29,17 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
-internal class GiteePRListLoaderImpl(progressManager: ProgressManager,
-                                     private val requestExecutor: GiteeApiRequestExecutor,
-                                     private val serverPath: GiteeServerPath,
-                                     private val repoPath: GiteeRepositoryPath,
-                                     private val listModel: CollectionListModel<GEPullRequestShort>,
-                                     private val searchQueryHolder: GiteePullRequestSearchQueryHolder)
-  : GiteeGQLPagedListLoader<GEPullRequestShort>(progressManager,
-  SimpleGiteeGQLPagesLoader(requestExecutor, { p ->
-    GiteeGQLRequests.PullRequest.search(serverPath, buildQuery(repoPath, searchQueryHolder.query), p)
+internal class GiteeFakePRListLoaderImpl(progressManager: ProgressManager,
+                                         private val requestExecutor: GiteeApiRequestExecutor,
+                                         private val serverPath: GiteeServerPath,
+                                         private val repoPath: GiteeRepositoryPath,
+                                         private val listModel: CollectionListModel<GiteePullRequest>,
+                                         private val searchQueryHolder: GiteePullRequestSearchQueryHolder)
+  : GiteeFakeGQLPagedListLoader<GiteePullRequest>(progressManager,
+  SimpleGiteeFakeGQLPagesLoader(requestExecutor, { p ->
+    GiteeApiRequests.Repos.PullRequests.search(serverPath, repoPath, buildQuery(searchQueryHolder.query, p))
   })),
-  GiteePRListLoader {
+  GiteeFakePRListLoader {
 
   override val hasLoadedItems: Boolean
     get() = !listModel.isEmpty
@@ -68,7 +71,7 @@ internal class GiteePRListLoaderImpl(progressManager: ProgressManager,
     searchQueryHolder.query = GiteePullRequestSearchQuery.parseFromString("state:open")
   }
 
-  override fun handleResult(list: List<GEPullRequestShort>) {
+  override fun handleResult(list: List<GiteePullRequest>) {
     listModel.add(list)
     sizeChecker.start()
   }
@@ -87,13 +90,13 @@ internal class GiteePRListLoaderImpl(progressManager: ProgressManager,
     loadMore()
   }
 
-  override fun reloadData(request: CompletableFuture<out GEPullRequestShort>) {
+  override fun reloadData(request: CompletableFuture<out GiteePullRequest>) {
     request.handleOnEdt(resetDisposable) { result, error ->
       if (error == null && result != null) updateData(result)
     }
   }
 
-  private fun updateData(pullRequest: GEPullRequestShort) {
+  private fun updateData(pullRequest: GiteePullRequest) {
     val index = listModel.items.indexOfFirst { it.id == pullRequest.id }
     listModel.setElementAt(pullRequest, index)
   }
@@ -149,11 +152,10 @@ internal class GiteePRListLoaderImpl(progressManager: ProgressManager,
   }
 
   companion object {
-    private fun buildQuery(repoPath: GiteeRepositoryPath, searchQuery: GiteePullRequestSearchQuery?): String {
-      return GiteeApiSearchQueryBuilder.searchQuery {
-        qualifier("type", GiteeIssueSearchType.pr.name)
-        qualifier("repo", repoPath.toString())
+    private fun buildQuery(searchQuery: GiteePullRequestSearchQuery?, pagination: GiteeRequestPagination? = null): String {
+      return GiteeApiUrlQueryBuilder.urlQuery {
         searchQuery?.buildApiSearchQuery(this)
+        param(pagination)
       }
     }
   }

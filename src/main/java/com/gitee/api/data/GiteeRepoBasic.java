@@ -106,7 +106,7 @@ public class GiteeRepoBasic {
 
   @NotNull
   public GiteeRepositoryPath getFullPath() {
-    String[] split = humanName.split("/");
+    String[] split = fullName.split("/");
     return new GiteeRepositoryPath(split[0], split[1]);
   }
 

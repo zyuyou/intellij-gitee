@@ -58,9 +58,6 @@ public class GiteePullRequest {
   private String patchUrl;
   private String issueUrl;
 
-  private Tag head;
-  private Tag base;
-
   @Mandatory
   private Links _links;
 
@@ -69,7 +66,9 @@ public class GiteePullRequest {
     return url;
   }
 
-
+  public long getId() {
+    return id;
+  }
 
   public long getNumber() {
     return number;
@@ -148,16 +147,6 @@ public class GiteePullRequest {
   @NotNull
   public Links getLinks() {
     return _links;
-  }
-
-  @NotNull
-  public Tag getHead() {
-    return head;
-  }
-
-  @NotNull
-  public Tag getBase() {
-    return base;
   }
 
   @RestModel

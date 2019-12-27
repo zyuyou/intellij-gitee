@@ -48,11 +48,12 @@ internal class GiteePullRequestDataProviderImpl(private val project: Project,
   private var lastKnownHeadSha: String? = null
 
   private val detailsRequestValue = backingValue {
-    val details = requestExecutor.execute(it, GiteeGQLRequests.PullRequest.findOne(serverPath, username, repositoryName, number))
+    val details = requestExecutor.execute(it, GiteeApiRequests.Repos.PullRequests.get(serverPath, username, repositoryName, number))
                   ?: throw GiteeNotFoundException("Pull request $number does not exist")
+
     invokeAndWaitIfNeeded {
-      lastKnownHeadSha?.run { if (this != details.headRefOid) reloadCommits() }
-      lastKnownHeadSha = details.headRefOid
+      lastKnownHeadSha?.run { if (this != details.head.sha) reloadCommits() }
+      lastKnownHeadSha = details.head.sha
     }
     details
   }
@@ -66,8 +67,7 @@ internal class GiteePullRequestDataProviderImpl(private val project: Project,
     get() = GiteeAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { branchFetchRequestValue.value } }
 
   private val apiCommitsRequestValue = backingValue {
-    GiteeApiPagesLoader.loadAll(requestExecutor, it,
-                                 GiteeApiRequests.Repos.PullRequests.Commits.pages(serverPath, username, repositoryName, number))
+    GiteeApiPagesLoader.loadAll(requestExecutor, it, GiteeApiRequests.Repos.PullRequests.Commits.pages(serverPath, username, repositoryName, number))
 
   }
   override val apiCommitsRequest

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.pullrequest.ui.timeline
 
-import com.gitee.api.data.GELabel
 import com.gitee.api.data.GEUser
+import com.gitee.api.data.GiteeIssueLabel
 import com.gitee.api.data.pullrequest.GiteeGitRefName
 import com.gitee.api.data.pullrequest.GiteePullRequestReviewer
 import com.gitee.api.data.pullrequest.GiteePullRequestState
@@ -126,7 +126,7 @@ class GiteePRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: 
       }
     }
 
-    private fun labelsHTML(added: Collection<GELabel> = emptyList(), removed: Collection<GELabel> = emptyList()): String {
+    private fun labelsHTML(added: Collection<GiteeIssueLabel> = emptyList(), removed: Collection<GiteeIssueLabel> = emptyList()): String {
       val builder = StringBuilder()
       if (added.isNotEmpty()) {
         if (added.size > 1) {
@@ -148,7 +148,7 @@ class GiteePRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: 
       return builder.toString()
     }
 
-    private fun labelHTML(label: GELabel): String {
+    private fun labelHTML(label: GiteeIssueLabel): String {
       val background = GiteeUIUtil.getLabelBackground(label)
       val foreground = GiteeUIUtil.getLabelForeground(background)
       //language=HTML
