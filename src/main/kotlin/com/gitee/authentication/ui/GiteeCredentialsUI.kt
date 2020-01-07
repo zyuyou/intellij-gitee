@@ -6,6 +6,7 @@ import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.GiteeAuthenticationException
+import com.gitee.exceptions.GiteeLoginException
 import com.gitee.exceptions.GiteeParseException
 import com.gitee.ui.util.DialogValidationUtils
 import com.gitee.ui.util.Validator
@@ -68,6 +69,9 @@ sealed class GiteeCredentialsUI {
                             private val executorFactory: GiteeApiRequestExecutor.Factory,
                             private val isAccountUnique: (login: String, server: GiteeServerPath) -> Boolean,
                             private val dialogMode: Boolean) : GiteeCredentialsUI() {
+
+    private val EMAIL_LOGIN_PATTERN = Regex("[\\w!#\$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#\$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?")
+    private val PHONE_NUMBER_LOGIN_PATTERN = Regex("^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[35678]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[01356789]\\d{2}|66\\d{2})\\d{6}\$")
 
     private val switchUiLink = LinkLabel.create("Use Token", switchUi)
     private val editCustomClientLink = LinkLabel.create("Edit Custom App Info", editCustomAppInfo)
@@ -136,6 +140,7 @@ sealed class GiteeCredentialsUI {
 
     override fun getValidator() = DialogValidationUtils.chain(
       { DialogValidationUtils.notBlank(loginTextField, "Login cannot be empty") },
+      loginNameValidator(loginTextField),
       { DialogValidationUtils.notBlank(passwordField, "Password cannot be empty") }
     )
 
@@ -170,6 +175,25 @@ sealed class GiteeCredentialsUI {
       loginTextField.isEnabled = !busy
       passwordField.isEnabled = !busy
       switchUiLink.isEnabled = !busy
+    }
+
+    private fun loginNameValidator(textField: JTextField): Validator {
+      return {
+        val text = textField.text
+        try {
+          if (PHONE_NUMBER_LOGIN_PATTERN.containsMatchIn(text)) {
+            throw GiteeLoginException("Phone number is not supported for oauth2.")
+          }
+
+          if (!EMAIL_LOGIN_PATTERN.containsMatchIn(text)) {
+            throw GiteeLoginException("Email support only.")
+          }
+
+          null
+        } catch (e: Exception) {
+          ValidationInfo("$text is not a valid login name:\n${e.message}", textField)
+        }
+      }
     }
   }
 
