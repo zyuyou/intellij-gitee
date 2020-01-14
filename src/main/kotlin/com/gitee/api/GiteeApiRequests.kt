@@ -474,6 +474,13 @@ object GiteeApiRequests {
                     "position" to diffLine),
                 GiteeApiContentHelper.V3_HTML_JSON_MIME_TYPE).withOperationName("create pull request review comment")
       }
+
+      object Labels : Entity("/labels") {
+        @JvmStatic
+        fun replace(server: GiteeServerPath, username: String, repoName: String, number: Long, labels: Collection<String>) =
+          Put.jsonList<GiteeIssueLabel>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
+            labels)
+      }
     }
   }
 

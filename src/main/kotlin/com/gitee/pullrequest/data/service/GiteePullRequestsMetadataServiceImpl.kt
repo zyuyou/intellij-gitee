@@ -46,7 +46,9 @@ class GiteePullRequestsMetadataServiceImpl internal constructor(progressManager:
   private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GiteeApiPagesLoader
       .loadAll(requestExecutor, indicator,
-               GiteeApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository))
+               GiteeApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository))
+      .filter { it.permissions.isPush }
+      .map { it as GiteeUser }
   }
 
   override val issuesAssignees: CompletableFuture<List<GiteeUser>>
@@ -122,8 +124,8 @@ class GiteePullRequestsMetadataServiceImpl internal constructor(progressManager:
 
     // 更新PR标签列表
     requestExecutor.execute(indicator,
-                            GiteeApiRequests.Repos.Issues.Labels
-                              .replace(serverPath, repoPath.owner, repoPath.repository, pullRequest.toString(),
+                            GiteeApiRequests.Repos.PullRequests.Labels
+                              .replace(serverPath, repoPath.owner, repoPath.repository, pullRequest,
                                        delta.newCollection.map { it.name }))
     messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
   }
