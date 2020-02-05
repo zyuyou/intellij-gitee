@@ -3,8 +3,8 @@ package com.gitee.pullrequest
 
 import com.gitee.pullrequest.action.GiteePullRequestKeys
 import com.gitee.pullrequest.avatars.GiteeAvatarIconsProvider
+import com.gitee.pullrequest.data.GiteePRDataProvider
 import com.gitee.pullrequest.data.GiteePRTimelineLoader
-import com.gitee.pullrequest.data.GiteePullRequestDataProvider
 import com.gitee.pullrequest.ui.timeline.*
 import com.gitee.ui.GiteeListLoaderPanel
 import com.gitee.ui.util.SingleValueModel
@@ -74,7 +74,7 @@ internal class GiteePRFileEditor(progressManager: ProgressManager,
         if (pr != null) detailsModel.value = pr
       }
     }
-    dataProvider.addRequestsChangesListener(this, object : GiteePullRequestDataProvider.RequestsChangedListener {
+    dataProvider.addRequestsChangesListener(this, object : GiteePRDataProvider.RequestsChangedListener {
       override fun detailsRequestChanged() = handleDetails()
       override fun reviewThreadsRequestChanged() = handleReviewsThreads()
     })

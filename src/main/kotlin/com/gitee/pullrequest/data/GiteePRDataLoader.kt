@@ -4,12 +4,12 @@ package com.gitee.pullrequest.data
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
 
-internal interface GiteePullRequestsDataLoader : Disposable {
+internal interface GiteePRDataLoader : Disposable {
   @CalledInAwt
-  fun getDataProvider(number: Long): GiteePullRequestDataProvider
+  fun getDataProvider(number: Long): GiteePRDataProvider
 
   @CalledInAwt
-  fun findDataProvider(number: Long): GiteePullRequestDataProvider?
+  fun findDataProvider(number: Long): GiteePRDataProvider?
 
   @CalledInAwt
   fun invalidateAllData()

@@ -8,6 +8,7 @@ import com.gitee.icons.GiteeIcons
 import com.gitee.util.CachingGiteeUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
 import com.gitee.util.GiteeUtil
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -35,6 +36,10 @@ class GiteeCloneDialogExtension : VcsCloneDialogExtension {
   }
 
   override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
+    throw AssertionError("Shouldn't be called")
+  }
+
+  override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
     return GiteeCloneDialogExtensionComponent(
         project,
         GiteeAuthenticationManager.getInstance(),

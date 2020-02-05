@@ -8,7 +8,7 @@ import com.gitee.api.GiteeServerPath
 import com.gitee.api.data.GiteeIssueLabel
 import com.gitee.api.data.GiteeUser
 import com.gitee.api.util.GiteeApiPagesLoader
-import com.gitee.pullrequest.data.GiteePullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
+import com.gitee.pullrequest.data.GiteePRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import com.gitee.util.CollectionDelta
 import com.gitee.util.GiteeAsyncUtil
 import com.gitee.util.LazyCancellableBackgroundProcessValue

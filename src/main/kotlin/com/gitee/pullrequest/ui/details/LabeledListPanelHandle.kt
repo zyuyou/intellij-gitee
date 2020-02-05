@@ -2,7 +2,7 @@
 package com.gitee.pullrequest.ui.details
 
 import com.gitee.api.data.GiteePullRequestDetailed
-import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
+import com.gitee.pullrequest.data.GiteePRBusyStateTracker
 import com.gitee.pullrequest.data.service.GiteePullRequestsSecurityService
 import com.gitee.ui.WrapLayout
 import com.gitee.ui.util.SingleValueModel
@@ -27,7 +27,7 @@ import javax.swing.JLabel
 
 internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GiteePullRequestDetailed?>,
                                                   private val securityService: GiteePullRequestsSecurityService,
-                                                  private val busyStateTracker: GiteePullRequestsBusyStateTracker,
+                                                  private val busyStateTracker: GiteePRBusyStateTracker,
                                                   emptyText: String, notEmptyText: String)
   : Disposable {
 

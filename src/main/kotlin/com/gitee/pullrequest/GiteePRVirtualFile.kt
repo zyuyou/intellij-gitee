@@ -3,12 +3,12 @@ package com.gitee.pullrequest
 
 import com.gitee.api.data.GiteePullRequest
 import com.gitee.pullrequest.action.GiteePRActionDataContext
-import com.gitee.pullrequest.data.GiteePullRequestDataProvider
+import com.gitee.pullrequest.data.GiteePRDataProvider
 import com.intellij.testFramework.LightVirtualFile
 
 internal class GiteePRVirtualFile(val context: GiteePRActionDataContext,
                                   val pullRequest: GiteePullRequest,
-                                  val dataProvider: GiteePullRequestDataProvider)
+                                  val dataProvider: GiteePRDataProvider)
   : LightVirtualFile(pullRequest.title, GiteePRFileType.INSTANCE, "") {
 
   init {

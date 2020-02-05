@@ -10,9 +10,9 @@ import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.pullrequest.comment.GiteePRDiffReviewThreadsProviderImpl
 import com.gitee.pullrequest.comment.ui.GiteePREditorReviewThreadComponentFactoryImpl
 import com.gitee.pullrequest.config.GiteePullRequestsProjectUISettings
-import com.gitee.pullrequest.data.GiteePullRequestDataProvider
-import com.gitee.pullrequest.data.GiteePullRequestsDataContext
-import com.gitee.pullrequest.data.GiteePullRequestsDataContextRepository
+import com.gitee.pullrequest.data.GiteePRDataContext
+import com.gitee.pullrequest.data.GiteePRDataContextRepository
+import com.gitee.pullrequest.data.GiteePRDataProvider
 import com.gitee.pullrequest.search.GiteePullRequestSearchPanel
 import com.gitee.pullrequest.ui.*
 import com.gitee.pullrequest.ui.changes.GiteePRChangesBrowser
@@ -67,13 +67,13 @@ internal class GiteePRComponentFactory(private val project: Project) {
 
   private val autoPopupController = AutoPopupController.getInstance(project)
   private val projectUiSettings = GiteePullRequestsProjectUISettings.getInstance(project)
-  private val dataContextRepository = GiteePullRequestsDataContextRepository.getInstance(project)
+  private val dataContextRepository = GiteePRDataContextRepository.getInstance(project)
 
   @CalledInAwt
   fun createComponent(remoteUrl: GitRemoteUrlCoordinates, account: GiteeAccount, requestExecutor: GiteeApiRequestExecutor,
                       parentDisposable: Disposable): JComponent {
 
-    val contextValue = object : LazyCancellableBackgroundProcessValue<GiteePullRequestsDataContext>(progressManager) {
+    val contextValue = object : LazyCancellableBackgroundProcessValue<GiteePRDataContext>(progressManager) {
       override fun compute(indicator: ProgressIndicator) =
         dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
           Disposer.register(parentDisposable, it)
@@ -84,7 +84,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
     val uiDisposable = Disposer.newDisposable()
     Disposer.register(parentDisposable, uiDisposable)
 
-    val loadingModel = GiteeCompletableFutureLoadingModel<GiteePullRequestsDataContext>()
+    val loadingModel = GiteeCompletableFutureLoadingModel<GiteePRDataContext>()
     val contentContainer = JBPanelWithEmptyText(null).apply {
       background = UIUtil.getListBackground()
     }
@@ -165,7 +165,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
     editorWindow.setFilePinned(file, true)
   }
 
-  private fun createContent(dataContext: GiteePullRequestsDataContext, disposable: Disposable): JComponent {
+  private fun createContent(dataContext: GiteePRDataContext, disposable: Disposable): JComponent {
     val avatarIconsProviderFactory = CachingGiteeAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
     val listSelectionHolder = GiteePullRequestsListSelectionHolderImpl()
     val actionDataContext = GiteePRActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
@@ -249,7 +249,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
     }
   }
 
-  private fun openTimelineForSelection(dataContext: GiteePullRequestsDataContext,
+  private fun openTimelineForSelection(dataContext: GiteePRDataContext,
                                        actionDataContext: GiteePRActionDataContext,
                                        list: GiteePullRequestsList) {
     val pullRequest = list.selectedValue
@@ -320,7 +320,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
     return model
   }
 
-  private fun createChangesLoadingModel(dataProviderModel: SingleValueModel<GiteePullRequestDataProvider?>,
+  private fun createChangesLoadingModel(dataProviderModel: SingleValueModel<GiteePRDataProvider?>,
                                         parentDisposable: Disposable): GiteeCompletableFutureLoadingModel<List<GitCommit>> {
     val model = GiteeCompletableFutureLoadingModel<List<GitCommit>>()
 
@@ -339,7 +339,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
         val disposable = Disposer.newDisposable().apply {
           Disposer.register(parentDisposable, this)
         }
-        provider.addRequestsChangesListener(disposable, object : GiteePullRequestDataProvider.RequestsChangedListener {
+        provider.addRequestsChangesListener(disposable, object : GiteePRDataProvider.RequestsChangedListener {
           override fun commitsRequestChanged() {
             model.future = provider.logCommitsRequest
           }
@@ -352,7 +352,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
     return model
   }
 
-  private fun createDetailsLoadingModel(dataProviderModel: SingleValueModel<GiteePullRequestDataProvider?>,
+  private fun createDetailsLoadingModel(dataProviderModel: SingleValueModel<GiteePRDataProvider?>,
                                         parentDisposable: Disposable): GiteeCompletableFutureLoadingModel<GiteePullRequestDetailed> {
     val model = GiteeCompletableFutureLoadingModel<GiteePullRequestDetailed>()
 
@@ -371,7 +371,7 @@ internal class GiteePRComponentFactory(private val project: Project) {
         val disposable = Disposer.newDisposable().apply {
           Disposer.register(parentDisposable, this)
         }
-        provider.addRequestsChangesListener(disposable, object : GiteePullRequestDataProvider.RequestsChangedListener {
+        provider.addRequestsChangesListener(disposable, object : GiteePRDataProvider.RequestsChangedListener {
           override fun detailsRequestChanged() {
             model.future = provider.detailsRequest
           }
@@ -398,12 +398,12 @@ internal class GiteePRComponentFactory(private val project: Project) {
     return model
   }
 
-  private fun createDataProviderModel(dataContext: GiteePullRequestsDataContext,
+  private fun createDataProviderModel(dataContext: GiteePRDataContext,
                                       listSelectionHolder: GiteePullRequestsListSelectionHolder,
-                                      parentDisposable: Disposable): SingleValueModel<GiteePullRequestDataProvider?> {
-    val model: SingleValueModel<GiteePullRequestDataProvider?> = SingleValueModel(null)
+                                      parentDisposable: Disposable): SingleValueModel<GiteePRDataProvider?> {
+    val model: SingleValueModel<GiteePRDataProvider?> = SingleValueModel(null)
 
-    fun setNewProvider(provider: GiteePullRequestDataProvider?) {
+    fun setNewProvider(provider: GiteePRDataProvider?) {
       val oldValue = model.value
       if (oldValue != null && provider != null && oldValue.number != provider.number) {
         model.value = null

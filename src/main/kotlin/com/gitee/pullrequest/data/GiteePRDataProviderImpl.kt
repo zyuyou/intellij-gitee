@@ -32,18 +32,18 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 
-internal class GiteePullRequestDataProviderImpl(private val project: Project,
-                                                 private val progressManager: ProgressManager,
-                                                 private val git: Git,
-                                                 private val requestExecutor: GiteeApiRequestExecutor,
-                                                 private val repository: GitRepository,
-                                                 private val remote: GitRemote,
-                                                 private val serverPath: GiteeServerPath,
-                                                 private val username: String,
-                                                 private val repositoryName: String,
-                                                 override val number: Long) : GiteePullRequestDataProvider {
+internal class GiteePRDataProviderImpl(private val project: Project,
+                                       private val progressManager: ProgressManager,
+                                       private val git: Git,
+                                       private val requestExecutor: GiteeApiRequestExecutor,
+                                       private val repository: GitRepository,
+                                       private val remote: GitRemote,
+                                       private val serverPath: GiteeServerPath,
+                                       private val username: String,
+                                       private val repositoryName: String,
+                                       override val number: Long) : GiteePRDataProvider {
 
-  private val requestsChangesEventDispatcher = EventDispatcher.create(GiteePullRequestDataProvider.RequestsChangedListener::class.java)
+  private val requestsChangesEventDispatcher = EventDispatcher.create(GiteePRDataProvider.RequestsChangedListener::class.java)
 
   private var lastKnownHeadSha: String? = null
 
@@ -150,12 +150,12 @@ internal class GiteePullRequestDataProviderImpl(private val project: Project,
       override fun compute(indicator: ProgressIndicator) = supplier(indicator)
     }
 
-  override fun addRequestsChangesListener(listener: GiteePullRequestDataProvider.RequestsChangedListener) =
+  override fun addRequestsChangesListener(listener: GiteePRDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.addListener(listener)
 
-  override fun addRequestsChangesListener(disposable: Disposable, listener: GiteePullRequestDataProvider.RequestsChangedListener) =
+  override fun addRequestsChangesListener(disposable: Disposable, listener: GiteePRDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.addListener(listener, disposable)
 
-  override fun removeRequestsChangesListener(listener: GiteePullRequestDataProvider.RequestsChangedListener) =
+  override fun removeRequestsChangesListener(listener: GiteePRDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.removeListener(listener)
 }

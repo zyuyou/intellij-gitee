@@ -20,7 +20,7 @@ class GiteePullRequestCreateBranchAction : DumbAwareAction("Create New Local Bra
                                                             null) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    val selection = e.getData(GiteePullRequestKeys.ACTION_DATA_CONTEXT)?.selectedPullRequestDataProvider
+    val selection = e.getData(GiteePullRequestKeys.ACTION_DATA_CONTEXT)?.selectedPRDataProvider
     e.presentation.isEnabled = project != null && !project.isDefault && selection != null
   }
 
@@ -29,7 +29,7 @@ class GiteePullRequestCreateBranchAction : DumbAwareAction("Create New Local Bra
     val context = e.getRequiredData(GiteePullRequestKeys.ACTION_DATA_CONTEXT)
     val repository = context.gitRepositoryCoordinates.repository
     val repositoryList = listOf(repository)
-    val dataProvider = context.selectedPullRequestDataProvider ?: return
+    val dataProvider = context.selectedPRDataProvider ?: return
 
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          "Create New Branch From Pull Request #${dataProvider.number}",

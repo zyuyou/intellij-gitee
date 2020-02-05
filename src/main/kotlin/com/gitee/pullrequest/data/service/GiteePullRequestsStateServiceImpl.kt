@@ -9,9 +9,9 @@ import com.gitee.api.data.GiteeCommit
 import com.gitee.api.data.GiteeIssueState
 import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.pullrequest.action.ui.GiteeMergeCommitMessageDialog
-import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
-import com.gitee.pullrequest.data.GiteePullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
-import com.gitee.pullrequest.data.GiteePullRequestsDataLoader
+import com.gitee.pullrequest.data.GiteePRBusyStateTracker
+import com.gitee.pullrequest.data.GiteePRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
+import com.gitee.pullrequest.data.GiteePRDataLoader
 import com.gitee.util.GiteeAsyncUtil
 import com.gitee.util.GiteeNotifications
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.CalledInAwt
 class GiteePullRequestsStateServiceImpl internal constructor(private val project: Project,
                                                              private val progressManager: ProgressManager,
                                                              private val messageBus: MessageBus,
-                                                             private val dataLoader: GiteePullRequestsDataLoader,
-                                                             private val busyStateTracker: GiteePullRequestsBusyStateTracker,
+                                                             private val dataLoader: GiteePRDataLoader,
+                                                             private val busyStateTracker: GiteePRBusyStateTracker,
                                                              private val requestExecutor: GiteeApiRequestExecutor,
                                                              private val serverPath: GiteeServerPath,
                                                              private val repoPath: GiteeRepositoryPath)

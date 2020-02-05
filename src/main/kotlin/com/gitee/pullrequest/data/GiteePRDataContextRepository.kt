@@ -7,8 +7,8 @@ import com.gitee.api.GiteeRepositoryCoordinates
 import com.gitee.api.data.GiteePullRequest
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
-import com.gitee.pullrequest.data.GiteePullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
-import com.gitee.pullrequest.data.GiteePullRequestsDataContext.Companion.PullRequestEditedListener
+import com.gitee.pullrequest.data.GiteePRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
+import com.gitee.pullrequest.data.GiteePRDataContext.Companion.PullRequestEditedListener
 import com.gitee.pullrequest.data.service.GiteePullRequestsMetadataServiceImpl
 import com.gitee.pullrequest.data.service.GiteePullRequestsSecurityServiceImpl
 import com.gitee.pullrequest.data.service.GiteePullRequestsStateServiceImpl
@@ -23,45 +23,44 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionListModel
+import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
+import com.intellij.util.messages.MessageBusOwner
 import git4idea.commands.Git
 import org.jetbrains.annotations.CalledInBackground
 import java.io.IOException
 
 @Service
-internal class GiteePullRequestsDataContextRepository(private val project: Project) {
-
-  private val progressManager = ProgressManager.getInstance()
-  private val messageBusFactory = MessageBusFactory.getInstance()
-  private val git = Git.getInstance()
-  private val accountInformationProvider = GiteeAccountInformationProvider.getInstance()
-
-  private val sharedProjectSettings = GiteeSharedProjectSettings.getInstance(project)
+internal class GiteePRDataContextRepository(private val project: Project) {
 
   @CalledInBackground
   @Throws(IOException::class)
   fun getContext(indicator: ProgressIndicator,
                  account: GiteeAccount, requestExecutor: GiteeApiRequestExecutor,
-                 gitRemoteCoordinates: GitRemoteUrlCoordinates): GiteePullRequestsDataContext {
+                 gitRemoteCoordinates: GitRemoteUrlCoordinates): GiteePRDataContext {
     val fullPath = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(gitRemoteCoordinates.url)
                    ?: throw IllegalArgumentException(
                      "Invalid Gitee Repository URL - ${gitRemoteCoordinates.url} is not a Gitee repository")
 
     indicator.text = "Loading account information"
-    val accountDetails = accountInformationProvider.getInformation(requestExecutor, indicator, account)
+    val accountDetails = GiteeAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
     indicator.checkCanceled()
 
     indicator.text = "Loading repository information"
     val repoDetails = requestExecutor.execute(indicator, GiteeApiRequests.Repos.get(account.server, fullPath.owner, fullPath.repository))
                       ?: throw IllegalArgumentException("Repository $fullPath does not exist at ${account.server} or you don't have access.")
 
-    val messageBus = messageBusFactory.createMessageBus(this)
+    val messageBus = MessageBusFactory.getInstance().createMessageBus(object : MessageBusOwner {
+      override fun isDisposed() = project.isDisposed
+
+      override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
+    })
 
     val listModel = CollectionListModel<GiteePullRequest>()
     val searchHolder = GiteePullRequestSearchQueryHolderImpl()
-//    val listLoader = GiteePRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
-    val listLoader = GiteeFakePRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
-    val dataLoader = GiteePullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor,
+//    val listLoader = GiteePRListLoaderImpl(ProgressManager.getInstance(), requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
+    val listLoader = GiteeFakePRListLoaderImpl(ProgressManager.getInstance(), requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
+    val dataLoader = GiteePRDataLoaderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor,
                                                       gitRemoteCoordinates.repository, gitRemoteCoordinates.remote,
                                                       account.server, repoDetails.fullPath)
 
@@ -74,20 +73,20 @@ internal class GiteePullRequestsDataContextRepository(private val project: Proje
         }
       }
     })
-    val securityService = GiteePullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
-    val busyStateTracker = GiteePullRequestsBusyStateTrackerImpl()
-    val metadataService = GiteePullRequestsMetadataServiceImpl(progressManager, messageBus, requestExecutor, account.server,
+    val securityService = GiteePullRequestsSecurityServiceImpl(GiteeSharedProjectSettings.getInstance(project), accountDetails, repoDetails)
+    val busyStateTracker = GiteePRBusyStateTrackerImpl()
+    val metadataService = GiteePullRequestsMetadataServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, account.server,
                                                                 repoDetails.fullPath)
-    val stateService = GiteePullRequestsStateServiceImpl(project, progressManager, messageBus, dataLoader,
+    val stateService = GiteePullRequestsStateServiceImpl(project, ProgressManager.getInstance(), messageBus, dataLoader,
                                                           busyStateTracker,
                                                           requestExecutor, account.server, repoDetails.fullPath)
 
-    return GiteePullRequestsDataContext(gitRemoteCoordinates, GiteeRepositoryCoordinates(account.server, repoDetails.fullPath), account,
+    return GiteePRDataContext(gitRemoteCoordinates, GiteeRepositoryCoordinates(account.server, repoDetails.fullPath), account,
                                      requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
                                      busyStateTracker, metadataService, stateService)
   }
 
   companion object {
-    fun getInstance(project: Project) = project.service<GiteePullRequestsDataContextRepository>()
+    fun getInstance(project: Project) = project.service<GiteePRDataContextRepository>()
   }
 }

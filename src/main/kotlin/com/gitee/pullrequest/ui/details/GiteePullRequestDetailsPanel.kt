@@ -3,7 +3,7 @@ package com.gitee.pullrequest.ui.details
 
 import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
-import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
+import com.gitee.pullrequest.data.GiteePRBusyStateTracker
 import com.gitee.pullrequest.data.service.GiteePullRequestsMetadataService
 import com.gitee.pullrequest.data.service.GiteePullRequestsSecurityService
 import com.gitee.pullrequest.data.service.GiteePullRequestsStateService
@@ -31,7 +31,7 @@ import javax.swing.JPanel
 internal class GiteePullRequestDetailsPanel(project: Project,
                                             model: SingleValueModel<GiteePullRequestDetailed?>,
                                             securityService: GiteePullRequestsSecurityService,
-                                            busyStateTracker: GiteePullRequestsBusyStateTracker,
+                                            busyStateTracker: GiteePRBusyStateTracker,
                                             metadataService: GiteePullRequestsMetadataService,
                                             stateService: GiteePullRequestsStateService,
                                             avatarIconsProviderFactory: CachingGiteeAvatarIconsProvider.Factory)

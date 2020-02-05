@@ -9,7 +9,7 @@ import org.jetbrains.annotations.CalledInAwt
 /**
  * Provides means to prevent concurrent pull request modifications which can result in undefined/broken state
  */
-interface GiteePullRequestsBusyStateTracker {
+interface GiteePRBusyStateTracker {
 
   @CalledInAwt
   fun acquire(pullRequest: Long): Boolean

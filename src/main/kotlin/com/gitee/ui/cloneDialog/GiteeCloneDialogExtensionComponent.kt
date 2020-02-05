@@ -48,6 +48,7 @@ import com.intellij.ui.layout.panel
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.progress.ProgressVisibilityManager
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
@@ -175,8 +176,8 @@ internal class GiteeCloneDialogExtensionComponent(
       row {
         cell(isFullWidth = true) {
           searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY, gapLeft = gapLeft)
-          accountsPanel(gapLeft = gapLeft)
+          JSeparator(JSeparator.VERTICAL)(growY).withLeftGap(gapLeft)
+          accountsPanel().withLeftGap(gapLeft)
         }
       }
       row {
@@ -186,7 +187,7 @@ internal class GiteeCloneDialogExtensionComponent(
         directoryField(growX, pushX)
       }
     }
-    repositoriesPanel.border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+    repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
 
     if (authenticationManager.hasAccounts()) {
       switchToRepositories()

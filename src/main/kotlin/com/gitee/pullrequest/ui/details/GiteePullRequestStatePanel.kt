@@ -5,7 +5,7 @@ import com.gitee.api.data.GiteeIssueState
 import com.gitee.api.data.GiteePullRequestDetailed
 import com.gitee.api.data.pullrequest.GiteePullRequestMergeableState
 import com.gitee.icons.GiteeIcons
-import com.gitee.pullrequest.data.GiteePullRequestsBusyStateTracker
+import com.gitee.pullrequest.data.GiteePRBusyStateTracker
 import com.gitee.pullrequest.data.service.GiteePullRequestsSecurityService
 import com.gitee.pullrequest.data.service.GiteePullRequestsStateService
 import com.gitee.ui.util.SingleValueModel
@@ -25,7 +25,7 @@ import javax.swing.*
 
 internal class GiteePullRequestStatePanel(private val model: SingleValueModel<GiteePullRequestDetailed?>,
                                           private val securityService: GiteePullRequestsSecurityService,
-                                          private val busyStateTracker: GiteePullRequestsBusyStateTracker,
+                                          private val busyStateTracker: GiteePRBusyStateTracker,
                                           private val stateService: GiteePullRequestsStateService)
   : NonOpaquePanel(VerticalFlowLayout(0, 0)), Disposable {
 

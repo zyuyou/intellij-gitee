@@ -24,7 +24,7 @@ class GiteePREditorContentSynchronizer {
   private fun addContentManagerListener(window: ToolWindowImpl,
                                         listener: ContentManagerListener) {
     window.contentManager.addContentManagerListener(listener)
-    Disposer.register(window, Disposable {
+    Disposer.register(window.contentManager, Disposable {
       if (!window.isDisposed) {
         window.contentManager.removeContentManagerListener(listener)
       }

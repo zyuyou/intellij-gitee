@@ -12,7 +12,7 @@ import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-interface GiteePullRequestDataProvider {
+interface GiteePRDataProvider {
   val number: Long
 
   val detailsRequest: CompletableFuture<GiteePullRequestDetailed>

@@ -18,8 +18,8 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.ui.layout.panel
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
@@ -114,7 +114,7 @@ sealed class GiteeCredentialsUI {
         }
       }
     }.apply {
-      border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+      border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
 
     override fun getPanel(): JPanel = panel {
@@ -133,7 +133,7 @@ sealed class GiteeCredentialsUI {
         }
       }
     }.apply {
-      border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+      border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
 
     override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
@@ -227,7 +227,7 @@ sealed class GiteeCredentialsUI {
         }
       }
     }.apply {
-      border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+      border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
 
     override fun getPanel2(): JPanel {

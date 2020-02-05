@@ -6,7 +6,7 @@ import com.gitee.pullrequest.comment.viewer.GiteePRDiffViewerBaseReviewThreadsHa
 import com.gitee.pullrequest.comment.viewer.GiteePRSimpleOnesideDiffViewerReviewThreadsHandler
 import com.gitee.pullrequest.comment.viewer.GiteePRTwosideDiffViewerReviewThreadsHandler
 import com.gitee.pullrequest.comment.viewer.GiteePRUnifiedDiffViewerReviewThreadsHandler
-import com.gitee.pullrequest.data.GiteePullRequestDataProvider
+import com.gitee.pullrequest.data.GiteePRDataProvider
 import com.gitee.util.handleOnEdt
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
@@ -17,7 +17,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 
-class GiteePRDiffReviewThreadsProviderImpl(private val dataProvider: GiteePullRequestDataProvider,
+class GiteePRDiffReviewThreadsProviderImpl(private val dataProvider: GiteePRDataProvider,
                                            private val componentFactory: GiteePREditorReviewThreadComponentFactory)
   : GiteePRDiffReviewThreadsProvider {
 
@@ -34,7 +34,7 @@ class GiteePRDiffReviewThreadsProviderImpl(private val dataProvider: GiteePullRe
     Disposer.register(viewer, commentsHandler)
 
     loadAndShowComments(commentsHandler, change)
-    dataProvider.addRequestsChangesListener(commentsHandler, object : GiteePullRequestDataProvider.RequestsChangedListener {
+    dataProvider.addRequestsChangesListener(commentsHandler, object : GiteePRDataProvider.RequestsChangedListener {
       override fun reviewThreadsRequestChanged() {
         loadAndShowComments(commentsHandler, change)
       }

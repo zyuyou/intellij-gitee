@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2019.3.5</version>
+    <version>2020.1.0</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -11,19 +11,19 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2020.1.0</i>
+        <ul>
+          <li>Compatible with idea-2020.x </li>
+        </ul>
         <i>2019.3.5</i>
         <ul>
           <li>Make PR viewer enabled.</li>
           <li>Limit oauth2 login name to email.</li>
         </ul>
-        <i>2019.3.4</i>
-        <ul>
-          <li>Make Gitee's third-party app info invisable by default.</li>
-        </ul>
       ]]>
     </change-notes>
 
-    <idea-version since-build="193.*" until-build="*.*"/>
+    <idea-version since-build="201.*" until-build="*.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>

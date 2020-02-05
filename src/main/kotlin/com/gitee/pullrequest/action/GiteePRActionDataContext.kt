@@ -4,12 +4,12 @@ package com.gitee.pullrequest.action
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeRepositoryCoordinates
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
-import com.gitee.pullrequest.data.GiteePullRequestDataProvider
-import com.gitee.pullrequest.data.GiteePullRequestsDataContext
+import com.gitee.pullrequest.data.GiteePRDataContext
+import com.gitee.pullrequest.data.GiteePRDataProvider
 import com.gitee.pullrequest.ui.GiteePullRequestsListSelectionHolder
 import com.gitee.util.GitRemoteUrlCoordinates
 
-class GiteePRActionDataContext internal constructor(private val dataContext: GiteePullRequestsDataContext,
+class GiteePRActionDataContext internal constructor(private val dataContext: GiteePRDataContext,
                                                     private val selectionHolder: GiteePullRequestsListSelectionHolder,
                                                     val avatarIconsProviderFactory: CachingGiteeAvatarIconsProvider.Factory) {
 
@@ -26,7 +26,7 @@ class GiteePRActionDataContext internal constructor(private val dataContext: Git
   private val selectedPullRequest: Long?
     get() = selectionHolder.selectionNumber
 
-  val selectedPullRequestDataProvider: GiteePullRequestDataProvider?
+  val selectedPRDataProvider: GiteePRDataProvider?
     get() = selectedPullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
 
 }

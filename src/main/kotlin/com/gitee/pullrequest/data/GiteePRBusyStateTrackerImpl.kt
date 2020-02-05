@@ -8,7 +8,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 
-class GiteePullRequestsBusyStateTrackerImpl : GiteePullRequestsBusyStateTracker {
+class GiteePRBusyStateTrackerImpl : GiteePRBusyStateTracker {
   private val busySet = ContainerUtil.newConcurrentSet<Long>()
   private val busyChangeEventDispatcher = EventDispatcher.create(GiteePullRequestBusyStateListener::class.java)
 

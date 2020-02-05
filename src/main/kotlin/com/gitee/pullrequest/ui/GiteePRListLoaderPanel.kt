@@ -2,7 +2,7 @@
 package com.gitee.pullrequest.ui
 
 import com.gitee.pullrequest.data.GiteeFakePRListLoader
-import com.gitee.pullrequest.data.GiteePullRequestsDataLoader
+import com.gitee.pullrequest.data.GiteePRDataLoader
 import com.gitee.ui.GiteeListLoaderPanel
 import com.gitee.ui.HtmlInfoPanel
 import com.intellij.openapi.Disposable
@@ -14,7 +14,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GiteePRListLoaderPanel(listLoader: GiteeFakePRListLoader,
-                                      private val dataLoader: GiteePullRequestsDataLoader,
+                                      private val dataLoader: GiteePRDataLoader,
                                       contentComponent: JComponent,
                                       filterComponent: JComponent)
   : GiteeListLoaderPanel<GiteeFakePRListLoader>(listLoader, contentComponent), Disposable {

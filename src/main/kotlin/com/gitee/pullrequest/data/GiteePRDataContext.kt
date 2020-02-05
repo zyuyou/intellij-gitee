@@ -16,19 +16,19 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.Topic
 import javax.swing.ListModel
 
-internal class GiteePullRequestsDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordinates,
-                                            val repositoryCoordinates: GiteeRepositoryCoordinates,
-                                            val account: GiteeAccount,
-                                            val requestExecutor: GiteeApiRequestExecutor,
-                                            val messageBus: MessageBus,
-                                            val listModel: ListModel<GiteePullRequest>,
-                                            val searchHolder: GiteePullRequestSearchQueryHolder,
-                                            val listLoader: GiteeFakePRListLoader,
-                                            val dataLoader: GiteePullRequestsDataLoader,
-                                            val securityService: GiteePullRequestsSecurityService,
-                                            val busyStateTracker: GiteePullRequestsBusyStateTracker, //TODO: move to ui
-                                            val metadataService: GiteePullRequestsMetadataService,
-                                            val stateService: GiteePullRequestsStateService) : Disposable {
+internal class GiteePRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordinates,
+                                  val repositoryCoordinates: GiteeRepositoryCoordinates,
+                                  val account: GiteeAccount,
+                                  val requestExecutor: GiteeApiRequestExecutor,
+                                  val messageBus: MessageBus,
+                                  val listModel: ListModel<GiteePullRequest>,
+                                  val searchHolder: GiteePullRequestSearchQueryHolder,
+                                  val listLoader: GiteeFakePRListLoader,
+                                  val dataLoader: GiteePRDataLoader,
+                                  val securityService: GiteePullRequestsSecurityService,
+                                  val busyStateTracker: GiteePRBusyStateTracker, //TODO: move to ui
+                                  val metadataService: GiteePullRequestsMetadataService,
+                                  val stateService: GiteePullRequestsStateService) : Disposable {
 
   override fun dispose() {
     Disposer.dispose(messageBus)

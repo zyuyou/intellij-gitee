@@ -16,22 +16,22 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 
-internal class GiteePullRequestsDataLoaderImpl(private val project: Project,
-                                               private val progressManager: ProgressManager,
-                                               private val git: Git,
-                                               private val requestExecutor: GiteeApiRequestExecutor,
-                                               private val repository: GitRepository,
-                                               private val remote: GitRemote,
-                                               private val serverPath: GiteeServerPath,
-                                               private val repoPath: GiteeRepositoryPath) : GiteePullRequestsDataLoader {
+internal class GiteePRDataLoaderImpl(private val project: Project,
+                                     private val progressManager: ProgressManager,
+                                     private val git: Git,
+                                     private val requestExecutor: GiteeApiRequestExecutor,
+                                     private val repository: GitRepository,
+                                     private val remote: GitRemote,
+                                     private val serverPath: GiteeServerPath,
+                                     private val repoPath: GiteeRepositoryPath) : GiteePRDataLoader {
 
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
-    .removalListener<Long, GiteePullRequestDataProviderImpl> {
+    .removalListener<Long, GiteePRDataProviderImpl> {
       runInEdt { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
     }
     .maximumSize(5)
-    .build<Long, GiteePullRequestDataProviderImpl>()
+    .build<Long, GiteePRDataProviderImpl>()
 
   private val invalidationEventDispatcher = EventDispatcher.create(DataInvalidatedListener::class.java)
 
@@ -45,17 +45,17 @@ internal class GiteePullRequestsDataLoaderImpl(private val project: Project,
   }
 
   @CalledInAwt
-  override fun getDataProvider(number: Long): GiteePullRequestDataProvider {
+  override fun getDataProvider(number: Long): GiteePRDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
 
     return cache.get(number) {
-      GiteePullRequestDataProviderImpl(project, progressManager, git, requestExecutor, repository, remote, serverPath,
+      GiteePRDataProviderImpl(project, progressManager, git, requestExecutor, repository, remote, serverPath,
                                         repoPath.owner, repoPath.repository, number)
     }
   }
 
   @CalledInAwt
-  override fun findDataProvider(number: Long): GiteePullRequestDataProvider? = cache.getIfPresent(number)
+  override fun findDataProvider(number: Long): GiteePRDataProvider? = cache.getIfPresent(number)
 
   override fun addInvalidationListener(disposable: Disposable, listener: (Long) -> Unit) =
     invalidationEventDispatcher.addListener(object : DataInvalidatedListener {

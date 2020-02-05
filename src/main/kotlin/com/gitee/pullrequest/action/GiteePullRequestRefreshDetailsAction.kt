@@ -8,11 +8,11 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class GiteePullRequestRefreshDetailsAction : DumbAwareAction("Refresh Pull Request Details", null, AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val selection = e.getData(GiteePullRequestKeys.ACTION_DATA_CONTEXT)?.selectedPullRequestDataProvider
+    val selection = e.getData(GiteePullRequestKeys.ACTION_DATA_CONTEXT)?.selectedPRDataProvider
     e.presentation.isEnabled = selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GiteePullRequestKeys.ACTION_DATA_CONTEXT).selectedPullRequestDataProvider?.reloadDetails()
+    e.getRequiredData(GiteePullRequestKeys.ACTION_DATA_CONTEXT).selectedPRDataProvider?.reloadDetails()
   }
 }
