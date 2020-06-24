@@ -211,7 +211,7 @@ class GiteeRebaseAction : AbstractAuthenticatingGiteeUrlGroupingAction(
       DvcsUtil.workingTreeChangeStarted(myProject, "Rebase").use { _ ->
         val rootsToSave = listOf(repository.root)
 
-        val saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy()
+        val saveMethod = GitVcsSettings.getInstance(myProject).saveChangesPolicy
 
         val process = GitPreservingProcess(myProject, git, rootsToSave, "Rebasing", onto,
             saveMethod, indicator

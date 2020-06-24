@@ -35,7 +35,7 @@ internal class GiteePRToolWindowTabsManager(private val project: Project) {
       contentManager.addTab(item, Disposable {
         //means that tab closed by user
         if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(item)) settings.addHiddenUrl(item.url)
-        ApplicationManager.getApplication().invokeLater(::updateRemoteUrls) { project.isDisposedOrDisposeInProgress }
+        ApplicationManager.getApplication().invokeLater(::updateRemoteUrls) { project.isDisposed }
       })
     }
   }
@@ -66,7 +66,7 @@ internal class GiteePRToolWindowTabsManager(private val project: Project) {
         project.service<GiteePRToolWindowTabsManager>().updateRemoteUrls()
       }
       else {
-        application.invokeLater(::updateRemotes) { project.isDisposedOrDisposeInProgress }
+        application.invokeLater(::updateRemotes) { project.isDisposed }
       }
     }
   }

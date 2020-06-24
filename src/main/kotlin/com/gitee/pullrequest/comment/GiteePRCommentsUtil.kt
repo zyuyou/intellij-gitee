@@ -110,7 +110,7 @@ object GiteePRCommentsUtil {
         val hunkLineIndex = diffLineIndex - (diffLineCounter - hunkLinesCount) - 1
 
         val line = hunk.lines[hunkLineIndex] ?: return null
-        return when (line.type!!) {
+        return when (line.type) {
           PatchLine.Type.CONTEXT, PatchLine.Type.REMOVE -> {
             val addedLinesBefore = hunk.lines.subList(0, hunkLineIndex).count { it.type == PatchLine.Type.ADD }
             Side.LEFT to hunk.startLineBefore + (hunkLineIndex - addedLinesBefore)

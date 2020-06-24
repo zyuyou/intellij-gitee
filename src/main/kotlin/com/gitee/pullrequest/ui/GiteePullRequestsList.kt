@@ -132,7 +132,7 @@ internal class GiteePullRequestsList(private val copyPasteManager: CopyPasteMana
         foreground = primaryTextColor
       }
       info.apply {
-        text = "#${value.number} ${value.user?.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
+        text = "#${value.number} ${value.user.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
         foreground = secondaryTextColor
       }
       labels.apply {

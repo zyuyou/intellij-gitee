@@ -47,21 +47,38 @@ class GiteePRToolWindowsTabsContentManager(private val project: Project,
       Disposer.register(it, onDispose)
     }
 
-    return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), GROUP_PREFIX, false).apply {
-      isCloseable = true
-      disposer = disposable
-      description = remoteUrl.url
-      this.remoteUrl = remoteUrl
-      putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
-      putUserData(ChangesViewContentManager.CONTENT_PROVIDER_SUPPLIER_KEY) {
-        object : ChangesViewContentProvider {
-          override fun initContent() =
-            GiteePRAccountsComponent(GiteeAuthenticationManager.getInstance(), project, remoteUrl, disposable)
-
-          override fun disposeContent() = Disposer.dispose(disposable)
+    val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(null), GROUP_PREFIX, false)
+    content.isCloseable = true
+    content.setDisposer(disposable)
+    content.description = remoteUrl.url
+    content.remoteUrl = remoteUrl
+    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
+    content.putUserData(ChangesViewContentManager.CONTENT_PROVIDER_SUPPLIER_KEY) {
+      object : ChangesViewContentProvider {
+        override fun initContent(): GiteePRAccountsComponent {
+          return GiteePRAccountsComponent(GiteeAuthenticationManager.getInstance(), project, remoteUrl, disposable)
         }
+
+        override fun disposeContent() = Disposer.dispose(disposable)
       }
     }
+    return content
+
+//    return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), GROUP_PREFIX, false).apply {
+//      isCloseable = true
+//      disposer = disposable
+//      description = remoteUrl.url
+//      this.remoteUrl = remoteUrl
+//      putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
+//      putUserData(ChangesViewContentManager.CONTENT_PROVIDER_SUPPLIER_KEY) {
+//        object : ChangesViewContentProvider {
+//          override fun initContent() =
+//            GiteePRAccountsComponent(GiteeAuthenticationManager.getInstance(), project, remoteUrl, disposable)
+//
+//          override fun disposeContent() = Disposer.dispose(disposable)
+//        }
+//      }
+//    }
   }
 
   private fun updateTabNames() {

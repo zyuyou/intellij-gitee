@@ -98,7 +98,7 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
       .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { component.background = editor.backgroundColor })
 
     wrapper.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) = inlay.updateSize()
+      override fun componentResized(e: ComponentEvent) = inlay.update()
     })
     wrapper.addMouseWheelListener(editor.contentComponent::dispatchEvent)
 
