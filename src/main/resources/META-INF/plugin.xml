@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2020.1.0</version>
+    <version>2020.1.1</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -11,6 +11,11 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2020.1.1</i>
+        <ul>
+          <li>Compatible with idea-2020.1 </li>
+          <li>Remove some deprecated api </li>
+        </ul>
         <i>2020.1.0</i>
         <ul>
           <li>Compatible with idea-2020.x </li>
