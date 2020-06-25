@@ -15,6 +15,7 @@
         <ul>
           <li>Compatible with idea-2020.1 </li>
           <li>Remove some deprecated api </li>
+          <li>Fix compatibility issues </li>
         </ul>
         <i>2020.1.0</i>
         <ul>
