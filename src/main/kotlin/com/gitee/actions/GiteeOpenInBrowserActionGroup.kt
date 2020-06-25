@@ -80,7 +80,7 @@ open class GiteeOpenInBrowserActionGroup
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is GitFileRevision) return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath) ?: return null
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
 
     val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
@@ -96,7 +96,7 @@ open class GiteeOpenInBrowserActionGroup
 
     val commit = ContainerUtil.getFirstItem(selectedCommits) ?: return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commit.root)
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(commit.root)
     if (repository == null) return null
 
     val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)

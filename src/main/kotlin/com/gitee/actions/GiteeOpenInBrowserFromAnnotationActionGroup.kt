@@ -44,7 +44,7 @@ class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation
 
     FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(virtualFile) ?: return null
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile) ?: return null
 
     val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
