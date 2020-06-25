@@ -20,7 +20,7 @@ import com.gitee.api.data.GiteeIssueLabel
 import com.gitee.api.data.GiteeUser
 import com.gitee.pullrequest.GiteePRAccountsComponent
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
-import com.intellij.CommonBundle
+import com.intellij.UtilBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -92,8 +92,8 @@ object GiteeUIUtil {
 
   fun formatActionDate(date: Date): String {
     val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
-    val datePrefix = if (prettyDate.equals(CommonBundle.message("date.format.today"), true) ||
-        prettyDate.equals(CommonBundle.message("date.format.yesterday"), true)) ""
+    val datePrefix = if (prettyDate.equals(UtilBundle.message("date.format.today"), true) ||
+        prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "
     return datePrefix + prettyDate
   }
