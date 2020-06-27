@@ -70,6 +70,9 @@ object GiteeApiContentHelper {
     try {
       return getObjectMapper(gqlNaming).readValue(string, clazz)
     }
+    catch (e: com.fasterxml.jackson.databind.exc.MismatchedInputException) {
+      throw GiteeJsonException("Can't parse Gitee response", e)
+    }
     catch (e: com.fasterxml.jackson.core.JsonParseException) {
       throw GiteeJsonException("Can't parse Gitee response", e)
     }

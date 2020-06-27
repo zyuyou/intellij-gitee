@@ -27,6 +27,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.messages.Topic
 import kotlin.properties.Delegates.observable
 
+internal val GiteeAccount.isGiteeAccount: Boolean get() = server.isGiteeDotCom()
+
 /**
  * Handles application-level Gitee accounts
  *
@@ -36,7 +38,7 @@ import kotlin.properties.Delegates.observable
  * @author JetBrains s.r.o.
  */
 @State(name = "GiteeAccounts", storages = [(Storage("gitee.xml"))])
-internal class GiteeAccountManager(private val passwordSafe: PasswordSafe) : PersistentStateComponent<Array<GiteeAccount>> {
+internal class GiteeAccountManager() : PersistentStateComponent<Array<GiteeAccount>> {
 
   var accounts: Set<GiteeAccount> by observable(setOf()) {
     _, oldValue, newValue ->
@@ -63,7 +65,7 @@ internal class GiteeAccountManager(private val passwordSafe: PasswordSafe) : Per
    * Add/update/remove Gitee OAuth token from application
    */
   fun updateAccountToken(account: GiteeAccount, token: String?) {
-    passwordSafe.set(createCredentialAttributes(account.id), token?.let { createCredentials(account.id, it) })
+    PasswordSafe.instance.set(createCredentialAttributes(account.id), token?.let { createCredentials(account.id, it) })
     LOG.debug((if (token == null) "Cleared" else "Updated") + " OAuth token for account: $account")
     ApplicationManager.getApplication().messageBus.syncPublisher(ACCOUNT_TOKEN_CHANGED_TOPIC).tokenChanged(account)
   }
@@ -74,7 +76,7 @@ internal class GiteeAccountManager(private val passwordSafe: PasswordSafe) : Per
   fun getTokenForAccount(account: GiteeAccount): String? = getTokensForAccount(account)?.first
 
   fun getTokensForAccount(account: GiteeAccount): Pair<String, String>? {
-    return passwordSafe.get(createCredentialAttributes(account.id))?.let {
+    return PasswordSafe.instance.get(createCredentialAttributes(account.id))?.let {
       credential ->
         credential.getPasswordAsString()?.let {
           tokens ->

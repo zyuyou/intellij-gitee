@@ -42,6 +42,7 @@ object GiteeUtil {
   val LOG: Logger = Logger.getInstance("gitee")
 
   const val SERVICE_DISPLAY_NAME: String = "Gitee"
+  const val ENTERPRISE_SERVICE_DISPLAY_NAME: String = "Gitee Enterprise"
   const val GIT_AUTH_PASSWORD_SUBSTITUTE: String = "x-oauth-basic"
 
   @JvmStatic

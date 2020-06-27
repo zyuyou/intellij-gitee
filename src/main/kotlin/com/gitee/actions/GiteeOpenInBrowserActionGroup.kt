@@ -3,7 +3,6 @@ package com.gitee.actions
 
 import com.gitee.api.GiteeRepositoryCoordinates
 import com.gitee.icons.GiteeIcons
-import com.gitee.pullrequest.action.GiteePullRequestKeys
 import com.gitee.util.GiteeGitHelper
 import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeUtil
@@ -62,17 +61,9 @@ open class GiteeOpenInBrowserActionGroup
   protected open fun getData(dataContext: DataContext): Pair<Set<GiteeRepositoryCoordinates>, Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
-    return getDataFromPullRequest(project, dataContext)
-      ?: getDataFromHistory(project, dataContext)
+    return getDataFromHistory(project, dataContext)
       ?: getDataFromLog(project, dataContext)
       ?: getDataFromVirtualFile(project, dataContext)
-  }
-
-  private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GiteeRepositoryCoordinates>, Data>? {
-    val pullRequest = dataContext.getData(GiteePullRequestKeys.SELECTED_PULL_REQUEST) ?: return null
-    val context = dataContext.getData(GiteePullRequestKeys.ACTION_DATA_CONTEXT) ?: return null
-
-    return setOf(context.repositoryCoordinates) to Data.URL(project, pullRequest.url)
   }
 
   private fun getDataFromHistory(project: Project, dataContext: DataContext): Pair<Set<GiteeRepositoryCoordinates>, Data>? {

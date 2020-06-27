@@ -18,41 +18,23 @@ package com.gitee.util
 
 import com.gitee.api.data.GiteeIssueLabel
 import com.gitee.api.data.GiteeUser
-import com.gitee.pullrequest.GiteePRAccountsComponent
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.intellij.UtilBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.*
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBList
-import com.intellij.ui.speedSearch.NameFilteringListModel
-import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Color
 import java.awt.Component
-import java.awt.Cursor
-import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 
 object GiteeUIUtil {
   val avatarSize = JBUI.uiIntValue("Gitee.Avatar.Size", 20)
@@ -107,139 +89,6 @@ object GiteeUIUtil {
       registerKeyboardAction({ action() },
           KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
           JComponent.WHEN_FOCUSED)
-    }
-  }
-
-  // PullRequest详情编辑按钮弹出菜单
-  fun <T> showChooserPopup(popupTitle: String, parentComponent: JComponent,
-                           cellRendererFactory: (JList<SelectableWrapper<T>>) -> SelectionListCellRenderer<T>,
-                           currentList: List<T>,
-                           availableListFuture: CompletableFuture<List<T>>)
-      : CompletableFuture<CollectionDelta<T>> {
-
-    val listModel = CollectionListModel<SelectableWrapper<T>>()
-    val list = JBList<SelectableWrapper<T>>().apply {
-      visibleRowCount = 7
-      isFocusable = false
-      selectionMode = ListSelectionModel.SINGLE_SELECTION
-    }
-    val listCellRenderer = cellRendererFactory(list)
-    list.cellRenderer = listCellRenderer
-
-    val speedSearch = SpeedSearch()
-    val filteringListModel = NameFilteringListModel<SelectableWrapper<T>>(listModel, { listCellRenderer.getText(it.value) },
-        speedSearch::shouldBeShowing, { speedSearch.filter ?: "" })
-    list.model = filteringListModel
-
-    speedSearch.addChangeListener {
-      val prevSelection = list.selectedValue // save to restore the selection on filter drop
-      filteringListModel.refilter()
-      if (filteringListModel.size > 0) {
-        val fullMatchIndex = if (speedSearch.isHoldingFilter) filteringListModel.closestMatchIndex
-        else filteringListModel.getElementIndex(prevSelection)
-        if (fullMatchIndex != -1) {
-          list.selectedIndex = fullMatchIndex
-        }
-
-        if (filteringListModel.size <= list.selectedIndex || !filteringListModel.contains(list.selectedValue)) {
-          list.selectedIndex = 0
-        }
-      }
-    }
-
-    val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
-      viewport.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      isFocusable = false
-    }
-
-    val searchField = SearchTextField(false).apply {
-      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
-      UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
-      textEditor.border = JBUI.Borders.empty()
-      //focus dark magic, otherwise focus shifts to searchfield panel
-      isFocusable = false
-      addDocumentListener(object : DocumentAdapter() {
-        override fun textChanged(e: DocumentEvent) {
-          speedSearch.updatePattern(text)
-        }
-      })
-    }
-
-    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField)
-    ScrollingUtil.installActions(list, panel)
-    ListUtil.installAutoSelectOnMouseMove(list)
-
-    fun toggleSelection() {
-      for (item in list.selectedValuesList) {
-        item.selected = !item.selected
-      }
-      list.repaint()
-    }
-
-    list.addMouseListener(object : MouseAdapter() {
-      override fun mouseReleased(e: MouseEvent) {
-        if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed) toggleSelection()
-      }
-    })
-
-    val originalSelection: Set<T> = currentList.toHashSet()
-    listModel.add(currentList.map { SelectableWrapper(it, true) })
-
-    val result = CompletableFuture<CollectionDelta<T>>()
-    JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchField)
-        .setRequestFocus(true)
-        .setCancelOnClickOutside(true)
-        .setTitle(popupTitle)
-        .setResizable(true)
-        .setMovable(true)
-        .setKeyboardActions(listOf(Pair.create(ActionListener { toggleSelection() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
-        .addListener(object : JBPopupListener {
-          override fun beforeShown(event: LightweightWindowEvent) {
-            list.setPaintBusy(true)
-            list.emptyText.text = "Loading..."
-
-            availableListFuture
-                .thenApplyAsync { available ->
-                  available.map { SelectableWrapper(it, originalSelection.contains(it)) }
-                      .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.selected }
-                          .thenComparing({ listCellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
-                }.thenAcceptAsync(Consumer { possibilities ->
-                  listModel.replaceAll(possibilities)
-
-                  list.setPaintBusy(false)
-                  list.emptyText.text = UIBundle.message("message.noMatchesFound")
-
-                  event.asPopup().pack(true, true)
-
-                  if (list.selectedIndex == -1) {
-                    list.selectedIndex = 0
-                  }
-                }, EDT_EXECUTOR)
-          }
-
-          override fun onClosed(event: LightweightWindowEvent) {
-            val selected = listModel.items.filter { it.selected }.map { it.value }
-            result.complete(CollectionDelta(originalSelection, selected))
-          }
-        })
-        .createPopup()
-        .showUnderneathOf(parentComponent)
-    return result
-  }
-
-  fun findAndSelectGiteeContent(project: Project, select: Boolean) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS) ?: return
-
-    val manager = toolWindow.contentManager
-    val component = ContentUtilEx.findContentComponent(manager) { c ->
-      return@findContentComponent c is GiteePRAccountsComponent
-    } ?: return
-
-    if (select) {
-      if (!toolWindow.isVisible)
-        toolWindow.activate(null)
-
-      ContentUtilEx.selectContent(manager, component, true)
     }
   }
 

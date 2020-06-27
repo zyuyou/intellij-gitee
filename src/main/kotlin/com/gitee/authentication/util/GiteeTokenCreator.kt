@@ -65,7 +65,7 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
   }
 
   companion object {
-    private val MASTER_SCOPES = listOf(
+    val MASTER_SCOPES = listOf(
       "projects",
       "pull_requests",
       "gists",

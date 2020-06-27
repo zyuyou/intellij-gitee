@@ -286,7 +286,7 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-  class Factory internal constructor(private val giteeSettings: GiteeSettings) {
+  class Factory {
 
     @CalledInAny
     fun create(token: String): WithTokenAuth {
@@ -295,17 +295,17 @@ sealed class GiteeApiRequestExecutor {
 
     @CalledInAny
     fun create(token: String, useProxy: Boolean = true): WithTokenAuth {
-      return WithTokenAuth(giteeSettings, token, useProxy)
+      return WithTokenAuth(GiteeSettings.getInstance(), token, useProxy)
     }
 
     @CalledInAny
     fun create(tokens: Pair<String, String>, authDataChangedSupplier: (tokens: Pair<String, String>) -> Unit): WithTokensAuth {
-      return WithTokensAuth(giteeSettings, tokens, authDataChangedSupplier)
+      return WithTokensAuth(GiteeSettings.getInstance(), tokens, authDataChangedSupplier)
     }
 
     @CalledInAny
     fun create(): WithPasswordOAuth2 {
-      return WithPasswordOAuth2(giteeSettings)
+      return WithPasswordOAuth2(GiteeSettings.getInstance())
     }
 
     companion object {

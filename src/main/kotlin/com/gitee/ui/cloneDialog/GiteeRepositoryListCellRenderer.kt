@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui.cloneDialog
 
-import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GiteeAccount
 import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -12,7 +12,7 @@ import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
 
-class GiteeRepositoryListCellRenderer(private val authenticationManager: GiteeAuthenticationManager) : ColoredListCellRenderer<GiteeRepositoryListItem>() {
+class GiteeRepositoryListCellRenderer(private val accountsSupplier: () -> Collection<GiteeAccount>) : ColoredListCellRenderer<GiteeRepositoryListItem>() {
   private val nameRenderer = AccountNameRenderer()
 
   override fun getListCellRendererComponent(list: JList<out GiteeRepositoryListItem>,
@@ -31,7 +31,7 @@ class GiteeRepositoryListCellRenderer(private val authenticationManager: GiteeAu
   }
 
   private fun showAccountNameAbove(list: JList<out GiteeRepositoryListItem>, index: Int): Boolean {
-    return authenticationManager.getAccounts().size > 1
+    return accountsSupplier().size > 1
            && (index == 0 || list.model.getElementAt(index).account != list.model.getElementAt(index - 1).account)
   }
 

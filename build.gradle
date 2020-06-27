@@ -50,6 +50,7 @@ allprojects {
     compileKotlin {
         kotlinOptions {
             jvmTarget = javaVersion
+            freeCompilerArgs = ["-Xjvm-default=enable"]
         }
     }
 

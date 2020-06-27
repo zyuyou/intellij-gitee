@@ -39,8 +39,14 @@ import java.awt.Component
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/GiteeAuthenticationManager.kt
  * @author JetBrains s.r.o.
  */
-class GiteeAuthenticationManager internal constructor(private val accountManager: GiteeAccountManager,
-                                                      private val executorFactory: GiteeApiRequestExecutor.Factory) {
+class GiteeAuthenticationManager internal constructor() {
+
+  private val accountManager: GiteeAccountManager
+    get() = service()
+
+  private val executorFactory: GiteeApiRequestExecutor.Factory
+    get() = service()
+
   @CalledInAny
   fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()
 
@@ -79,10 +85,10 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
-    account.name = dialog.getLogin()
-    accountManager.updateAccountToken(account, "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+    account.name = dialog.login
+    accountManager.updateAccountToken(account, "${dialog.accessToken}&${dialog.refreshToken}")
 
-    return dialog.getAccessToken() to dialog.getRefreshToken()
+    return dialog.accessToken to dialog.refreshToken
   }
 
   @CalledInAwt
@@ -92,7 +98,7 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
-    return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+    return registerAccount(dialog.login, dialog.server, "${dialog.accessToken}&${dialog.refreshToken}")
   }
 
   @CalledInAwt
@@ -102,7 +108,7 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
-    return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+    return registerAccount(dialog.login, dialog.server, "${dialog.accessToken}&${dialog.refreshToken}")
   }
 
   @CalledInAwt
@@ -114,10 +120,27 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
-    return registerAccount(dialog.getLogin(), dialog.getServer(), "${dialog.getAccessToken()}&${dialog.getRefreshToken()}")
+    return registerAccount(dialog.login, dialog.server, "${dialog.accessToken}&${dialog.refreshToken}")
   }
 
-  internal fun isAccountUnique(name: String, server: GiteeServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+  internal fun isAccountUnique(name: String, server: GiteeServerPath) =
+    accountManager.accounts.none { it.name == name && it.server == server }
+
+  @CalledInAwt
+  @JvmOverloads
+  fun requestReLogin(account: GiteeAccount, project: Project?, parentComponent: Component? = null): Boolean {
+    val dialog = GiteeLoginDialog(GiteeApiRequestExecutor.Factory.getInstance(), project, parentComponent)
+      .withServer(account.server.toString(), false)
+      .withCredentials(account.name)
+
+    DialogManager.show(dialog)
+    if (!dialog.isOK) return false
+
+    val token = dialog.token
+    account.name = dialog.login
+    accountManager.updateAccountToken(account, token)
+    return true
+  }
 
   @CalledInAwt
   internal fun removeAccount(giteeAccount: GiteeAccount) {
@@ -168,6 +191,13 @@ class GiteeAuthenticationManager internal constructor(private val accountManager
       }
     }
     return true
+  }
+
+  fun getSingleOrDefaultAccount(project: Project): GiteeAccount? {
+    project.service<GiteeProjectDefaultAccountHolder>().account?.let { return it }
+    val accounts = accountManager.accounts
+    if (accounts.size == 1) return accounts.first()
+    return null
   }
 
   companion object {
