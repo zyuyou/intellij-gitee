@@ -18,10 +18,7 @@ package com.gitee.authentication.accounts
 import com.gitee.util.GiteeNotifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 
 /**
@@ -35,8 +32,7 @@ import com.intellij.openapi.project.Project
  * @author JetBrains s.r.o.
  */
 @State(name = "GiteeDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-internal class GiteeProjectDefaultAccountHolder(private val project: Project,
-                                                private val accountManager: GiteeAccountManager) : PersistentStateComponent<AccountState> {
+internal class GiteeProjectDefaultAccountHolder(private val project: Project) : PersistentStateComponent<AccountState> {
   var account: GiteeAccount? = null
 
   init {
@@ -59,7 +55,7 @@ internal class GiteeProjectDefaultAccountHolder(private val project: Project,
   }
 
   private fun findAccountById(id: String): GiteeAccount? {
-    val account = accountManager.accounts.find { it.id == id }
+    val account = service<GiteeAccountManager>().accounts.find { it.id == id }
     if (account == null) runInEdt {
       GiteeNotifications.showWarning(project, "Missing Default Gitee Account", "",
         GiteeNotifications.getConfigureAction(project))

@@ -19,6 +19,7 @@ import com.gitee.api.GiteeRepositoryCoordinates
 import com.gitee.api.GiteeRepositoryPath
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GiteeAuthenticationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,11 +38,11 @@ import git4idea.repo.GitRepositoryManager
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GiteeGitHelper.java
  * @author JetBrains s.r.o.
  */
-class GiteeGitHelper(private val giteeSettings: GiteeSettings,
-                     private val authenticationManager: GiteeAuthenticationManager) {
+@Service
+class GiteeGitHelper {
 
   fun getRemoteUrl(server: GiteeServerPath, fullName: String): String {
-    return if (giteeSettings.isCloneGitUsingSsh) {
+    return if (GiteeSettings.getInstance().isCloneGitUsingSsh) {
       "git@${server.host}:${server.suffix?.substring(1).orEmpty()}/$fullName.git"
     } else {
       "https://${server.host}${server.suffix.orEmpty()}/$fullName.git"
@@ -53,7 +54,7 @@ class GiteeGitHelper(private val giteeSettings: GiteeSettings,
   }
 
   fun getRemoteUrl(server: GiteeServerPath, user: String, repo: String): String {
-    return if (giteeSettings.isCloneGitUsingSsh) {
+    return if (GiteeSettings.getInstance().isCloneGitUsingSsh) {
       "git@${server.host}:${server.suffix?.substring(1).orEmpty()}/$user/$repo.git"
     } else {
       "https://${server.host}${server.suffix.orEmpty()}/$user/$repo.git"
@@ -68,7 +69,7 @@ class GiteeGitHelper(private val giteeSettings: GiteeSettings,
     return repository.getRemoteUrls().any(::isRemoteUrlAccessible)
   }
 
-  private fun isRemoteUrlAccessible(url: String) = authenticationManager.getAccounts().find { it.server.matches(url) } != null
+  private fun isRemoteUrlAccessible(url: String) = GiteeAuthenticationManager.getInstance().getAccounts().find { it.server.matches(url) } != null
 
 //  fun getPossibleRepositories(repository: GitRepository): Set<GiteeRepositoryPath> {
 //    val registeredServers = mutableSetOf(DEFAULT_SERVER)
@@ -119,7 +120,7 @@ class GiteeGitHelper(private val giteeSettings: GiteeSettings,
   private fun getKnownGiteeServers(): Set<GiteeServerPath> {
     val registeredServers = mutableSetOf(GiteeServerPath.DEFAULT_SERVER)
 //    migrationHelper.getOldServer()?.run(registeredServers::add)
-    authenticationManager.getAccounts().mapTo(registeredServers) { it.server }
+    GiteeAuthenticationManager.getInstance().getAccounts().mapTo(registeredServers) { it.server }
     return registeredServers
   }
 

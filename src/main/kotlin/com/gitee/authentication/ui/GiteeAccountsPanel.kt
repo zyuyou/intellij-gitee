@@ -15,7 +15,6 @@
  */
 package com.gitee.authentication.ui
 
-import com.gitee.GiteeBundle
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
@@ -24,6 +23,7 @@ import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.exceptions.GiteeAuthenticationException
+import com.gitee.i18n.GiteeBundle
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.pullrequest.avatars.GiteeAvatarIconsProvider
 import com.gitee.ui.util.JListHoveredRowMaterialiser
@@ -55,9 +55,6 @@ import javax.swing.*
 
 private val actionManager: ActionManager get() = ActionManager.getInstance()
 
-private const val ACCOUNT_PICTURE_SIZE: Int = 40
-private const val LINK_TAG = "EDIT_LINK"
-
 /**
  * @author Yuyou Chow
  *
@@ -77,15 +74,6 @@ internal class GiteeAccountsPanel(
 
   private val accountListModel = CollectionListModel<GiteeAccountDecorator>()
 
-//  private val accountListModel = CollectionListModel<GiteeAccountDecorator>().apply {
-//    // disable link handler when there are no errors
-//    addListDataListener(object : ListDataListener {
-//      override fun contentsChanged(e: ListDataEvent?) = setLinkHandlerEnabled(items.any { it.loadingError != null })
-//      override fun intervalRemoved(e: ListDataEvent?) {}
-//      override fun intervalAdded(e: ListDataEvent?) {}
-//    })
-//  }
-
   private val accountList = JBList<GiteeAccountDecorator>(accountListModel).apply {
     val decoratorRenderer = GiteeAccountDecoratorRenderer()
     cellRenderer = decoratorRenderer
@@ -95,24 +83,7 @@ internal class GiteeAccountsPanel(
     selectionMode = ListSelectionModel.SINGLE_SELECTION
   }
 
-//  private val accountList = JBList<GiteeAccountDecorator>(accountListModel).apply {
-//    val decoratorRenderer = GiteeAccountDecoratorRenderer()
-//    cellRenderer = decoratorRenderer
-//    UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(decoratorRenderer))
-//
-//    selectionMode = ListSelectionModel.SINGLE_SELECTION
-//
-//    emptyText.apply {
-//      appendText("No Gitee accounts added.")
-//      appendSecondaryText("Add account", SimpleTextAttributes.LINK_ATTRIBUTES) { addAccount() }
-//      appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
-//    }
-//  }
-
   private val progressManager = createListProgressManager()
-
-//  private val errorLinkHandler = createLinkActivationListener()
-//  private var errorLinkHandlerInstalled = false
 
   private var currentTokensMap = mapOf<GiteeAccount, Pair<String, String>?>()
   private val newTokensMap = mutableMapOf<GiteeAccount, Pair<String, String>>()
@@ -182,20 +153,6 @@ internal class GiteeAccountsPanel(
     }
   }
 
-//  fun addAccount(server: GiteeServerPath, login: String, token: String) {
-//    val dialog = GiteeLoginDialog(executorFactory, project, this, ::isAccountUnique)
-//
-//    if (dialog.showAndGet()) {
-//      val giteeAccount = GiteeAccountManager.createAccount(login, server)
-//      newTokensMap[giteeAccount] = dialog.getAccessToken() to dialog.getRefreshToken()
-//
-//      val accountData = GiteeAccountDecorator(giteeAccount, false)
-//      accountListModel.add(accountData)
-//
-//      loadAccountDetails(accountData)
-//    }
-//  }
-
   fun addAccount(server: GiteeServerPath, login: String, tokens: Pair<String, String>) {
     val giteeAccount = GiteeAccountManager.createAccount(login, server)
     newTokensMap[giteeAccount] = tokens
@@ -207,80 +164,6 @@ internal class GiteeAccountsPanel(
 
   fun isAccountUnique(login: String, server: GiteeServerPath) =
     accountListModel.items.none { it.account.name == login && it.account.server == server }
-
-//  /**
-//   * Manages link hover and click for [GiteeAccountDecoratorRenderer.loadingError]
-//   * Sets the proper cursor and underlines the link on hover
-//   *
-//   * @see [GiteeAccountDecorator.loadingError]
-//   * @see [GiteeAccountDecorator.showLoginLink]
-//   * @see [GiteeAccountDecorator.errorLinkPointedAt]
-//   */
-//  private fun createLinkActivationListener() = object : MouseAdapter() {
-//
-//    override fun mouseMoved(e: MouseEvent) {
-//      val decorator = findDecoratorWithLoginLinkAt(e.point)
-//      if (decorator != null) {
-//        UIUtil.setCursor(accountList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-//      } else {
-//        UIUtil.setCursor(accountList, Cursor.getDefaultCursor())
-//      }
-//
-//      var hasChanges = false
-//      for (item in accountListModel.items) {
-//        val isLinkPointedAt = item == decorator
-//        hasChanges = hasChanges || isLinkPointedAt != item.errorLinkPointedAt
-//        item.errorLinkPointedAt = isLinkPointedAt
-//      }
-//      if (hasChanges) accountListModel.allContentsChanged()
-//    }
-//
-//    override fun mouseClicked(e: MouseEvent) {
-//      findDecoratorWithLoginLinkAt(e.point)?.run(::editAccount)
-//    }
-//
-//    /**
-//     * Checks if mouse is pointed at decorator error link
-//     *
-//     * @return decorator with error link under mouse pointer or null
-//     */
-//    private fun findDecoratorWithLoginLinkAt(point: Point): GiteeAccountDecorator? {
-//      val idx = accountList.locationToIndex(point)
-//      if (idx < 0) return null
-//
-//      val cellBounds = accountList.getCellBounds(idx, idx)
-//      if (!cellBounds.contains(point)) return null
-//
-//      val decorator = accountListModel.getElementAt(idx)
-//      if (decorator?.loadingError == null) return null
-//
-//      val rendererComponent = accountList.cellRenderer.getListCellRendererComponent(accountList, decorator, idx, true, true)
-//      rendererComponent.setBounds(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height)
-//      UIUtil.layoutRecursively(rendererComponent)
-//
-//      val rendererRelativeX = point.x - cellBounds.x
-//      val rendererRelativeY = point.y - cellBounds.y
-//      val childComponent = UIUtil.getDeepestComponentAt(rendererComponent, rendererRelativeX, rendererRelativeY) as? SimpleColoredComponent
-//        ?: return null
-//
-//      val childRelativeX = rendererRelativeX - childComponent.parent.x - childComponent.x
-//      return if (childComponent.getFragmentTagAt(childRelativeX) == LINK_TAG) decorator else null
-//    }
-//  }
-
-//  private fun setLinkHandlerEnabled(enabled: Boolean) {
-//    if (enabled) {
-//      if (!errorLinkHandlerInstalled) {
-//        accountList.addMouseListener(errorLinkHandler)
-//        accountList.addMouseMotionListener(errorLinkHandler)
-//        errorLinkHandlerInstalled = true
-//      }
-//    } else if (errorLinkHandlerInstalled) {
-//      accountList.removeMouseListener(errorLinkHandler)
-//      accountList.removeMouseMotionListener(errorLinkHandler)
-//      errorLinkHandlerInstalled = false
-//    }
-//  }
 
   fun loadExistingAccountsDetails() {
     for (accountData in accountListModel.items) {
@@ -329,7 +212,6 @@ internal class GiteeAccountsPanel(
       }
     })
   }
-
 
   private fun createListProgressManager() = object : ProgressVisibilityManager() {
     override fun setProgressVisible(visible: Boolean) = accountList.setPaintBusy(visible)
@@ -443,122 +325,6 @@ internal class GiteeAccountsPanel(
   }
 }
 
-//private class GiteeAccountDecoratorRenderer : ListCellRenderer<GiteeAccountDecorator>, JPanel() {
-//  private val accountName = JLabel()
-//
-//  private val serverName = JLabel()
-//  private val profilePicture = JLabel()
-//
-//  private val fullName = JLabel()
-//
-//  private val loadingError = SimpleColoredComponent()
-//
-//  /**
-//   * UPDATE [createLinkActivationListener] IF YOU CHANGE LAYOUT
-//   */
-//  init {
-//    layout = FlowLayout(FlowLayout.LEFT, 0, 0)
-//    border = JBUI.Borders.empty(5, 8)
-//
-//    val namesPanel = JPanel().apply {
-//      layout = GridBagLayout()
-//      border = JBUI.Borders.empty(0, 6, 4, 6)
-//
-//      val bag = GridBag()
-//        .setDefaultInsets(JBUI.insetsRight(UIUtil.DEFAULT_HGAP))
-//        .setDefaultAnchor(GridBagConstraints.WEST)
-//        .setDefaultFill(GridBagConstraints.VERTICAL)
-//      add(fullName, bag.nextLine().next())
-//      add(accountName, bag.next())
-//      add(loadingError, bag.next())
-//      add(serverName, bag.nextLine().coverLine())
-//    }
-//
-//    add(profilePicture)
-//    add(namesPanel)
-//  }
-//
-//  override fun getListCellRendererComponent(list: JList<out GiteeAccountDecorator>,
-//                                            value: GiteeAccountDecorator,
-//                                            index: Int,
-//                                            isSelected: Boolean,
-//                                            cellHasFocus: Boolean): Component {
-//    UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus()))
-//    val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
-//    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
-//
-//    accountName.apply {
-//      text = value.account.name
-//      setBold(if (value.details?.name == null) value.projectDefault else false)
-//      foreground = if (value.details?.name == null) primaryTextColor else secondaryTextColor
-//    }
-//    serverName.apply {
-//      text = value.account.server.toString()
-//      foreground = secondaryTextColor
-//    }
-//    profilePicture.apply {
-//      icon = value.getIcon()
-//    }
-//    fullName.apply {
-//      text = value.details?.name
-//      setBold(value.projectDefault)
-//      isVisible = value.details?.name != null
-//      foreground = primaryTextColor
-//    }
-//    loadingError.apply {
-//      clear()
-//      value.loadingError?.let {
-//        append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
-//        append(" ")
-//        if (value.showLoginLink) append("Log In",
-//            if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE,
-//                JBUI.CurrentTheme.Link.linkColor())
-//            else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
-//            LINK_TAG)
-//      }
-//    }
-//    return this
-//  }
-//
-//  companion object {
-//    private fun JLabel.setBold(isBold: Boolean) {
-//      font = font.deriveFont(if (isBold) font.style or Font.BOLD else font.style and Font.BOLD.inv())
-//    }
-//  }
-//}
-
-///**
-// * Account + auxillary info + info loading error
-// */
-//private class GiteeAccountDecorator(val account: GiteeAccount, var projectDefault: Boolean) {
-//  var details: GiteeAuthenticatedUser? = null
-//  var iconProvider: CachingGiteeAvatarIconsProvider? = null
-//
-//  var loadingError: String? = null
-//
-//  var showLoginLink = false
-//  var errorLinkPointedAt = false
-//
-//  override fun equals(other: Any?): Boolean {
-//    if (this === other) return true
-//    if (javaClass != other?.javaClass) return false
-//
-//    other as GiteeAccountDecorator
-//
-//    if (account != other.account) return false
-//
-//    return true
-//  }
-//
-//  override fun hashCode(): Int {
-//    return account.hashCode()
-//  }
-//
-//  fun getIcon(): Icon? {
-//    val url = details?.avatarUrl
-//    return iconProvider?.getIcon(url)
-//  }
-//}
 /**
  * Account + auxillary info + info loading error
  */

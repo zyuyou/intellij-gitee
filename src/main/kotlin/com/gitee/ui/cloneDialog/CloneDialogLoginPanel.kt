@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui.cloneDialog
 
-import com.gitee.GiteeBundle.Companion.message
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeLoginPanel
 import com.gitee.authentication.ui.setPasswordUi
 import com.gitee.authentication.ui.setTokenUi
+import com.gitee.i18n.GiteeBundle.message
 import com.gitee.util.completionOnEdt
 import com.gitee.util.errorOnEdt
 import com.gitee.util.successOnEdt

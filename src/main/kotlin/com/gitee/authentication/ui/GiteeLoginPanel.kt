@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication.ui
 
-import com.gitee.GiteeBundle.Companion.message
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.util.GiteeTokenCreator
+import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.util.completionOnEdt
 import com.gitee.util.errorOnEdt
@@ -47,7 +47,7 @@ class GiteeLoginPanel(
 //    serverTextField, clientIdTextField, clientSecretTextField, ::switchToTokenUI, ::editCustomAppInfo, ::useDefaultAppInfo, executorFactory, isAccountUnique, isDialogMode
 //  )
   private var passwordUi = GEPasswordCredentialsUi(
-    serverTextField, executorFactory, isAccountUnique, clientIdTextField, clientSecretTextField, ::editCustomAppInfo, ::useDefaultAppInfo
+    serverTextField, executorFactory, isAccountUnique, clientIdTextField, clientSecretTextField
   )
 
 //  private var tokenUi = GiteeCredentialsUI.TokenUI(
@@ -70,16 +70,6 @@ class GiteeLoginPanel(
 
   init {
     applyUi(passwordUi)
-  }
-
-  private fun editCustomAppInfo() {
-//    setContent(currentUi.getPanel2())
-//    currentUi.getPreferredFocus().requestFocus()
-  }
-
-  private fun useDefaultAppInfo() {
-//    setContent(currentUi.getPanel())
-//    currentUi.getPreferredFocus().requestFocus()
   }
 
   private fun applyUi(ui: GECredentialsUi) {

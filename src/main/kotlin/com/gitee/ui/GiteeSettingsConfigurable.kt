@@ -15,17 +15,18 @@
  */
 package com.gitee.ui
 
-import com.gitee.GiteeBundle
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.authentication.accounts.AccountTokenChangedListener
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.authentication.ui.GiteeAccountsPanel
+import com.gitee.i18n.GiteeBundle
 import com.gitee.util.CachingGiteeUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
 import com.gitee.util.GiteeSettings
 import com.gitee.util.GiteeUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
@@ -40,43 +41,12 @@ import com.intellij.ui.layout.panel
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSettingsConfigurable.kt
  * @author JetBrains s.r.o.
  */
-//class GiteeSettingsConfigurable internal constructor(private val project: Project,
-//                                                     private val settings: GiteeSettings,
-//                                                     private val accountManager: GiteeAccountManager,
-//                                                     private val defaultAccountHolder: GiteeProjectDefaultAccountHolder,
-//                                                     private val executorFactory: GiteeApiRequestExecutor.Factory,
-//                                                     private val avatarLoader: CachingGiteeUserAvatarLoader,
-//                                                     private val imageResizer: GiteeImageResizer) :
-//  ConfigurableBase<GiteeSettingsPanel, GiteeSettingsConfigurable.GiteeSettingsHolder>(
-//    "settings.gitee",
-//    GiteeUtil.SERVICE_DISPLAY_NAME,
-//    "settings.gitee"
-//  ), Configurable.NoMargin {
-//
-//  init {
-//    ApplicationManager.getApplication()
-//      .messageBus
-//      .connect(project)
-//      .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-//        override fun tokenChanged(account: GiteeAccount) {
-//          if (!isModified) reset()
-//        }
-//      })
-//  }
-//
-//  override fun getSettings(): GiteeSettingsHolder {
-//    return GiteeSettingsHolder(settings, accountManager, defaultAccountHolder)
-//  }
-//
-//  override fun createUi(): GiteeSettingsPanel {
-//    return GiteeSettingsPanel(project, executorFactory, avatarLoader, imageResizer)
-//  }
-//
-//  inner class GiteeSettingsHolder internal constructor(val application: GiteeSettings,
-//                                                       val applicationAccounts: GiteeAccountManager,
-//                                                       val projectAccount: GiteeProjectDefaultAccountHolder)
-//}
-internal class GiteeSettingsConfigurable internal constructor(private val project: Project) : BoundConfigurable(GiteeUtil.SERVICE_DISPLAY_NAME, "settings.github") {
+internal class GiteeSettingsConfigurable internal constructor(private val project: Project) : BoundConfigurable(GiteeUtil.SERVICE_DISPLAY_NAME, "settings.gitee") {
+  fun setDisposable(disposer: Disposable) {
+    val defaultAccountHolder = project.service<GiteeProjectDefaultAccountHolder>()
+
+  }
+
   override fun createPanel(): DialogPanel {
     val defaultAccountHolder = project.service<GiteeProjectDefaultAccountHolder>()
     val accountManager = service<GiteeAccountManager>()

@@ -16,7 +16,6 @@
 
 package com.gitee.actions
 
-import com.gitee.GiteeBundle
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.data.request.GiteeRequestPagination
@@ -25,6 +24,7 @@ import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.i18n.GiteeBundle
 import com.gitee.icons.GiteeIcons
 import com.gitee.ui.GiteeShareDialog
 import com.gitee.util.GiteeGitHelper

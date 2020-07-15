@@ -1,12 +1,12 @@
 package com.gitee.authentication.ui
 
-import com.gitee.GiteeBundle.Companion.message
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeLoginException
 import com.gitee.exceptions.GiteeParseException
+import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
@@ -25,9 +25,7 @@ internal class GEPasswordCredentialsUi(
   private val executorFactory: GiteeApiRequestExecutor.Factory,
   private val isAccountUnique: UniqueLoginPredicate,
   private val clientIdTextField: JBTextField,
-  private val clientSecretTextField: JPasswordField,
-  editCustomAppInfo: () -> Unit,
-  useDefaultAppInfo: () -> Unit) : GECredentialsUi() {
+  private val clientSecretTextField: JPasswordField) : GECredentialsUi() {
 
   private val EMAIL_LOGIN_PATTERN = Regex("[\\w!#\$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#\$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?")
   private val PHONE_NUMBER_LOGIN_PATTERN = Regex("^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[35678]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[01356789]\\d{2}|66\\d{2})\\d{6}\$")
@@ -100,95 +98,6 @@ internal class GEPasswordCredentialsUi(
     loginTextField.isEnabled = !busy
     passwordField.isEnabled = !busy
   }
-
-
-//  override fun setLoginAction(actionListener: ActionListener) {
-//    super.setLoginAction(actionListener)
-//    passwordField.setEnterPressedAction(actionListener)
-//    loginTextField.setEnterPressedAction(actionListener)
-//    serverTextField.setEnterPressedAction(actionListener)
-//  }
-//
-//  override fun getPanel2(): JPanel = panel {
-//    buildTitleAndLinkRow(this, dialogMode, switchUiLink)
-//    row("Server:") { serverTextField(pushX, growX) }
-//    row("Login:") { loginTextField(pushX, growX) }
-//    row("Password:") {
-//      passwordField(comment = "Password is not saved and used only to acquire Gitee token",
-//        constraints = *arrayOf(pushX, growX))
-//    }
-//    row("AppId:") { clientIdTextField(pushX, growX) }
-//    row("AppSecret:") { clientSecretTextField(pushX, growX) }
-//    row("") { cell { useDefaultClientLink() } }
-//    row("") {
-//      cell {
-//        loginButton()
-//        cancelButton()
-//      }
-//    }
-//  }.apply {
-//    border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
-//  }
-//
-//  override fun getPanel(): JPanel = panel {
-//    buildTitleAndLinkRow(this, dialogMode, switchUiLink)
-//    row("Server:") { serverTextField(pushX, growX) }
-//    row("Login:") { loginTextField(pushX, growX) }
-//    row("Password:") {
-//      passwordField(comment = "Password is not saved and used only to acquire Gitee token",
-//        constraints = *arrayOf(pushX, growX))
-//    }
-//    row("") { cell { editCustomClientLink() } }
-//    row("") {
-//      cell {
-//        loginButton()
-//        cancelButton()
-//      }
-//    }
-//  }.apply {
-//    border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
-//  }
-//
-//  override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
-//
-//  override fun getValidator() = DialogValidationUtils.chain(
-//    { DialogValidationUtils.notBlank(loginTextField, "Login cannot be empty") },
-//    loginNameValidator(loginTextField),
-//    { DialogValidationUtils.notBlank(passwordField, "Password cannot be empty") }
-//  )
-//
-//  override fun createExecutor(): GiteeApiRequestExecutor.WithPasswordOAuth2 {
-//    return executorFactory.create()
-//  }
-//
-//  override fun acquireLoginAndToken(server: GiteeServerPath,
-//                                    executor: GiteeApiRequestExecutor,
-//                                    indicator: ProgressIndicator): Triple<String, String, String> {
-//
-//    val login = loginTextField.text.trim()
-//
-//    if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-//
-//    val authorization = GiteeTokenCreator(server, executor, indicator).createMaster(loginTextField.text, passwordField.password)
-//
-//    return Triple(loginTextField.text, authorization.accessToken, authorization.refreshToken)
-//  }
-//
-//  override fun handleAcquireError(error: Throwable): ValidationInfo {
-//    return when (error) {
-//      is LoginNotUniqueException -> ValidationInfo("Account already added", loginTextField).withOKEnabled()
-//      is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
-//      is GiteeAuthenticationException -> ValidationInfo("Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
-//      is GiteeParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
-//      else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
-//    }
-//  }
-//
-//  override fun setBusy(busy: Boolean) {
-//    loginTextField.isEnabled = !busy
-//    passwordField.isEnabled = !busy
-//    switchUiLink.isEnabled = !busy
-//  }
 
   private fun loginNameValidator(textField: JTextField): Validator {
     return {

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui.cloneDialog
 
-import com.gitee.GiteeBundle.Companion.message
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
@@ -9,6 +8,7 @@ import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.accounts.GiteeAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
 import com.gitee.authentication.accounts.GiteeAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
 import com.gitee.authentication.accounts.isGiteeAccount
+import com.gitee.i18n.GiteeBundle.message
 import com.gitee.util.CachingGiteeUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
 import com.gitee.util.GiteeUtil

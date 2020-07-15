@@ -28,7 +28,7 @@ import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 
-class GiteeImageResizer(private val progressManager: ProgressManager) : Disposable {
+class GiteeImageResizer : Disposable {
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Gitee Image Resizer", getThreadPoolSize())
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
@@ -37,7 +37,7 @@ class GiteeImageResizer(private val progressManager: ProgressManager) : Disposab
     val indicator = progressIndicator
 
     return CompletableFuture.supplyAsync(Supplier {
-      progressManager.runProcess(Computable {
+      ProgressManager.getInstance().runProcess(Computable {
         indicator.checkCanceled()
         val hidpiImage = ImageUtil.ensureHiDPI(image, scaleContext)
         indicator.checkCanceled()

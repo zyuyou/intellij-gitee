@@ -11,9 +11,9 @@
     </description>
     <change-notes>
         <![CDATA[
-        <i>2020.2</i>
+        <i>2020.2.0</i>
         <ul>
-          <li>Compatible with idea-2020.2 </li>
+          <li>Compatible with idea-2020.2.0 </li>
           <li>Disable pullrequest view </li>
         </ul>
         <i>2020.1.1</i>
@@ -34,6 +34,8 @@
       ]]>
     </change-notes>
 
+    <resource-bundle>messages.GiteeBundle</resource-bundle>
+
     <idea-version since-build="201.*" until-build="*.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
@@ -53,7 +55,7 @@
         <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutorManager"/>
         <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountInformationProvider"/>
 
-        <applicationService serviceImplementation="com.gitee.util.GiteeGitHelper"/>
+<!--        <applicationService serviceImplementation="com.gitee.util.GiteeGitHelper"/>-->
         <applicationService serviceImplementation="com.gitee.util.CachingGiteeUserAvatarLoader"/>
         <applicationService serviceImplementation="com.gitee.util.GiteeImageResizer"/>
 
@@ -106,9 +108,9 @@
 
         <group id="Gitee.Accounts.AddAccount">
             <action id="Gitee.Accounts.AddGEAccount" class="com.gitee.authentication.ui.AddGEAccountAction"/>
-            <action id="Gitee.Accounts.AddGHAccountWithTokens" class="com.gitee.authentication.ui.AddGEAccountWithTokensAction"/>
+            <action id="Gitee.Accounts.AddGEAccountWithTokens" class="com.gitee.authentication.ui.AddGEAccountWithTokensAction"/>
             <separator/>
-            <action id="Gitee.Accounts.AddGHEAccount" class="com.gitee.authentication.ui.AddGEEAccountAction"/>
+            <action id="Gitee.Accounts.AddGEEAccount" class="com.gitee.authentication.ui.AddGEEAccountAction"/>
         </group>
 
     </actions>
