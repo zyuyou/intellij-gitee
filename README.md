@@ -4,7 +4,9 @@ Allow works with [码云 - Gitee](https://gitee.com)
 
 ## Installation
 
-* [Intellij Plugins Home](https://plugins.jetbrains.com/plugin/8383)
+* [Intellij Plugins Home - 2018](https://plugins.jetbrains.com/plugin/8383)
+
+* [Intellij Plugins Home - 2019](https://plugins.jetbrains.com/plugin/11491)
 
 ## Extra Usage
 
