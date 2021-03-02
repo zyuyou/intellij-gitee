@@ -22,11 +22,11 @@ import com.gitee.GiteeCreatePullRequestWorker.ForkInfo
 import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeProjectSettings
 import com.gitee.util.GiteeSettings
-import com.intellij.CommonBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.UIBundle
 import com.intellij.util.ThreeState
 import java.awt.event.ItemEvent
 import javax.swing.JComponent
@@ -209,7 +209,8 @@ class GiteeCreatePullRequestDialog(val project: Project,
     }
 
     override fun getDoNotShowMessage(): String {
-      return CommonBundle.message("dialog.options.do.not.ask")
+      return UIBundle.message("dialog.options.do.not.ask");
+//      return CommonBundle.message("dialog.options.do.not.ask")
     }
   }
 

@@ -11,6 +11,15 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2020.3.1</i>
+        <ul>
+          <li>Add Gitee Menu </li>
+        </ul>
+        <i>2020.3.0</i>
+        <ul>
+          <li>Compatible with idea-2020.3.0 </li>
+          <li>Keep pullrequest view disabled </li>
+        </ul>
         <i>2020.2.0</i>
         <ul>
           <li>Compatible with idea-2020.2.0 </li>
@@ -25,11 +34,6 @@
         <i>2020.1.0</i>
         <ul>
           <li>Compatible with idea-2020.x </li>
-        </ul>
-        <i>2019.3.5</i>
-        <ul>
-          <li>Make PR viewer enabled.</li>
-          <li>Limit oauth2 login name to email.</li>
         </ul>
       ]]>
     </change-notes>
@@ -105,6 +109,15 @@
             <add-to-group group-id="EditorTabPopupMenu"/>
             <add-to-group group-id="ConsoleEditorPopupMenu"/>
         </action>
+
+        <group id="Gitee.MainMenu" popup="true" text="Gitee">
+            <reference ref="Gitee.Share"/>
+            <reference ref="Gitee.Rebase"/>
+            <reference ref="Gitee.Create.Gist"/>
+            <reference ref="Gitee.Open.In.Browser"/>
+
+            <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
+        </group>
 
         <group id="Gitee.Accounts.AddAccount">
             <action id="Gitee.Accounts.AddGEAccount" class="com.gitee.authentication.ui.AddGEAccountAction"/>
