@@ -17,9 +17,9 @@ import com.intellij.application.subscribe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
@@ -118,7 +118,7 @@ private class GHCloneDialogLoginPanel(account: GiteeAccount?) : JBPanel<GHCloneD
       border = JBEmptyBorder(getRegularPanelInsets())
 
       val loginViaGHButton = JButton(message("login.via.gitee.action")).apply { addActionListener { setPasswordUi() } }
-      val useTokenLink = LinkLabel.create(message("link.label.use.token")) { setTokenUi() }
+      val useTokenLink = ActionLink(message("link.label.use.token")) { setTokenUi() }
 
       add(loginViaGHButton)
       add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })

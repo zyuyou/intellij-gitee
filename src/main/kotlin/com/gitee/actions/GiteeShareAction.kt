@@ -31,8 +31,6 @@ import com.gitee.util.GiteeGitHelper
 import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeUtil
 import com.intellij.CommonBundle
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -54,8 +52,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.mapSmartSet
 import com.intellij.util.ui.JBUI
@@ -75,7 +73,6 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
-import java.awt.FlowLayout
 import java.io.IOException
 import java.util.*
 import javax.swing.BoxLayout
@@ -375,10 +372,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
       }
       for (remote in remotes) {
-        remotesPanel.add(JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-          add(LinkLabel.create(remote) { BrowserUtil.browse(remote) })
-          add(JBLabel(AllIcons.Ide.External_link_arrow))
-        })
+        remotesPanel.add(BrowserLink(remote, remote))
       }
 
       val messagesPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)

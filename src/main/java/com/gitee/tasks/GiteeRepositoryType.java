@@ -34,7 +34,7 @@ import java.util.EnumSet;
  * @author JetBrains s.r.o.
  * @author Dennis.Ushakov
  */
-public class GiteeRepositoryType extends BaseRepositoryType<GiteeRepository> {
+final class GiteeRepositoryType extends BaseRepositoryType<GiteeRepository> {
 
   @NotNull
   @Override
@@ -63,7 +63,7 @@ public class GiteeRepositoryType extends BaseRepositoryType<GiteeRepository> {
   @Override
   public TaskRepositoryEditor createEditor(GiteeRepository repository,
                                            Project project,
-                                           Consumer<GiteeRepository> changeListener) {
+                                           Consumer<? super GiteeRepository> changeListener) {
     return new GiteeRepositoryEditor(project, repository, changeListener);
   }
 
@@ -71,5 +71,4 @@ public class GiteeRepositoryType extends BaseRepositoryType<GiteeRepository> {
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.of(TaskState.OPEN, TaskState.RESOLVED);
   }
-
 }

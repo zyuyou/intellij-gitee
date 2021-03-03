@@ -16,14 +16,12 @@
 package com.gitee.api
 
 import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.AccountTokenChangedListener
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.exceptions.GiteeMissingTokenException
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Component
 
 /**
@@ -34,34 +32,31 @@ import java.awt.Component
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiRequestExecutorManager.kt
  * @author JetBrains s.r.o.
  */
-class GiteeApiRequestExecutorManager internal constructor(private val accountManager: GiteeAccountManager,
-                                                          private val authenticationManager: GiteeAuthenticationManager,
-                                                          private val requestExecutorFactory: GiteeApiRequestExecutor.Factory) : AccountTokenChangedListener {
+class GiteeApiRequestExecutorManager {
 
   private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor.WithTokensAuth>()
 
-  init {
-    ApplicationManager.getApplication().messageBus
-      .connect()
-      .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, this)
+  companion object {
+    @JvmStatic
+    fun getInstance(): GiteeApiRequestExecutorManager = service()
   }
 
-  override fun tokenChanged(account: GiteeAccount) {
-    val tokens = accountManager.getTokensForAccount(account)
+  internal fun tokenChanged(account: GiteeAccount) {
+    val tokens = service<GiteeAccountManager>().getTokensForAccount(account)
     if (tokens == null) executors.remove(account) else executors[account]?.tokens = tokens
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithTokensAuth? {
-    return getOrTryToCreateExecutor(account) { authenticationManager.requestNewTokens(account, project) }
+    return getOrTryToCreateExecutor(account) { GiteeAuthenticationManager.getInstance().requestNewTokens(account, project) }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor.WithTokensAuth? {
-    return getOrTryToCreateExecutor(account) { authenticationManager.requestNewTokens(account, null, parentComponent) }
+    return getOrTryToCreateExecutor(account) { GiteeAuthenticationManager.getInstance().requestNewTokens(account, null, parentComponent) }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Throws(GiteeMissingTokenException::class)
   fun getExecutor(account: GiteeAccount): GiteeApiRequestExecutor.WithTokensAuth {
     return getOrTryToCreateExecutor(account) { throw GiteeMissingTokenException(account) }!!
@@ -73,17 +68,12 @@ class GiteeApiRequestExecutorManager internal constructor(private val accountMan
     // 先从本地credential系统取, 如果没有 => missingTokensHandler弹窗请求输入
     // 如果本地credential取到, 创建附带刷新回调的executor
     return executors.getOrPut(account) {
-      (authenticationManager.getTokensForAccount(account) ?: missingTokensHandler())
+      (GiteeAuthenticationManager.getInstance().getTokensForAccount(account) ?: missingTokensHandler())
         ?.let { tokens ->
-          requestExecutorFactory.create(tokens) { newTokens ->
-            authenticationManager.updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
+          GiteeApiRequestExecutor.Factory.getInstance().create(tokens) { newTokens ->
+            GiteeAuthenticationManager.getInstance().updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
           }
         } ?: return null
     }
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): GiteeApiRequestExecutorManager = service()
   }
 }

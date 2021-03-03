@@ -3,11 +3,8 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.i18n.GiteeBundle
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.BrowserLink
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -96,8 +93,9 @@ internal class GiteeLoginDialog @JvmOverloads constructor(
 
   companion object {
     fun createSignUpLink(): JPanel = JBUI.Panels.simplePanel()
-      .addToCenter(LinkLabel.create(GiteeBundle.message("login.sign.up")) { BrowserUtil.browse("https://gitee.com") })
-      .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
+      .addToCenter(BrowserLink(GiteeBundle.message("login.sign.up"), "https://github.com"))
+//      .addToCenter(LinkLabel.create(GiteeBundle.message("login.sign.up")) { BrowserUtil.browse("https://gitee.com") })
+//      .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
   }
 //
 //  fun getAccessToken(): String = accessToken
