@@ -11,6 +11,10 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2020.3.2</i>
+        <ul>
+          <li>Fix fetch repo list error </li>
+        </ul>
         <i>2020.3.1</i>
         <ul>
           <li>Add Gitee Menu </li>

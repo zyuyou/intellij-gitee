@@ -32,11 +32,25 @@ class GiteeResponsePage<T> constructor(var items: List<T>,
 //    const val HEADER_NAME = "Link"
 
     const val HEADER_TOTAL_COUNT = "total_count"
+    const val HEADER_TOTAL_PAGE = "total_page"
 
     @JvmStatic
     @Throws(GiteeConfusingException::class)
     fun <T> parseFromHeader(items: List<T>, requestUrl: String, totalCountHeaderValue: Int?): GiteeResponsePage<T> {
       if (totalCountHeaderValue == null || items.size == totalCountHeaderValue) return GiteeResponsePage(items)
+
+      val newNextLink = requestUrl.replace(Regex("([?&]+page=)(\\d+)")) {
+        "${it.groupValues[1]}${it.groupValues[2].toInt() + 1}"
+      }
+
+      return GiteeResponsePage(items, newNextLink)
+    }
+
+    @JvmStatic
+    @Throws(GiteeConfusingException::class)
+    fun <T> parseFromHeaderPage(items: List<T>, requestUrl: String, totalPageHeaderValue: Int?): GiteeResponsePage<T> {
+      val curPage = Regex("([?&]+page=)(\\d+)").find(requestUrl)?.groupValues?.get(2)?.toInt()
+      if(curPage == null || curPage == totalPageHeaderValue) return GiteeResponsePage(items)
 
       val newNextLink = requestUrl.replace(Regex("([?&]+page=)(\\d+)")) {
         "${it.groupValues[1]}${it.groupValues[2].toInt() + 1}"

@@ -99,8 +99,8 @@ sealed class GiteeApiRequest<out T>(val url: String) {
       : Get<GiteeResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GiteeApiResponse): GiteeResponsePage<T> {
-        return GiteeResponsePage.parseFromHeader(parseJsonList(response, clazz), url,
-            response.findHeader(GiteeResponsePage.HEADER_TOTAL_COUNT)?.toInt())
+        return GiteeResponsePage.parseFromHeaderPage(parseJsonList(response, clazz), url,
+            response.findHeader(GiteeResponsePage.HEADER_TOTAL_PAGE)?.toInt())
       }
     }
 
@@ -110,8 +110,8 @@ sealed class GiteeApiRequest<out T>(val url: String) {
       : Get<GiteeResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GiteeApiResponse): GiteeResponsePage<T> {
-        return GiteeResponsePage.parseFromHeader(parseJsonSearchPage(response, clazz).items, url,
-            response.findHeader(GiteeResponsePage.HEADER_TOTAL_COUNT)?.toInt())
+        return GiteeResponsePage.parseFromHeaderPage(parseJsonSearchPage(response, clazz).items, url,
+            response.findHeader(GiteeResponsePage.HEADER_TOTAL_PAGE)?.toInt())
       }
     }
   }
