@@ -11,6 +11,10 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2020.3.3</i>
+        <ul>
+          <li>Compatible with idea-2020.3.3</li>
+        </ul>
         <i>2020.3.2</i>
         <ul>
           <li>Fix fetch repo list error </li>
@@ -44,7 +48,7 @@
 
     <resource-bundle>messages.GiteeBundle</resource-bundle>
 
-    <idea-version since-build="201.*" until-build="*.*"/>
+    <idea-version since-build="203.*" until-build="*.*"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>

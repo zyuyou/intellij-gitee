@@ -50,7 +50,7 @@ class GiteeResponsePage<T> constructor(var items: List<T>,
     @Throws(GiteeConfusingException::class)
     fun <T> parseFromHeaderPage(items: List<T>, requestUrl: String, totalPageHeaderValue: Int?): GiteeResponsePage<T> {
       val curPage = Regex("([?&]+page=)(\\d+)").find(requestUrl)?.groupValues?.get(2)?.toInt()
-      if(curPage == null || curPage == totalPageHeaderValue) return GiteeResponsePage(items)
+      if(curPage == null || totalPageHeaderValue == null || curPage >= totalPageHeaderValue) return GiteeResponsePage(items)
 
       val newNextLink = requestUrl.replace(Regex("([?&]+page=)(\\d+)")) {
         "${it.groupValues[1]}${it.groupValues[2].toInt() + 1}"
