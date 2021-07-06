@@ -11,6 +11,10 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2020.3.4</i>
+        <ul>
+          <li>Fix fetch account info error</li>
+        </ul>
         <i>2020.3.3</i>
         <ul>
           <li>Compatible with idea-2020.3.3</li>
@@ -32,16 +36,6 @@
         <ul>
           <li>Compatible with idea-2020.2.0 </li>
           <li>Disable pullrequest view </li>
-        </ul>
-        <i>2020.1.1</i>
-        <ul>
-          <li>Compatible with idea-2020.1 </li>
-          <li>Remove some deprecated api </li>
-          <li>Fix compatibility issues </li>
-        </ul>
-        <i>2020.1.0</i>
-        <ul>
-          <li>Compatible with idea-2020.x </li>
         </ul>
       ]]>
     </change-notes>
