@@ -48,12 +48,30 @@ class GiteeApiRequestExecutorManager {
 
   @RequiresEdt
   fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithTokensAuth? {
-    return getOrTryToCreateExecutor(account) { GiteeAuthenticationManager.getInstance().requestNewTokens(account, project) }
+    return getOrTryToCreateExecutor(account) {
+      GiteeAuthenticationManager.getInstance().requestNewTokens(account, project) ?.let {
+        val tokens = it.split("&")
+        if(tokens.size == 1) {
+          it to ""
+        } else {
+          tokens[0] to tokens[1]
+        }
+      }
+    }
   }
 
   @RequiresEdt
   fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor.WithTokensAuth? {
-    return getOrTryToCreateExecutor(account) { GiteeAuthenticationManager.getInstance().requestNewTokens(account, null, parentComponent) }
+    return getOrTryToCreateExecutor(account) {
+      GiteeAuthenticationManager.getInstance().requestNewTokens(account, null, parentComponent) ?.let {
+        val tokens = it.split("&")
+        if(tokens.size == 1) {
+          it to ""
+        } else {
+          tokens[0] to tokens[1]
+        }
+      }
+    }
   }
 
   @RequiresEdt

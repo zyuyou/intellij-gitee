@@ -5,8 +5,11 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.i18n.GiteeBundle.message
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import git4idea.i18n.GitBundle
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -22,31 +25,61 @@ abstract class BaseAddAccountWithTokensAction : DumbAwareAction() {
   abstract val defaultServer: String
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.getData(GiteeAccountsPanel.KEY) != null
+    e.presentation.isEnabledAndVisible = e.getData(GEAccountsHost.KEY) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val accountsPanel = e.getData(GiteeAccountsPanel.KEY)!!
-    val dialog = AddAccountWithTokensDialog(e.project, accountsPanel, defaultServer, accountsPanel::isAccountUnique)
+//    val accountsPanel = e.getData(GiteeAccountsPanel.KEY)!!
+//    val dialog = AddAccountWithTokensDialog(e.project, accountsPanel, defaultServer, accountsPanel::isAccountUnique)
+//
+//    if (dialog.showAndGet()) {
+//      accountsPanel.addAccount(dialog.server, dialog.login, dialog.accessToken to dialog.refreshToken)
+//    }
 
+    val accountsHost = e.getData(GEAccountsHost.KEY)!!
+    val dialog = newAddAccountDialog(e.project, e.getData(PlatformDataKeys.CONTEXT_COMPONENT), accountsHost::isAccountUnique)
+
+    dialog.setServer(defaultServer, defaultServer != GiteeServerPath.DEFAULT_HOST)
     if (dialog.showAndGet()) {
-      accountsPanel.addAccount(dialog.server, dialog.login, dialog.accessToken to dialog.refreshToken)
+      accountsHost.addAccount(dialog.server, dialog.login, dialog.accessToken to dialog.refreshToken)
     }
   }
 }
 
-private class AddAccountWithTokensDialog(project: Project?, parent: Component?, server: String, isAccountUnique: UniqueLoginPredicate) :
+//private class AddAccountWithTokensDialog(project: Project?, parent: Component?, server: String, isAccountUnique: UniqueLoginPredicate) :
+//  BaseLoginDialog(project, parent, GiteeApiRequestExecutor.Factory.getInstance(), isAccountUnique) {
+//
+//  init {
+//    title = message("dialog.title.add.gitee.account")
+//    setOKButtonText(message("button.add.account"))
+//
+//    setServer(server, server != GiteeServerPath.DEFAULT_HOST)
+//    loginPanel.setTokenUi()
+//
+//    init()
+//  }
+//
+//  override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
+//}
+
+private fun newAddAccountDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate): BaseLoginDialog =
+  GETokensLoginDialog(project, parent, isAccountUnique).apply {
+    title = message("dialog.title.add.gitee.account")
+    setLoginButtonText(message("accounts.add.button"))
+  }
+
+internal class GETokensLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
   BaseLoginDialog(project, parent, GiteeApiRequestExecutor.Factory.getInstance(), isAccountUnique) {
 
   init {
-    title = message("dialog.title.add.gitee.account")
-    setOKButtonText(message("button.add.account"))
-
-    setServer(server, server != GiteeServerPath.DEFAULT_HOST)
+    title = message("login.to.gitee")
+    setLoginButtonText(GitBundle.message("login.dialog.button.login"))
     loginPanel.setTokenUi()
 
     init()
   }
+
+  internal fun setLoginButtonText(@NlsContexts.Button text: String) = setOKButtonText(text)
 
   override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
 }

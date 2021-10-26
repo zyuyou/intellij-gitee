@@ -16,6 +16,7 @@
 package com.gitee.api.data;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.intellij.collaboration.auth.AccountDetails;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.RestModel;
 
@@ -23,7 +24,7 @@ import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GiteeUserDetailed extends GiteeUser {
+public class GiteeUserDetailed extends GiteeUser implements AccountDetails {
 	private String name;
 	private String email;
 

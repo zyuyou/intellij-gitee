@@ -2,7 +2,7 @@
     <id>org.intellij.gitee</id>
     <vendor email="likui@oschina.cn">码云</vendor>
     <name>Gitee</name>
-    <version>2020.2</version>
+    <version>2021.2</version>
     <description>
         <![CDATA[
       Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
@@ -11,32 +11,27 @@
     </description>
     <change-notes>
         <![CDATA[
-        <i>2021.1</i>
+        <i>2021.2.2</i>
         <ul>
-          <li>Compatible with idea-2021.1 </li>
+          <li>Add `Gitee` in IDEA tasks.</li>
+        </ul>
+        <i>2021.2.1</i>
+        <ul>
+          <li>Fix `GiteeSettingsConfigurable` panel loading error </li>
+        </ul>
+        <i>2021.2</i>
+        <ul>
+          <li>Compatible with idea-2021.2 </li>
           <li>Remove some deprecated api </li>
-          <li>Fix compatibility issues </li>
-        </ul>
-        <i>2020.3.1</i>
-        <ul>
-          <li>Add Gitee Menu </li>
-        </ul>
-        <i>2020.3.0</i>
-        <ul>
-          <li>Compatible with idea-2020.3.0 </li>
-          <li>Keep pullrequest view disabled </li>
-        </ul>
-        <i>2020.2.0</i>
-        <ul>
-          <li>Compatible with idea-2020.2.0 </li>
-          <li>Disable pullrequest view </li>
+          <li>Remove Idea tasks </li>
         </ul>
       ]]>
     </change-notes>
 
     <resource-bundle>messages.GiteeBundle</resource-bundle>
 
-    <idea-version since-build="211.*" until-build="*.*"/>
+    <idea-version since-build="212.*" until-build="*.*"/>
+
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>
@@ -44,20 +39,25 @@
     <!-- //////////////////////////////////////////////////////////////////////////////////// -->
 
     <extensions defaultExtensionNs="com.intellij">
-        <registryKey key="gitee.use.oauth" description="Use OAuth to log in to gitee.com" defaultValue="false"/>
         <httpRequestHandler implementation="com.gitee.authentication.GEOAuthCallbackHandler"/>
 
         <applicationService serviceImplementation="com.gitee.util.GiteeSettings"/>
 
-        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountManager"/>
+<!--        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountManager"/>-->
+<!--        <applicationService serviceImplementation="com.gitee.authentication.GiteeAuthenticationManager"/>-->
+<!--        <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutor$Factory"/>-->
+<!--        <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutorManager"/>-->
+<!--        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountInformationProvider"/>-->
+<!--        <applicationService serviceImplementation="com.gitee.util.CachingGEUserAvatarLoader"/>-->
+<!--        <applicationService serviceImplementation="com.gitee.util.GiteeImageResizer"/>-->
+
+        <applicationService serviceImplementation="com.gitee.authentication.accounts.GEPersistentAccounts"/>
         <applicationService serviceImplementation="com.gitee.authentication.GiteeAuthenticationManager"/>
         <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutor$Factory"/>
         <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutorManager"/>
         <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountInformationProvider"/>
+        <applicationService serviceImplementation="com.gitee.util.CachingGEUserAvatarLoader"/>
 
-<!--        <applicationService serviceImplementation="com.gitee.util.GiteeGitHelper"/>-->
-        <applicationService serviceImplementation="com.gitee.util.CachingGiteeUserAvatarLoader"/>
-        <applicationService serviceImplementation="com.gitee.util.GiteeImageResizer"/>
 
         <projectService serviceImplementation="com.gitee.extensions.GiteeAccountGitAuthenticationFailureManager"/>
         <projectService serviceImplementation="com.gitee.util.GiteeProjectSettings"/>
@@ -66,18 +66,33 @@
 
         <vcsAnnotationGutterActionProvider implementation="com.gitee.extensions.GiteeAnnotationGutterActionProvider"/>
 
-        <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500" instance="com.gitee.ui.GiteeSettingsConfigurable"/>
+        <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
+                             instance="com.gitee.ui.GiteeSettingsConfigurable"/>
 
-        <statistics.applicationUsagesCollector implementation="com.gitee.authentication.accounts.GiteeAccountsStatisticsCollector"/>
+<!--        <statistics.applicationUsagesCollector implementation="com.gitee.authentication.accounts.GiteeAccountsStatisticsCollector"/>-->
+<!--        <statistics.notificationIdsHolder implementation="com.gitee.util.GiteeNotificationIdsHolder"/>-->
 
-        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="com.gitee.ui.cloneDialog.GECloneDialogExtension"/>
-        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="com.gitee.ui.cloneDialog.GEECloneDialogExtension"/>
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+                implementation="com.gitee.ui.cloneDialog.GECloneDialogExtension"/>
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+                implementation="com.gitee.ui.cloneDialog.GEECloneDialogExtension"/>
 
     </extensions>
 
+    <projectListeners>
+        <listener class="com.gitee.util.GEProjectRepositoriesManager$RemoteUrlsListener"
+                  topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+        <listener class="com.gitee.util.GEProjectRepositoriesManager$RemoteUrlsListener"
+                  topic="git4idea.repo.GitRepositoryChangeListener"/>
+    </projectListeners>
+
     <extensions defaultExtensionNs="Git4Idea">
         <GitHttpAuthDataProvider implementation="com.gitee.extensions.GiteeHttpAuthDataProvider"/>
-        <gitRepositoryHostingService implementation="com.gitee.extensions.GiteeRepositoryHostingService"/>
+        <GitHttpAuthDataProvider implementation="com.gitee.extensions.GEComHttpAuthDataProvider"/>
+
+        <gitRepositoryHostingService implementation="com.gitee.extensions.GERepositoryHostingService"/>
+        <gitProtectedBranchProvider implementation="com.gitee.util.GiteeProtectedBranchProvider"/>
+        <gitFetchHandler implementation="com.gitee.extensions.GEProtectedBranchRulesLoader"/>
     </extensions>
 
     <actions>
@@ -85,7 +100,7 @@
             <add-to-group group-id="Vcs.Import"/>
         </action>
 
-        <action id="Gitee.Rebase" class="com.gitee.actions.GiteeRebaseAction">
+        <action id="Gitee.Sync.Fork" class="com.gitee.actions.GiteeSyncForkAction">
             <add-to-group group-id="Git.Menu"/>
         </action>
 
@@ -108,7 +123,7 @@
 
         <group id="Gitee.MainMenu" popup="true" text="Gitee">
             <reference ref="Gitee.Share"/>
-            <reference ref="Gitee.Rebase"/>
+            <reference ref="Gitee.Sync.Fork"/>
             <reference ref="Gitee.Create.Gist"/>
             <reference ref="Gitee.Open.In.Browser"/>
 

@@ -21,9 +21,11 @@ import com.gitee.api.GiteeApiRequests;
 import com.gitee.api.GiteeServerPath;
 import com.gitee.api.data.request.GiteeGistRequest.FileContent;
 import com.gitee.authentication.GiteeAuthenticationManager;
+import com.gitee.authentication.accounts.GiteeAccount;
 import com.gitee.i18n.GiteeBundle;
 import com.gitee.icons.GiteeIcons;
 import com.gitee.ui.GiteeCreateGistDialog;
+import com.gitee.util.GiteeNotificationIdsHolder;
 import com.gitee.util.GiteeNotifications;
 import com.gitee.util.GiteeSettings;
 import com.gitee.util.GiteeUtil;
@@ -41,10 +43,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +57,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubCreateGistAction.java
@@ -63,28 +69,30 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 	private static final Logger LOG = GiteeUtil.LOG;
 	private static final String FAILED_TO_CREATE_GIST = "Can't create Gist";
 
+	private static final Condition<@Nullable VirtualFile> FILE_WITH_CONTENT = f -> f != null && !(f.getFileType().isBinary());
+
 	protected GiteeCreateGistAction() {
-		super(GiteeBundle.message2("gitee.create.gist.title"), GiteeBundle.message2("gitee.create.gist.desc"), GiteeIcons.Gitee_icon);
+		super(GiteeBundle.messagePointer("create.gist.action.title"),
+				GiteeBundle.messagePointer("create.gist.action.description"),
+				GiteeIcons.Gitee_icon);
 	}
 
 	@Override
 	public void update(@NotNull final AnActionEvent e) {
 		Project project = e.getData(CommonDataKeys.PROJECT);
 		if (project == null || project.isDefault()) {
-			e.getPresentation().setVisible(false);
-			e.getPresentation().setEnabled(false);
-			return;
-		}
-
-		Editor editor = e.getData(CommonDataKeys.EDITOR);
-		VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-		VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-
-		if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
 			e.getPresentation().setEnabledAndVisible(false);
 			return;
 		}
+		Editor editor = e.getData(CommonDataKeys.EDITOR);
+		VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+		VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+		boolean hasFilesWithContent = FILE_WITH_CONTENT.value(file) || (files != null && ContainerUtil.exists(files, FILE_WITH_CONTENT));
 
+		if (!hasFilesWithContent || editor != null && editor.getDocument().getTextLength() == 0) {
+			e.getPresentation().setEnabledAndVisible(false);
+			return;
+		}
 		e.getPresentation().setEnabledAndVisible(true);
 	}
 
@@ -98,26 +106,34 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 		final Editor editor = e.getData(CommonDataKeys.EDITOR);
 		final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 		final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-
 		if (editor == null && file == null && files == null) {
 			return;
 		}
 
-		createGistAction(project, editor, file, files);
+		createGistAction(project, editor, FILE_WITH_CONTENT.value(file) ? file : null, filterFilesWithContent(files));
+	}
+
+	private static VirtualFile @Nullable [] filterFilesWithContent(@Nullable VirtualFile @Nullable [] files) {
+		if (files == null) return null;
+
+		return ContainerUtil.filter(files, FILE_WITH_CONTENT).toArray(VirtualFile.EMPTY_ARRAY);
 	}
 
 	private static void createGistAction(@NotNull final Project project,
-	                                     @Nullable final Editor editor,
-	                                     @Nullable final VirtualFile file,
-	                                     @Nullable final VirtualFile[] files) {
+																			 @Nullable final Editor editor,
+																			 @Nullable final VirtualFile file,
+																			 final VirtualFile @Nullable [] files) {
 
 		GiteeAuthenticationManager authManager = GiteeAuthenticationManager.getInstance();
-		if (!authManager.ensureHasAccounts(project)) return;
-
 		GiteeSettings settings = GiteeSettings.getInstance();
-
 		// Ask for description and other params
-		GiteeCreateGistDialog dialog = new GiteeCreateGistDialog(project, authManager.getAccounts(), authManager.getDefaultAccount(project), getFileName(editor, files), settings.isPrivateGist(), settings.isOpenInBrowserGist(), settings.isCopyURLGist());
+		GiteeCreateGistDialog dialog = new GiteeCreateGistDialog(project,
+				authManager.getAccounts(),
+				authManager.getDefaultAccount(project),
+				getFileName(editor, files),
+				settings.isPrivateGist(),
+				settings.isOpenInBrowserGist(),
+				settings.isCopyURLGist());
 		if (!dialog.showAndGet()) {
 			return;
 		}
@@ -125,19 +141,19 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 		settings.setOpenInBrowserGist(dialog.isOpenInBrowser());
 		settings.setCopyURLGist(dialog.isCopyURL());
 
-		GiteeApiRequestExecutor requestExecutor = GiteeApiRequestExecutorManager.getInstance().getExecutor(dialog.getAccount(), project);
+		GiteeAccount account = requireNonNull(dialog.getAccount());
+		GiteeApiRequestExecutor requestExecutor = GiteeApiRequestExecutorManager.getInstance().getExecutor(account, project);
 		if (requestExecutor == null) return;
 
-		GiteeServerPath server = dialog.getAccount().getServer();
-
 		final Ref<String> url = new Ref<>();
-		new Task.Backgroundable(project, "Creating Gist...") {
+		new Task.Backgroundable(project, GiteeBundle.message("create.gist.process")) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
 				List<FileContent> contents = collectContents(project, editor, file, files);
 				if (contents.isEmpty()) return;
 
-				String gistUrl = createGist(project, requestExecutor, indicator, server, contents, dialog.isSecret(), dialog.getDescription(), dialog.getFileName());
+				String gistUrl = createGist(project, requestExecutor, indicator, account.getServer(),
+						contents, dialog.isSecret(), dialog.getDescription(), dialog.getFileName());
 				url.set(gistUrl);
 			}
 
@@ -152,15 +168,20 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 				}
 				if (dialog.isOpenInBrowser()) {
 					BrowserUtil.browse(url.get());
-				} else {
-					GiteeNotifications.showInfoURL(project, "Gist Created Successfully", "Your gist url", url.get());
+				}
+				else {
+					GiteeNotifications
+							.showInfoURL(project,
+									GiteeNotificationIdsHolder.GIST_CREATED,
+									GiteeBundle.message("create.gist.success"),
+									GiteeBundle.message("create.gist.url"), url.get());
 				}
 			}
 		}.queue();
 	}
 
 	@Nullable
-	private static String getFileName(@Nullable Editor editor, @Nullable VirtualFile[] files) {
+	private static String getFileName(@Nullable Editor editor, VirtualFile @Nullable [] files) {
 		if (files != null && files.length == 1 && !files[0].isDirectory()) {
 			return files[0].getName();
 		}
@@ -172,10 +193,9 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 
 	@NotNull
 	static List<FileContent> collectContents(@NotNull Project project,
-	                                         @Nullable Editor editor,
-	                                         @Nullable VirtualFile file,
-	                                         @Nullable VirtualFile[] files) {
-
+																					 @Nullable Editor editor,
+																					 @Nullable VirtualFile file,
+																					 VirtualFile @Nullable [] files) {
 		if (editor != null) {
 			String content = getContentFromEditor(editor);
 			if (content == null) {
@@ -183,7 +203,8 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 			}
 			if (file != null) {
 				return Collections.singletonList(new FileContent(file.getName(), content));
-			} else {
+			}
+			else {
 				return Collections.singletonList(new FileContent("", content));
 			}
 		}
@@ -205,28 +226,32 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 
 	@Nullable
 	static String createGist(@NotNull Project project,
-	                         @NotNull GiteeApiRequestExecutor executor,
-	                         @NotNull ProgressIndicator indicator,
-	                         @NotNull GiteeServerPath server,
-	                         @NotNull List<? extends FileContent> contents,
-	                         final boolean isSecret,
-	                         @NotNull final String description,
-	                         @Nullable String filename) {
-
+													 @NotNull GiteeApiRequestExecutor executor,
+													 @NotNull ProgressIndicator indicator,
+													 @NotNull GiteeServerPath server,
+													 @NotNull List<? extends FileContent> contents,
+													 final boolean isSecret,
+													 @NotNull final String description,
+													 @Nullable String filename) {
 		if (contents.isEmpty()) {
-			GiteeNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
+			GiteeNotifications.showWarning(project,
+					GiteeNotificationIdsHolder.GIST_CANNOT_CREATE,
+					GiteeBundle.message("cannot.create.gist"),
+					GiteeBundle.message("create.gist.error.empty"));
 			return null;
 		}
-
 		if (contents.size() == 1 && filename != null) {
 			FileContent entry = contents.iterator().next();
 			contents = Collections.singletonList(new FileContent(filename, entry.getContent()));
 		}
-
 		try {
 			return executor.execute(indicator, GiteeApiRequests.Gists.create(server, contents, description, !isSecret)).getHtmlUrl();
-		} catch (IOException e) {
-			GiteeNotifications.showError(project, FAILED_TO_CREATE_GIST, e);
+		}
+		catch (IOException e) {
+			GiteeNotifications.showError(project,
+					GiteeNotificationIdsHolder.GIST_CANNOT_CREATE,
+					GiteeBundle.message("cannot.create.gist"),
+					e);
 			return null;
 		}
 	}
@@ -249,35 +274,39 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 		if (file.isDirectory()) {
 			return getContentFromDirectory(file, project, prefix);
 		}
-
 		if (file.getFileType().isBinary()) {
-			GiteeNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't upload binary file: " + file);
+			GiteeNotifications
+					.showWarning(project, GiteeNotificationIdsHolder.GIST_CANNOT_CREATE,
+							GiteeBundle.message("cannot.create.gist"),
+							GiteeBundle.message("create.gist.error.binary.file", file.getName()));
 			return Collections.emptyList();
 		}
-
 		String content = ReadAction.compute(() -> {
 			try {
 				Document document = FileDocumentManager.getInstance().getDocument(file);
 				if (document != null) {
 					return document.getText();
-				} else {
+				}
+				else {
 					return new String(file.contentsToByteArray(), file.getCharset());
 				}
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				LOG.info("Couldn't read contents of the file " + file, e);
 				return null;
 			}
 		});
-
 		if (content == null) {
-			GiteeNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file);
+			GiteeNotifications
+					.showWarning(project,
+							GiteeNotificationIdsHolder.GIST_CANNOT_CREATE,
+							GiteeBundle.message("cannot.create.gist"),
+							GiteeBundle.message("create.gist.error.content.read", file.getName()));
 			return Collections.emptyList();
 		}
-
 		if (StringUtil.isEmptyOrSpaces(content)) {
 			return Collections.emptyList();
 		}
-
 		String filename = addPrefix(file.getName(), prefix, false);
 		return Collections.singletonList(new FileContent(filename, content));
 	}

@@ -15,19 +15,18 @@
  */
 package com.gitee.ui
 
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.authentication.accounts.AccountTokenChangedListener
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountManager
+import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
-import com.gitee.authentication.ui.GiteeAccountsPanel
+import com.gitee.authentication.ui.GEAccountsDetailsProvider
+import com.gitee.authentication.ui.GEAccountsHost
+import com.gitee.authentication.ui.GEAccountsListModel
 import com.gitee.i18n.GiteeBundle
-import com.gitee.util.CachingGiteeUserAvatarLoader
-import com.gitee.util.GiteeImageResizer
+import com.gitee.icons.GiteeIcons
 import com.gitee.util.GiteeSettings
 import com.gitee.util.GiteeUtil
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.accountsPanel
+import com.intellij.collaboration.util.ProgressIndicatorsProvider
+import com.intellij.ide.DataManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
@@ -41,46 +40,76 @@ import com.intellij.ui.layout.panel
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubSettingsConfigurable.kt
  * @author JetBrains s.r.o.
  */
-internal class GiteeSettingsConfigurable internal constructor(private val project: Project) : BoundConfigurable(GiteeUtil.SERVICE_DISPLAY_NAME, "settings.gitee") {
-  fun setDisposable(disposer: Disposable) {
-    val defaultAccountHolder = project.service<GiteeProjectDefaultAccountHolder>()
+internal class GiteeSettingsConfigurable internal constructor(private val project: Project)
+  : BoundConfigurable(GiteeUtil.SERVICE_DISPLAY_NAME, "settings.gitee") {
 
-  }
+//  fun setDisposable(disposer: Disposable) {
+//    val defaultAccountHolder = project.service<GiteeProjectDefaultAccountHolder>()
+//
+//  }
 
   override fun createPanel(): DialogPanel {
     val defaultAccountHolder = project.service<GiteeProjectDefaultAccountHolder>()
-    val accountManager = service<GiteeAccountManager>()
+    val accountManager = service<GEAccountManager>()
     val settings = GiteeSettings.getInstance()
+
+    val indicatorsProvider = ProgressIndicatorsProvider().also {
+      Disposer.register(disposable!!, it)
+    }
+    val accountsModel = GEAccountsListModel(project)
+    val detailsProvider = GEAccountsDetailsProvider(indicatorsProvider, accountManager, accountsModel)
+
+
+//    return panel {
+//      row {
+//        val accountsPanel = GiteeAccountsPanel(project, GiteeApiRequestExecutor.Factory.getInstance(), CachingGEUserAvatarLoader.getInstance(), GiteeImageResizer.getInstance()).apply {
+//          Disposer.register(disposable!!, this)
+//        }
+//        component(accountsPanel)
+//          .onIsModified { accountsPanel.isModified(accountManager.accounts, defaultAccountHolder.account) }
+//          .onReset {
+//            val accountsMap = accountManager.accounts.associateWith { accountManager.getTokensForAccount(it) }
+//            accountsPanel.setAccounts(accountsMap, defaultAccountHolder.account)
+//            accountsPanel.clearNewTokens()
+//            accountsPanel.loadExistingAccountsDetails()
+//          }
+//          .onApply {
+//            val (accountsTokenMap, defaultAccount) = accountsPanel.getAccounts()
+//            accountManager.accounts = accountsTokenMap.keys
+//            accountsTokenMap.filterValues { it != null }
+//              .mapValues { "${it.value?.first}&${it.value?.second}" }
+//              .forEach(accountManager::updateAccountToken)
+//            defaultAccountHolder.account = defaultAccount
+//            accountsPanel.clearNewTokens()
+//          }
+//
+//        ApplicationManager.getApplication().messageBus.connect(disposable!!)
+//          .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC,
+//            object : AccountTokenChangedListener {
+//              override fun tokenChanged(account: GiteeAccount) {
+//                if (!isModified) reset()
+//              }
+//            })
+//      }
+//      row {
+//        checkBox(GiteeBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
+//      }
+//      row {
+//        cell {
+//          label(GiteeBundle.message("settings.timeout"))
+//          intTextField({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 }, columns = 2, range = 0..60)
+//          label(GiteeBundle.message("settings.timeout.seconds"))
+//        }
+//      }
+//    }
     return panel {
       row {
-        val accountsPanel = GiteeAccountsPanel(project, GiteeApiRequestExecutor.Factory.getInstance(), CachingGiteeUserAvatarLoader.getInstance(), GiteeImageResizer.getInstance()).apply {
-          Disposer.register(disposable!!, this)
+        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, GiteeIcons.DefaultAvatar).also {
+          DataManager.registerDataProvider(it.component) { key ->
+            if (GEAccountsHost.KEY.`is`(key)) accountsModel
+            else null
+          }
         }
-        component(accountsPanel)
-          .onIsModified { accountsPanel.isModified(accountManager.accounts, defaultAccountHolder.account) }
-          .onReset {
-            val accountsMap = accountManager.accounts.associateWith { accountManager.getTokensForAccount(it) }
-            accountsPanel.setAccounts(accountsMap, defaultAccountHolder.account)
-            accountsPanel.clearNewTokens()
-            accountsPanel.loadExistingAccountsDetails()
-          }
-          .onApply {
-            val (accountsTokenMap, defaultAccount) = accountsPanel.getAccounts()
-            accountManager.accounts = accountsTokenMap.keys
-            accountsTokenMap.filterValues { it != null }
-              .mapValues { "${it.value?.first}&${it.value?.second}" }
-              .forEach(accountManager::updateAccountToken)
-            defaultAccountHolder.account = defaultAccount
-            accountsPanel.clearNewTokens()
-          }
-
-        ApplicationManager.getApplication().messageBus.connect(disposable!!)
-          .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC,
-            object : AccountTokenChangedListener {
-              override fun tokenChanged(account: GiteeAccount) {
-                if (!isModified) reset()
-              }
-            })
       }
       row {
         checkBox(GiteeBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
@@ -89,6 +118,7 @@ internal class GiteeSettingsConfigurable internal constructor(private val projec
         cell {
           label(GiteeBundle.message("settings.timeout"))
           intTextField({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 }, columns = 2, range = 0..60)
+          @Suppress("DialogTitleCapitalization")
           label(GiteeBundle.message("settings.timeout.seconds"))
         }
       }

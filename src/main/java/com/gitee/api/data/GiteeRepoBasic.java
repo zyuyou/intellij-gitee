@@ -16,7 +16,7 @@
 package com.gitee.api.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gitee.api.GiteeRepositoryPath;
+import com.gitee.api.GERepositoryPath;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,9 +105,9 @@ public class GiteeRepoBasic {
   }
 
   @NotNull
-  public GiteeRepositoryPath getFullPath() {
+  public GERepositoryPath getFullPath() {
     String[] split = fullName.split("/");
-    return new GiteeRepositoryPath(split[0], split[1]);
+    return new GERepositoryPath(split[0], split[1]);
   }
 
   @Override

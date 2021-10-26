@@ -19,10 +19,11 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.data.GiteeAuthenticatedUser
 import com.google.common.cache.CacheBuilder
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.CalledInBackground
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -35,29 +36,36 @@ import java.util.concurrent.TimeUnit
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/accounts/GithubAccountInformationProvider.kt
  * @author JetBrains s.r.o.
  */
-class GiteeAccountInformationProvider {
+class GiteeAccountInformationProvider : Disposable {
 
   private val informationCache = CacheBuilder.newBuilder()
     .expireAfterAccess(30, TimeUnit.MINUTES)
     .build<GiteeAccount, GiteeAuthenticatedUser>()
 
+//  init {
+//    ApplicationManager.getApplication().messageBus
+//      .connect()
+//      .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
+//        override fun tokenChanged(account: GiteeAccount) {
+//          informationCache.invalidate(account)
+//        }
+//      })
+//  }
   init {
-    ApplicationManager.getApplication().messageBus
-      .connect()
-      .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-        override fun tokenChanged(account: GiteeAccount) {
-          informationCache.invalidate(account)
+    service<GEAccountManager>().addListener(this, object : AccountsListener<GiteeAccount> {
+      override fun onAccountListChanged(old: Collection<GiteeAccount>, new: Collection<GiteeAccount>) {
+        val cache = getInstance().informationCache
+        for (account in (old - new)) {
+          cache.invalidate(account)
         }
-      })
+      }
+
+      override fun onAccountCredentialsChanged(account: GiteeAccount) =
+        getInstance().informationCache.invalidate(account)
+    })
   }
 
-//  @CalledInBackground
-//  @Throws(IOException::class)
-//  fun getInformation(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, account: GiteeAccount): GiteeUserDetailed {
-//    return informationCache.get(account) { executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server)) }
-//  }
-
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(IOException::class)
   fun getInformation(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator, account: GiteeAccount): GiteeAuthenticatedUser {
     return informationCache.get(account) { executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server)) }
@@ -68,5 +76,9 @@ class GiteeAccountInformationProvider {
     fun getInstance(): GiteeAccountInformationProvider {
       return service()
     }
+  }
+
+  override fun dispose() {
+    informationCache.invalidateAll()
   }
 }

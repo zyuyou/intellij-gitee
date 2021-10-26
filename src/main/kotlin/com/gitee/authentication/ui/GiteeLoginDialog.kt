@@ -44,7 +44,8 @@ internal class GiteeLoginDialog @JvmOverloads constructor(
 
   @JvmOverloads
   fun withCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true): GiteeLoginDialog  =
-    apply { loginPanel.setCredentials(login, password, editableLogin) }
+//    apply { loginPanel.setCredentials(login, password, editableLogin) }
+    apply {  }
 
   @JvmOverloads
   fun withToken(token: String? = null): GiteeLoginDialog = apply { loginPanel.setToken(token) }
@@ -93,7 +94,7 @@ internal class GiteeLoginDialog @JvmOverloads constructor(
 
   companion object {
     fun createSignUpLink(): JPanel = JBUI.Panels.simplePanel()
-      .addToCenter(BrowserLink(GiteeBundle.message("login.sign.up"), "https://github.com"))
+      .addToCenter(BrowserLink(GiteeBundle.message("login.sign.up"), "https://gitee.com"))
 //      .addToCenter(LinkLabel.create(GiteeBundle.message("login.sign.up")) { BrowserUtil.browse("https://gitee.com") })
 //      .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
   }

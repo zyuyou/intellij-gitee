@@ -263,7 +263,7 @@ object GiteeApiRequests {
 
       object Comments : Entity("/comments") {
         @JvmStatic
-        fun create(repository: GiteeRepositoryCoordinates, issueId: Long, body: String) =
+        fun create(repository: GERepositoryCoordinates, issueId: Long, body: String) =
           create(repository.serverPath, repository.repositoryPath.owner, repository.repositoryPath.repository, issueId.toString(), body)
 
         @JvmStatic
@@ -456,14 +456,14 @@ object GiteeApiRequests {
             .withOperationName("get comments for pull request")
 
         @JvmStatic
-        fun createReply(repository: GiteeRepositoryCoordinates, pullRequest: Long, commentId: Long, body: String) =
+        fun createReply(repository: GERepositoryCoordinates, pullRequest: Long, commentId: Long, body: String) =
             Post.json<GiteePullRequestCommentWithHtml>(
                 getUrl(repository, PullRequests.urlSuffix, "/$pullRequest", "/comments/$commentId/replies"),
                 mapOf("body" to body),
                 GiteeApiContentHelper.V3_HTML_JSON_MIME_TYPE).withOperationName("reply to pull request review comment")
 
         @JvmStatic
-        fun create(repository: GiteeRepositoryCoordinates, pullRequest: Long,
+        fun create(repository: GERepositoryCoordinates, pullRequest: Long,
                    commitSha: String, filePath: String, diffLine: Int,
                    body: String) =
             Post.json<GiteePullRequestCommentWithHtml>(
@@ -559,7 +559,7 @@ object GiteeApiRequests {
 
   private fun getBaseUrl(server: GiteeServerPath, suffix: String) = server.toUrl() + suffix
 
-  private fun getUrl(repository: GiteeRepositoryCoordinates, vararg suffixes: String) =
+  private fun getUrl(repository: GERepositoryCoordinates, vararg suffixes: String) =
       getUrl(repository.serverPath, Repos.urlSuffix, "/", repository.repositoryPath.toString(), *suffixes)
 
   fun getUrl(server: GiteeServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()

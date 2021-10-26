@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -40,10 +41,12 @@ import javax.swing.ListSelectionModel
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/ui/GithubChooseAccountDialog.kt
  * @author JetBrains s.r.o.
  */
-class GiteeChooseAccountDialog(project: Project?, parentComponent: Component?,
-                               accounts: Collection<GiteeAccount>,
-                               descriptionText: String?, showHosts: Boolean, allowDefault: Boolean,
-                               title: String = "Choose Gitee Account", okText: String = "Choose")
+class GiteeChooseAccountDialog @JvmOverloads constructor(project: Project?, parentComponent: Component?,
+                                                         accounts: Collection<GiteeAccount>,
+                                                         @Nls(capitalization = Nls.Capitalization.Sentence) descriptionText: String?,
+                                                         showHosts: Boolean, allowDefault: Boolean,
+                                                         @Nls(capitalization = Nls.Capitalization.Title) title: String = "Choose Gitee Account",
+                                                         @Nls(capitalization = Nls.Capitalization.Title) okText: String = "Choose")
   : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
 
   private val description: JTextArea? = descriptionText?.let {

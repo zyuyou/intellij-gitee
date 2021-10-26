@@ -27,7 +27,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.messages.Topic
 import kotlin.properties.Delegates.observable
 
-internal val GiteeAccount.isGiteeAccount: Boolean get() = server.isGiteeDotCom()
+//internal val GiteeAccount.isGiteeAccount: Boolean get() = server.isGiteeDotCom()
 
 /**
  * Handles application-level Gitee accounts
@@ -114,10 +114,10 @@ private fun createCredentials(accountId: String, token: String) = Credentials(ac
 
 private fun createServiceName(accountId: String): String = generateServiceName(GiteeUtil.SERVICE_DISPLAY_NAME, accountId)
 
-interface AccountRemovedListener {
-  fun accountRemoved(removedAccount: GiteeAccount)
-}
-
-interface AccountTokenChangedListener {
-  fun tokenChanged(account: GiteeAccount)
-}
+//interface AccountRemovedListener {
+//  fun accountRemoved(removedAccount: GiteeAccount)
+//}
+//
+//interface AccountTokenChangedListener {
+//  fun tokenChanged(account: GiteeAccount)
+//}

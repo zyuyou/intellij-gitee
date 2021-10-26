@@ -18,10 +18,12 @@ package com.gitee.api
 
 import com.gitee.exceptions.GiteeParseException
 import com.gitee.util.GiteeUrlUtil
+import com.intellij.collaboration.api.ServerPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
+import org.jetbrains.annotations.NotNull
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -46,7 +48,7 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
                                                      @field:Attribute("clientid")
                                                      val clientId: String? = null,
                                                      @field:Attribute("clientsecret")
-                                                     val clientSecret: String? = null) {
+                                                     val clientSecret: String? = null) : ServerPath {
 
   companion object {
     const val DEFAULT_HOST: String = "gitee.com"
@@ -99,6 +101,14 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
     return getSchemaUrlPart() + host + getPortUrlPart() + StringUtil.notNullize(suffix)
   }
 
+  @NotNull
+  fun toUrl(showSchema: Boolean): String {
+    val builder = StringBuilder()
+    if (showSchema) builder.append(getSchemaUrlPart())
+    builder.append(host).append(getPortUrlPart()).append(StringUtil.notNullize(suffix))
+    return builder.toString()
+  }
+
   fun toApiUrl(): String {
     val builder = StringBuilder(getSchemaUrlPart())
 
@@ -132,15 +142,28 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
   }
 
   override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is GiteeServerPath) return false
+//    if (this === other) return true
+//    if (other !is GiteeServerPath) return false
+//
+//    val path = other as GiteeServerPath?
+//
+//    return useHttp == path!!.useHttp
+//      && host == path.host
+//      && port == path.port
+//      && suffix == path.suffix
+    return equals(other, false);
+  }
 
-    val path = other as GiteeServerPath?
+  fun equals(o: Any?, ignoreProtocol: Boolean): Boolean {
+    if (this === o) return true
+    if (o !is GiteeServerPath) return false
 
-    return useHttp == path!!.useHttp
-      && host == path.host
-      && port == path.port
-      && suffix == path.suffix
+    val path: GiteeServerPath = o
+
+    return (ignoreProtocol || useHttp == path.useHttp) &&
+      host == path.host &&
+      port == path.port &&
+      suffix == path.suffix
   }
 
   override fun hashCode(): Int {

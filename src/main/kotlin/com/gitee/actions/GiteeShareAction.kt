@@ -27,9 +27,7 @@ import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.i18n.GiteeBundle
 import com.gitee.icons.GiteeIcons
 import com.gitee.ui.GiteeShareDialog
-import com.gitee.util.GiteeGitHelper
-import com.gitee.util.GiteeNotifications
-import com.gitee.util.GiteeUtil
+import com.gitee.util.*
 import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -46,6 +44,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -74,7 +73,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.io.IOException
-import java.util.*
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -87,6 +85,7 @@ import javax.swing.JPanel
  * @author JetBrains s.r.o.
  */
 class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.project.title"), GiteeBundle.message2("gitee.share.project.desc"), GiteeIcons.Gitee_icon) {
+
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault
@@ -121,19 +120,9 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
       val gitRepository = GiteeGitHelper.findGitRepository(project, file)
 
-      val authManager = service<GiteeAuthenticationManager>()
-      if (!authManager.ensureHasAccounts(project)) return
-
-      val accounts = authManager.getAccounts()
-
-      val progressManager = service<ProgressManager>()
-      val requestExecutorManager = service<GiteeApiRequestExecutorManager>()
-      val accountInformationProvider = service<GiteeAccountInformationProvider>()
-
-      val gitHelper = service<GiteeGitHelper>()
-      val git = service<Git>()
-
-      val possibleRemotes = gitRepository?.let(gitHelper::getAccessibleRemoteUrls).orEmpty()
+      val possibleRemotes = gitRepository
+        ?.let(project.service<GEProjectRepositoriesManager>()::findKnownRepositories)
+        ?.map { it.gitRemoteUrlCoordinates.url }.orEmpty()
 
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GiteeExistingRemotesDialog(project, possibleRemotes)
@@ -143,13 +132,37 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
         }
       }
 
+      val authManager = service<GiteeAuthenticationManager>()
+      val progressManager = service<ProgressManager>()
+      val requestExecutorManager = service<GiteeApiRequestExecutorManager>()
+      val accountInformationProvider = service<GiteeAccountInformationProvider>()
+      val gitHelper = service<GiteeGitHelper>()
+      val git = service<Git>()
+
+//      if (!authManager.ensureHasAccounts(project)) return
+//      val accounts = authManager.getAccounts()
+//      val progressManager = service<ProgressManager>()
+//      val requestExecutorManager = service<GiteeApiRequestExecutorManager>()
+//      val accountInformationProvider = service<GiteeAccountInformationProvider>()
+//      val gitHelper = service<GiteeGitHelper>()
+//      val git = service<Git>()
+//      val possibleRemotes = gitRepository?.let(gitHelper::getAccessibleRemoteUrls).orEmpty()
+
+//      if (possibleRemotes.isNotEmpty()) {
+//        val existingRemotesDialog = GiteeExistingRemotesDialog(project, possibleRemotes)
+//        DialogManager.show(existingRemotesDialog)
+//        if (!existingRemotesDialog.isOK) {
+//          return
+//        }
+//      }
+
       val accountInformationLoader = object : (GiteeAccount, Component) -> Pair<Boolean, Set<String>> {
         private val loadedInfo = mutableMapOf<GiteeAccount, Pair<Boolean, Set<String>>>()
 
         @Throws(IOException::class)
         override fun invoke(account: GiteeAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
-          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent)
-            ?: throw ProcessCanceledException()
+          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent) ?: throw ProcessCanceledException()
+
           progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
 
             val user = requestExecutor.execute(progressManager.progressIndicator, GiteeApiRequests.CurrentUser.get(account.server))
@@ -161,11 +174,11 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
             ).mapSmartSet { it.name }
 
             user.canCreatePrivateRepo() to names
-          }, "Loading Account Information For $account", true, project)
+          }, GiteeBundle.message("share.process.loading.account.info", account), true, project)
         }
       }
 
-      val shareDialog = GiteeShareDialog(project, accounts, authManager.getDefaultAccount(project),
+      val shareDialog = GiteeShareDialog(project, authManager.getAccounts(), authManager.getDefaultAccount(project),
         gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(), accountInformationLoader)
 
       DialogManager.show(shareDialog)
@@ -177,16 +190,18 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
       val isPrivate: Boolean = shareDialog.isPrivate()
       val remoteName: String = shareDialog.getRemoteName()
       val description: String = shareDialog.getDescription()
-      val account: GiteeAccount = shareDialog.getAccount()
+      val account: GiteeAccount = shareDialog.getAccount()!!
 
       val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
-      object : Task.Backgroundable(project, "Sharing Project on Gitee...") {
+
+      object : Task.Backgroundable(project, GiteeBundle.message("share.process")) {
         private lateinit var url: String
 
         override fun run(indicator: ProgressIndicator) {
           // create Gitee repo (network)
           LOG.info("Creating Gitee repository")
-          indicator.text = "Creating Gitee repository..."
+
+          indicator.text = GiteeBundle.message("share.process.creating.repository")
 
           url = requestExecutor.execute(indicator, GiteeApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
           LOG.info("Successfully created Gitee repository")
@@ -198,7 +213,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
           if (gitRepository == null) {
             LOG.info("No git detected, creating empty git repo")
-            indicator.text = "Creating empty git repo..."
+            indicator.text = GiteeBundle.message("share.process.creating.git.repository")
             if (!createEmptyGitRepository(project, root)) {
               return
             }
@@ -208,17 +223,20 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
           val repository = repositoryManager.getRepositoryForRoot(root)
 
           if (repository == null) {
-            GiteeNotifications.showError(project, "Failed to create Gitee Repository", "Can't find Git repository")
+            GiteeNotifications.showError(project,
+              GiteeNotificationIdsHolder.SHARE_CANNOT_FIND_GIT_REPO,
+              GiteeBundle.message("share.error.failed.to.create.repo"),
+              GiteeBundle.message("cannot.find.git.repo"))
             return
           }
 
-          indicator.text = "Retrieving username..."
+          indicator.text = GiteeBundle.message("share.process.retrieving.username")
           val username = accountInformationProvider.getInformation(requestExecutor, indicator, account).login
           val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
 
           //git remote add origin git@gitee.com:login/name.git
           LOG.info("Adding Gitee as a remote host")
-          indicator.text = "Adding Gitee as a remote host..."
+          indicator.text = GiteeBundle.message("share.process.adding.gh.as.remote.host")
           git.addRemote(repository, remoteName, remoteUrl).getOutputOrThrow()
           repository.update()
 
@@ -229,23 +247,27 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
           //git push origin master
           LOG.info("Pushing to gitee master")
-          indicator.text = "Pushing to gitee master..."
+          indicator.text = GiteeBundle.message("share.process.pushing.to.gitee.master")
           if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)) {
             return
           }
 
-          GiteeNotifications.showInfoURL(project, GiteeBundle.message2("gitee.share.project.success.notify"), name, url)
+          GiteeNotifications.showInfoURL(project, GiteeNotificationIdsHolder.SHARE_PROJECT_SUCCESSFULLY_SHARED,
+            GiteeBundle.message("share.process.successfully.shared"), name, url)
         }
 
         private fun createEmptyGitRepository(project: Project, root: VirtualFile): Boolean {
           val result = Git.getInstance().init(project, root)
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.errorOutputAsHtmlString)
+            VcsNotifier.getInstance(project).notifyError(GiteeNotificationIdsHolder.GIT_REPO_INIT_REPO,
+              GitBundle.message("initializing.title"), result.errorOutputAsHtmlString)
+
             LOG.info("Failed to create empty git repo: " + result.errorOutputAsJoinedString)
             return false
           }
 
           GitInit.refreshAndConfigureVcsMappings(project, root, root.path)
+          GitUtil.generateGitignoreFileIfNeeded(project, root)
           return true
         }
 
@@ -253,7 +275,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
                                                  root: VirtualFile,
                                                  repository: GitRepository,
                                                  indicator: ProgressIndicator,
-                                                 name: String,
+                                                 @NlsSafe name: String,
                                                  url: String): Boolean {
           // check if there is no commits
           if (!repository.isFresh) {
@@ -263,7 +285,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
           LOG.info("Trying to commit")
           try {
             LOG.info("Adding files for commit")
-            indicator.text = "Adding files to git..."
+            indicator.text = GiteeBundle.message("share.process.adding.files")
 
             // ask for files to add
             val trackedFiles = ChangeListManager.getInstance(project).affectedFiles
@@ -286,7 +308,8 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
             val files2commit = dialog.selectedFiles
             if (!dialog.isOK || files2commit.isEmpty()) {
-              GiteeNotifications.showInfoURL(project, GiteeBundle.message2("gitee.create.empty.repository"), name, url)
+              GiteeNotifications.showInfoURL(project, GiteeNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
+                GiteeBundle.message("share.process.empty.project.created"), name, url)
               return false
             }
 
@@ -300,7 +323,8 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
 
             // commit
             LOG.info("Performing commit")
-            indicator.text = "Performing commit..."
+            indicator.text = GiteeBundle.message("share.process.performing.commit")
+
             val handler = GitLineHandler(project, root, GitCommand.COMMIT)
             handler.setStdoutSuppressed(false)
             handler.addParameters("-m", dialog.commitMessage)
@@ -310,8 +334,12 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
             VcsFileUtil.markFilesDirty(project, modified)
           } catch (e: VcsException) {
             LOG.warn(e)
-            GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
-              " on Gitee, but initial commit failed:<br/>" + GiteeUtil.getErrorTextFromException(e),
+
+            GiteeNotifications.showErrorURL(project, GiteeNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED,
+              GiteeBundle.message("share.error.cannot.finish"),
+              GiteeBundle.message("share.error.created.project"),
+              " '$name' ",
+              GiteeBundle.message("share.error.init.commit.failed") + GiteeUtil.getErrorTextFromException(e),
               url)
             return false
           }
@@ -334,15 +362,23 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
                                       url: String): Boolean {
           val currentBranch = repository.currentBranch
           if (currentBranch == null) {
-            GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
-              " on Gitee, but initial push failed: no current branch", url)
+            GiteeNotifications.showErrorURL(project, GiteeNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
+              GiteeBundle.message("share.error.cannot.finish"),
+              GiteeBundle.message("share.error.created.project"),
+              " '$name' ",
+              GiteeBundle.message("share.error.push.no.current.branch"),
+              url)
             return false
           }
 
           val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
           if (!result.success()) {
-            GiteeNotifications.showErrorURL(project, "Can't finish Gitee sharing process", "Successfully created project ", "'$name'",
-              " on Gitee, but initial push failed:<br/>" + result.errorOutputAsHtmlString, url)
+            GiteeNotifications.showErrorURL(project, GiteeNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
+              GiteeBundle.message("share.error.cannot.finish"),
+              GiteeBundle.message("share.error.created.project"),
+              " '$name' ",
+              GiteeBundle.message("share.error.push.failed", result.errorOutputAsHtmlString),
+              url)
             return false
           }
 
@@ -350,7 +386,9 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
         }
 
         override fun onThrowable(error: Throwable) {
-          GiteeNotifications.showError(project, "Failed to create Gitee Repository", error)
+          GiteeNotifications.showError(project,
+            GiteeNotificationIdsHolder.SHARE_CANNOT_CREATE_REPO,
+            GiteeBundle.message("share.error.failed.to.create.repo"), error)
         }
       }.queue()
     }
@@ -365,8 +403,9 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
     }
 
     override fun createCenterPanel(): JComponent? {
-      val mainText = JBLabel(if (remotes.size == 1) "Remote is already on Gitee:"
-      else "Following remotes are already on Gitee:")
+      val mainText = JBLabel(
+        if (remotes.size == 1) GiteeBundle.message("share.action.remote.is.on.gitee") else GiteeBundle.message("share.action.remotes.are.on.gitee")
+      )
 
       val remotesPanel = JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)

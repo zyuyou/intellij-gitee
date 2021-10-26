@@ -27,7 +27,7 @@ import com.gitee.i18n.GiteeBundle
 import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
 import com.gitee.pullrequest.avatars.GiteeAvatarIconsProvider
 import com.gitee.ui.util.JListHoveredRowMaterialiser
-import com.gitee.util.CachingGiteeUserAvatarLoader
+import com.gitee.util.CachingGEUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
 import com.gitee.util.GiteeUIUtil
 import com.intellij.icons.AllIcons
@@ -64,7 +64,7 @@ private val actionManager: ActionManager get() = ActionManager.getInstance()
 internal class GiteeAccountsPanel(
   private val project: Project,
   private val executorFactory: GiteeApiRequestExecutor.Factory,
-  private val avatarLoader: CachingGiteeUserAvatarLoader,
+  private val avatarLoader: CachingGEUserAvatarLoader,
   private val imageResizer: GiteeImageResizer
 ) : BorderLayoutPanel(), Disposable, DataProvider {
 

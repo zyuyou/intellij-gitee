@@ -15,12 +15,14 @@
  */
 package com.gitee.util
 
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.EventDispatcher
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture
@@ -115,9 +117,15 @@ object GiteeUtil {
 
   object Delegates {
     inline fun <T> equalVetoingObservable(initialValue: T, crossinline onChange: (newValue: T) -> Unit) =
-        object : ObservableProperty<T>(initialValue) {
-          override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T) = newValue == null || oldValue != newValue
-          override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = onChange(newValue)
-        }
+      object : ObservableProperty<T>(initialValue) {
+        override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T) = newValue == null || oldValue != newValue
+        override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = onChange(newValue)
+      }
+
+    fun <T> observableField(initialValue: T, dispatcher: EventDispatcher<SimpleEventListener>): ObservableProperty<T> {
+      return object : ObservableProperty<T>(initialValue) {
+        override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = dispatcher.multicaster.eventOccurred()
+      }
+    }
   }
 }

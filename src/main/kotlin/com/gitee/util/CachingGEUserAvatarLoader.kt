@@ -33,8 +33,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
-class CachingGiteeUserAvatarLoader : Disposable {
-  private val LOG = logger<CachingGiteeUserAvatarLoader>()
+class CachingGEUserAvatarLoader : Disposable {
+  private val LOG = logger<CachingGEUserAvatarLoader>()
 
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
 
@@ -87,6 +87,6 @@ class CachingGiteeUserAvatarLoader : Disposable {
     private const val MAXIMUM_ICON_SIZE = 40
 
     @JvmStatic
-    fun getInstance(): CachingGiteeUserAvatarLoader = service()
+    fun getInstance(): CachingGEUserAvatarLoader = service()
   }
 }

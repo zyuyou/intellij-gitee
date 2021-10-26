@@ -39,7 +39,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
@@ -56,13 +55,10 @@ import com.intellij.util.ui.cloneDialog.*
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Account
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Action
 import git4idea.GitUtil
-import git4idea.checkout.GitCheckoutProvider
-import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.nio.file.Paths
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
@@ -72,7 +68,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
   private val authenticationManager: GiteeAuthenticationManager,
   private val executorManager: GiteeApiRequestExecutorManager,
   private val accountInformationProvider: GiteeAccountInformationProvider,
-  private val avatarLoader: CachingGiteeUserAvatarLoader,
+  private val avatarLoader: CachingGEUserAvatarLoader,
   private val imageResizer: GiteeImageResizer
 ) : VcsCloneDialogExtensionComponent(),
   AccountRemovedListener,
@@ -92,7 +88,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
 
   private val wrapper: Wrapper = Wrapper()
   private val repositoriesPanel: DialogPanel
-  private val repositoryList: JBList<GiteeRepositoryListItem>
+  private val repositoryList: JBList<GERepositoryListItem>
 
   private val popupMenuMouseAdapter = object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent?) = showPopupMenu()
@@ -117,8 +113,8 @@ internal abstract class BaseCloneDialogExtensionComponent(
   // state
   private val userDetailsByAccount = hashMapOf<GiteeAccount, GiteeAuthenticatedUser>()
   private val repositoriesByAccount = hashMapOf<GiteeAccount, LinkedHashSet<GiteeRepo>>()
-  private val errorsByAccount = hashMapOf<GiteeAccount, GiteeRepositoryListItem.Error>()
-  private val originListModel = CollectionListModel<GiteeRepositoryListItem>()
+  private val errorsByAccount = hashMapOf<GiteeAccount, GERepositoryListItem.Error>()
+  private val originListModel = CollectionListModel<GERepositoryListItem>()
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 
@@ -129,10 +125,10 @@ internal abstract class BaseCloneDialogExtensionComponent(
   protected val content: JComponent get() = wrapper.targetComponent
 
   init {
-    val listWithSearchBundle = ListWithSearchComponent(originListModel, GiteeRepositoryListCellRenderer { getAccounts() })
+    val listWithSearchBundle = ListWithSearchComponent(originListModel, GERepositoryListCellRenderer { getAccounts() })
 
     repositoryList = listWithSearchBundle.list
-    val mouseAdapter = GiteeRepositoryMouseAdapter(repositoryList)
+    val mouseAdapter = GERepositoryMouseAdapter(repositoryList)
     repositoryList.addMouseListener(mouseAdapter)
     repositoryList.addMouseMotionListener(mouseAdapter)
     repositoryList.addListSelectionListener {
@@ -233,7 +229,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
       loadRepositories(account, executor)
     }
     catch (e: GiteeMissingTokenException) {
-      errorsByAccount[account] = GiteeRepositoryListItem.Error(account,
+      errorsByAccount[account] = GERepositoryListItem.Error(account,
                                                             GiteeBundle.message("account.token.missing"),
                                                             GiteeBundle.message("login.link"),
                                                             Runnable { switchToLogin(account) })
@@ -275,7 +271,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
 
       override fun onThrowable(error: Throwable) {
         LOG.error(error)
-        errorsByAccount[account] = GiteeRepositoryListItem.Error(account,
+        errorsByAccount[account] = GERepositoryListItem.Error(account,
                                                               GiteeBundle.message("clone.error.load.repositories"),
                                                               GiteeBundle.message("retry.link"),
                                                               Runnable { addAccount(account) })
@@ -313,7 +309,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
 
       override fun onThrowable(error: Throwable) {
         LOG.error(error)
-        errorsByAccount[account] = GiteeRepositoryListItem.Error(account,
+        errorsByAccount[account] = GERepositoryListItem.Error(account,
                                                               GiteeBundle.message("clone.error.load.repositories"),
                                                               GiteeBundle.message("retry.link"),
                                                               Runnable { loadRepositories(account, executor) })
@@ -331,7 +327,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
       val user = userDetailsByAccount[account] ?: continue
       val repos = repositoriesByAccount[account] ?: continue
       for (repo in repos) {
-        originListModel.add(GiteeRepositoryListItem.Repo(account, user, repo))
+        originListModel.add(GERepositoryListItem.Repo(account, user, repo))
       }
     }
     repositoryList.setSelectedValue(selectedValue, false)
@@ -347,30 +343,30 @@ internal abstract class BaseCloneDialogExtensionComponent(
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-    val parent = Paths.get(directoryField.text).toAbsolutePath().parent
-    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
-    if (destinationValidation != null) {
-      LOG.error("Unable to create destination directory", destinationValidation.message)
-      GiteeNotifications.showError(project, GiteeBundle.message("clone.dialog.clone.failed"),
-                                    GiteeBundle.message("clone.error.unable.to.create.dest.dir"))
-      return
-    }
-
-    val lfs = LocalFileSystem.getInstance()
-    var destinationParent = lfs.findFileByIoFile(parent.toFile())
-    if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-    }
-    if (destinationParent == null) {
-      LOG.error("Clone Failed. Destination doesn't exist")
-      GiteeNotifications.showError(project, GiteeBundle.message("clone.dialog.clone.failed"),
-                                    GiteeBundle.message("clone.error.unable.to.find.dest"))
-      return
-    }
-    val directoryName = Paths.get(directoryField.text).fileName.toString()
-    val parentDirectory = parent.toAbsolutePath().toString()
-
-    GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
+//    val parent = Paths.get(directoryField.text).toAbsolutePath().parent
+//    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
+//    if (destinationValidation != null) {
+//      LOG.error("Unable to create destination directory", destinationValidation.message)
+//      GiteeNotifications.showError(project, GiteeBundle.message("clone.dialog.clone.failed"),
+//                                    GiteeBundle.message("clone.error.unable.to.create.dest.dir"))
+//      return
+//    }
+//
+//    val lfs = LocalFileSystem.getInstance()
+//    var destinationParent = lfs.findFileByIoFile(parent.toFile())
+//    if (destinationParent == null) {
+//      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
+//    }
+//    if (destinationParent == null) {
+//      LOG.error("Clone Failed. Destination doesn't exist")
+//      GiteeNotifications.showError(project, GiteeBundle.message("clone.dialog.clone.failed"),
+//                                    GiteeBundle.message("clone.error.unable.to.find.dest"))
+//      return
+//    }
+//    val directoryName = Paths.get(directoryField.text).fileName.toString()
+//    val parentDirectory = parent.toAbsolutePath().toString()
+//
+//    GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
   }
 
   override fun onComponentSelected() {
@@ -402,7 +398,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
       return
     }
     val selectedValue = repositoryList.selectedValue
-    if (selectedValue is GiteeRepositoryListItem.Repo) {
+    if (selectedValue is GERepositoryListItem.Repo) {
       selectedUrl = giteeGitHelper.getRemoteUrl(
         selectedValue.account.server,
         selectedValue.repo.userName,
@@ -414,7 +410,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
   }
 
 
-  private fun getGiteeRepoPath(searchText: String): GiteeRepositoryCoordinates? {
+  private fun getGiteeRepoPath(searchText: String): GERepositoryCoordinates? {
     val url = searchText
       .trim()
       .removePrefix("git clone")
@@ -426,7 +422,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
       serverPath = GiteeServerPath.from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: ""))
 
       val giteeFullPath = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url) ?: return null
-      return GiteeRepositoryCoordinates(serverPath, giteeFullPath)
+      return GERepositoryCoordinates(serverPath, giteeFullPath)
     }
     catch (e: Throwable) {
       return null

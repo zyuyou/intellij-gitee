@@ -15,15 +15,14 @@
  */
 package com.gitee.actions
 
-import com.gitee.api.GiteeRepositoryCoordinates
-import com.gitee.util.GiteeGitHelper
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.gitee.util.GEProjectRepositoriesManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
+import git4idea.annotate.GitFileAnnotation
 
 
 /**
@@ -32,26 +31,26 @@ import git4idea.GitUtil
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubOpenInBrowserFromAnnotationActionGroup.kt
  * @author JetBrains s.r.o.
  */
-class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation) : GiteeOpenInBrowserActionGroup(), UpToDateLineNumberListener {
+class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
+  : GiteeOpenInBrowserActionGroup(), UpToDateLineNumberListener {
   private var myLineNumber = -1
 
-  override fun getData(dataContext: DataContext): Pair<Set<GiteeRepositoryCoordinates>, Data>? {
+  override fun getData(dataContext: DataContext): List<Data>? {
     if (myLineNumber < 0) return null
 
-    val project = dataContext.getData(CommonDataKeys.PROJECT)
-    val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
-    if (project == null || virtualFile == null) return null
+    if (annotation !is GitFileAnnotation) return null
+    val project = annotation.project
+    val virtualFile = annotation.file
 
-    FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
+    val filePath = VcsUtil.getFilePath(virtualFile)
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile) ?: return null
-
-    val accessibleRepositories = service<GiteeGitHelper>().getPossibleRepositories(repository)
+    val accessibleRepositories = project.service<GEProjectRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val revisionHash = annotation.getLineRevisionNumber(myLineNumber)?.asString() ?: return null
 
-    return accessibleRepositories to Data.Revision(project, revisionHash)
+    return accessibleRepositories.map { Data.Revision(project, it.geRepositoryCoordinates, revisionHash) }
   }
 
   override fun consume(integer: Int) {

@@ -3,10 +3,10 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
-import com.gitee.util.GiteeAsyncUtil
-import com.gitee.util.completionOnEdt
-import com.gitee.util.errorOnEdt
-import com.gitee.util.successOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -41,7 +41,15 @@ internal abstract class BaseLoginDialog(
   val refreshToken: String get() = _refreshToken
 
   val server: GiteeServerPath get() = loginPanel.getServer()
+
+  fun setLogin(login: String?, editable: Boolean) = loginPanel.setLogin(login, editable)
+  fun setToken(token: String?) = loginPanel.setToken(token)
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
+
+  fun setError(exception: Throwable) {
+    loginPanel.setError(exception)
+    startTrackingValidation()
+  }
 
   override fun getPreferredFocusedComponent(): JComponent? = loginPanel.getPreferredFocusableComponent()
 
@@ -53,6 +61,7 @@ internal abstract class BaseLoginDialog(
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
 
     startGettingToken()
+
     loginPanel.acquireLoginAndToken(emptyProgressIndicator)
       .completionOnEdt(modalityState) { finishGettingToken() }
       .successOnEdt(modalityState) { (login, accessToken, refreshToken) ->
@@ -64,7 +73,7 @@ internal abstract class BaseLoginDialog(
         close(OK_EXIT_CODE, true)
       }
       .errorOnEdt(modalityState) {
-        if (!GiteeAsyncUtil.isCancellation(it)) startTrackingValidation()
+        if (!CompletableFutureUtil.isCancellation(it)) startTrackingValidation()
       }
   }
 

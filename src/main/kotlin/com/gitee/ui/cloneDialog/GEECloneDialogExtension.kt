@@ -3,18 +3,18 @@ package com.gitee.ui.cloneDialog
 
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
-import com.gitee.authentication.accounts.GiteeAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
-import com.gitee.authentication.accounts.GiteeAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
-import com.gitee.authentication.accounts.isGiteeAccount
+import com.gitee.authentication.accounts.isGEAccount
 import com.gitee.i18n.GiteeBundle.message
-import com.gitee.util.CachingGiteeUserAvatarLoader
-import com.gitee.util.GiteeImageResizer
+import com.gitee.util.CachingGEUserAvatarLoader
 import com.gitee.util.GiteeUtil
-import com.intellij.application.subscribe
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBEmptyBorder
@@ -26,7 +26,7 @@ import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JComponent
 
-private val GiteeAccount.isGEEAccount: Boolean get() = !isGiteeAccount
+private val GiteeAccount.isGEEAccount: Boolean get() = !isGEAccount
 
 private fun getGEEAccounts(): Collection<GiteeAccount> =
   GiteeAuthenticationManager.getInstance().getAccounts().filter { it.isGEEAccount }
@@ -37,61 +37,63 @@ class GEECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getAccounts(): Collection<GiteeAccount> = getGEEAccounts()
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    object : BaseCloneDialogExtensionComponent(
-      project,
-      GiteeAuthenticationManager.getInstance(),
-      GiteeApiRequestExecutorManager.getInstance(),
-      GiteeAccountInformationProvider.getInstance(),
-      CachingGiteeUserAvatarLoader.getInstance(),
-      GiteeImageResizer.getInstance()
-    ) {
-
-      init {
-        ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
-        ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
-
-        setup()
-      }
-
-      override fun getAccounts(): Collection<GiteeAccount> = getGEEAccounts()
-
-      override fun accountRemoved(removedAccount: GiteeAccount) {
-        if (removedAccount.isGEEAccount) super.accountRemoved(removedAccount)
-      }
-
-      override fun tokenChanged(account: GiteeAccount) {
-        if (account.isGEEAccount) super.tokenChanged(account)
-      }
-
-      override fun createLoginPanel(account: GiteeAccount?, cancelHandler: () -> Unit): JComponent =
-        GEECloneDialogLoginPanel(account).apply {
-          loginPanel.isCancelVisible = getAccounts().isNotEmpty()
-          loginPanel.setCancelHandler(cancelHandler)
-        }
-
-      override fun createAccountMenuLoginActions(account: GiteeAccount?): Collection<AccountMenuItem.Action> =
-        listOf(createLoginAction(account))
-
-      private fun createLoginAction(account: GiteeAccount?): AccountMenuItem.Action {
-        val isExistingAccount = account != null
-        return AccountMenuItem.Action(
-          if (isExistingAccount) message("login.action") else message("accounts.add"),
-          { switchToLogin(account) },
-          showSeparatorAbove = !isExistingAccount
-        )
-      }
-    }
+    GEECloneDialogExtensionComponent(project)
 }
 
-private class GEECloneDialogLoginPanel(account: GiteeAccount?) : BorderLayoutPanel() {
+private class GEECloneDialogExtensionComponent(project: Project) : GECloneDialogExtensionComponentBase(
+  project,
+  GiteeAuthenticationManager.getInstance(),
+  GiteeApiRequestExecutorManager.getInstance(),
+  GiteeAccountInformationProvider.getInstance(),
+  CachingGEUserAvatarLoader.getInstance()
+) {
+
+  init {
+    service<GEAccountManager>().addListener(this, this)
+    setup()
+  }
+
+  override fun getAccounts(): Collection<GiteeAccount> = getGEEAccounts()
+
+  override fun onAccountListChanged(old: Collection<GiteeAccount>, new: Collection<GiteeAccount>) {
+    super.onAccountListChanged(old.filter { it.isGEEAccount }, new.filter { it.isGEEAccount })
+  }
+
+  override fun onAccountCredentialsChanged(account: GiteeAccount) {
+    if (account.isGEEAccount) super.onAccountCredentialsChanged(account)
+  }
+
+  override fun createLoginPanel(account: GiteeAccount?, cancelHandler: () -> Unit): JComponent =
+    GEECloneDialogLoginPanel(account).apply {
+      Disposer.register(this@GEECloneDialogExtensionComponent, this)
+
+      loginPanel.isCancelVisible = getAccounts().isNotEmpty()
+      loginPanel.setCancelHandler(cancelHandler)
+    }
+
+  override fun createAccountMenuLoginActions(account: GiteeAccount?): Collection<AccountMenuItem.Action> =
+    listOf(createLoginAction(account))
+
+  private fun createLoginAction(account: GiteeAccount?): AccountMenuItem.Action {
+    val isExistingAccount = account != null
+    return AccountMenuItem.Action(
+      message("login.to.gitee.enterprise.action"),
+      { switchToLogin(account) },
+      showSeparatorAbove = !isExistingAccount
+    )
+  }
+}
+
+private class GEECloneDialogLoginPanel(account: GiteeAccount?) : BorderLayoutPanel(), Disposable {
   private val titlePanel =
     simplePanel().apply {
       val title = JBLabel(message("login.to.gitee.enterprise"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
       addToLeft(title)
     }
   val loginPanel = CloneDialogLoginPanel(account).apply {
+    Disposer.register(this@GEECloneDialogLoginPanel, this)
+
     if (account == null) setServer("", true)
-//    setTokenUi()
     setPasswordUi()
   }
 
@@ -99,4 +101,6 @@ private class GEECloneDialogLoginPanel(account: GiteeAccount?) : BorderLayoutPan
     addToTop(titlePanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { bottom = 0 }) })
     addToCenter(loginPanel)
   }
+
+  override fun dispose() = loginPanel.cancelLogin()
 }

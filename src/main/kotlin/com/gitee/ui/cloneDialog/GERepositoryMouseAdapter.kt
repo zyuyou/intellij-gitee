@@ -9,7 +9,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
 
-internal class GiteeRepositoryMouseAdapter(private val list: JList<*>) : MouseAdapter() {
+internal class GERepositoryMouseAdapter(private val list: JList<*>) : MouseAdapter() {
   private fun getRunnableAt(e: MouseEvent): Runnable? {
     val point = e.point
     val renderer = ListUtil.getDeepestRendererChildComponentAt(list, point)

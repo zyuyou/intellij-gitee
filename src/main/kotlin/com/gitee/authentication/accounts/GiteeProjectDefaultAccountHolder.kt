@@ -15,56 +15,42 @@
  */
 package com.gitee.authentication.accounts
 
+import com.gitee.i18n.GiteeBundle
+import com.gitee.util.GiteeNotificationIdsHolder
 import com.gitee.util.GiteeNotifications
-import com.intellij.openapi.application.ApplicationManager
+import com.gitee.util.GiteeUtil
+import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsNotifier
 
 /**
  * Handles default Gitee account for project
- *
- * TODO: auto-detection
  *
  * @author Yuyou Chow
  *
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/accounts/GithubProjectDefaultAccountHolder.kt
  * @author JetBrains s.r.o.
  */
-@State(name = "GiteeDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-internal class GiteeProjectDefaultAccountHolder(private val project: Project) : PersistentStateComponent<AccountState> {
-  var account: GiteeAccount? = null
+@Suppress("UNCHECKED_CAST")
+@State(name = "GiteeDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
+internal class GiteeProjectDefaultAccountHolder(project: Project)
+  : PersistentDefaultAccountHolder<GiteeAccount>(project) {
 
-  init {
-    ApplicationManager.getApplication()
-      .messageBus
-      .connect(project)
-      .subscribe(GiteeAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
-        override fun accountRemoved(removedAccount: GiteeAccount) {
-          if (account == removedAccount) account = null
-        }
-      })
-  }
+  override fun accountManager() = service<GEAccountManager>()
 
-  override fun getState(): AccountState {
-    return AccountState().apply { defaultAccountId = account?.id }
-  }
+  override fun notifyDefaultAccountMissing() = runInEdt {
+    val title = GiteeBundle.message("accounts.default.missing")
 
-  override fun loadState(state: AccountState) {
-    account = state.defaultAccountId?.let(::findAccountById)
-  }
-
-  private fun findAccountById(id: String): GiteeAccount? {
-    val account = service<GiteeAccountManager>().accounts.find { it.id == id }
-    if (account == null) runInEdt {
-      GiteeNotifications.showWarning(project, "Missing Default Gitee Account", "",
-        GiteeNotifications.getConfigureAction(project))
-    }
-    return account
+    GiteeUtil.LOG.info("${title}; ${""}")
+    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, NotificationType.WARNING)
+      .setDisplayId(GiteeNotificationIdsHolder.MISSING_DEFAULT_ACCOUNT)
+      .addAction(GiteeNotifications.getConfigureAction(project))
+      .notify(project)
   }
 }
-
-internal class AccountState {
-  var defaultAccountId: String? = null
-}
-

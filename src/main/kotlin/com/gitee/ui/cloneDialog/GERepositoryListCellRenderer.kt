@@ -12,11 +12,11 @@ import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
 
-class GiteeRepositoryListCellRenderer(private val accountsSupplier: () -> Collection<GiteeAccount>) : ColoredListCellRenderer<GiteeRepositoryListItem>() {
+class GERepositoryListCellRenderer(private val accountsSupplier: () -> Collection<GiteeAccount>) : ColoredListCellRenderer<GERepositoryListItem>() {
   private val nameRenderer = AccountNameRenderer()
 
-  override fun getListCellRendererComponent(list: JList<out GiteeRepositoryListItem>,
-                                            value: GiteeRepositoryListItem,
+  override fun getListCellRendererComponent(list: JList<out GERepositoryListItem>,
+                                            value: GERepositoryListItem,
                                             index: Int,
                                             selected: Boolean,
                                             hasFocus: Boolean): Component {
@@ -30,13 +30,13 @@ class GiteeRepositoryListCellRenderer(private val accountsSupplier: () -> Collec
     return component
   }
 
-  private fun showAccountNameAbove(list: JList<out GiteeRepositoryListItem>, index: Int): Boolean {
+  private fun showAccountNameAbove(list: JList<out GERepositoryListItem>, index: Int): Boolean {
     return accountsSupplier().size > 1
            && (index == 0 || list.model.getElementAt(index).account != list.model.getElementAt(index - 1).account)
   }
 
-  override fun customizeCellRenderer(list: JList<out GiteeRepositoryListItem>,
-                                     value: GiteeRepositoryListItem,
+  override fun customizeCellRenderer(list: JList<out GERepositoryListItem>,
+                                     value: GERepositoryListItem,
                                      index: Int,
                                      selected: Boolean,
                                      hasFocus: Boolean) = value.customizeRenderer(this, list)

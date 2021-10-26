@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.gitee.tasks">
   <extensions defaultExtensionNs="com.intellij">
     <tasks.repositoryType implementation="com.gitee.tasks.GiteeRepositoryType"/>
   </extensions>

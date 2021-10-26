@@ -9,20 +9,20 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.cloneDialog.SearchableListItem
 import javax.swing.JList
 
-sealed class GiteeRepositoryListItem(
+sealed class GERepositoryListItem(
     val account: GiteeAccount
 ) : SearchableListItem {
   override val stringToSearch: String?
     get() = ""
 
-  abstract fun customizeRenderer(renderer: ColoredListCellRenderer<GiteeRepositoryListItem>,
-                                 list: JList<out GiteeRepositoryListItem>)
+  abstract fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
+                                 list: JList<out GERepositoryListItem>)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as GiteeRepositoryListItem
+    other as GERepositoryListItem
 
     if (account != other.account) return false
 
@@ -37,11 +37,11 @@ sealed class GiteeRepositoryListItem(
       account: GiteeAccount,
       val user: GiteeUser,
       val repo: GiteeRepo
-  ) : GiteeRepositoryListItem(account) {
+  ) : GERepositoryListItem(account) {
     override val stringToSearch get() = repo.fullName
 
-    override fun customizeRenderer(renderer: ColoredListCellRenderer<GiteeRepositoryListItem>,
-                                   list: JList<out GiteeRepositoryListItem>): Unit =
+    override fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
+                                   list: JList<out GERepositoryListItem>): Unit =
         with(renderer) {
           ipad.left = 10
           toolTipText = repo.description
@@ -75,10 +75,10 @@ sealed class GiteeRepositoryListItem(
       private val errorText: String,
       private val linkText: String,
       private val linkHandler: Runnable
-  ) : GiteeRepositoryListItem(account) {
+  ) : GERepositoryListItem(account) {
 
-    override fun customizeRenderer(renderer: ColoredListCellRenderer<GiteeRepositoryListItem>,
-                                   list: JList<out GiteeRepositoryListItem>) =
+    override fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
+                                   list: JList<out GERepositoryListItem>) =
         with(renderer) {
           ipad.left = 10
           toolTipText = null

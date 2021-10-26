@@ -2,7 +2,7 @@
 package com.gitee.ui.cloneDialog
 
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.isGiteeAccount
+import com.gitee.authentication.accounts.isGEAccount
 import com.gitee.i18n.GiteeBundle
 import com.gitee.icons.GiteeIcons
 import com.intellij.openapi.project.Project
@@ -14,7 +14,7 @@ import javax.swing.Icon
 
 private val GiteeAccount.nameWithServer: String
   get() {
-    val serverPrefix = if (isGiteeAccount) "" else "${server.host}/"
+    val serverPrefix = if (isGEAccount) "" else "${server.host}/"
     return serverPrefix + name
   }
 

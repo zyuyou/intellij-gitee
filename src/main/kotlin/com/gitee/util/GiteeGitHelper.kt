@@ -15,7 +15,8 @@
  */
 package com.gitee.util
 
-import com.gitee.api.GiteeRepositoryCoordinates
+import com.gitee.api.GERepositoryCoordinates
+import com.gitee.api.GERepositoryPath
 import com.gitee.api.GiteeRepositoryPath
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GiteeAuthenticationManager
@@ -40,6 +41,9 @@ import git4idea.repo.GitRepositoryManager
  */
 @Service
 class GiteeGitHelper {
+  fun getRemoteUrl(server: GiteeServerPath, repoPath: GERepositoryPath): String {
+    return getRemoteUrl(server, repoPath.owner, repoPath.repository)
+  }
 
   fun getRemoteUrl(server: GiteeServerPath, fullName: String): String {
     return if (GiteeSettings.getInstance().isCloneGitUsingSsh) {
@@ -86,11 +90,11 @@ class GiteeGitHelper {
 //    return repositoryPaths
 //  }
 
-  fun getPossibleRepositories(repository: GitRepository): Set<GiteeRepositoryCoordinates> {
+  fun getPossibleRepositories(repository: GitRepository): Set<GERepositoryCoordinates> {
     val knownServers = getKnownGiteeServers()
     return repository.getRemoteUrls().mapNotNull { url ->
       knownServers.find { it.matches(url) }
-        ?.let { server -> GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GiteeRepositoryCoordinates(server, it) } }
+        ?.let { server -> GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GERepositoryCoordinates(server, it) } }
     }.toSet()
   }
 

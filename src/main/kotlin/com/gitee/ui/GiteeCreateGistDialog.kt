@@ -17,7 +17,11 @@
 package com.gitee.ui
 
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GiteeAccountCombobox
+import com.gitee.authentication.ui.GEAccountsComboBoxModel
+import com.gitee.authentication.ui.GEAccountsComboBoxModel.Companion.accountSelector
+import com.gitee.authentication.ui.GEAccountsHost
+import com.gitee.i18n.GiteeBundle.message
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
@@ -38,14 +42,16 @@ class GiteeCreateGistDialog(project: Project,
                             fileName: String?,
                             secret: Boolean,
                             openInBrowser: Boolean,
-                            copyLink: Boolean) : DialogWrapper(project, true) {
+                            copyLink: Boolean) : DialogWrapper(project, true), DataProvider {
 
   private val fileNameField: JBTextField? = fileName?.let { JBTextField(it) }
   private val descriptionField = JTextArea()
   private val secretCheckBox = JBCheckBox("Secret", secret)
   private val browserCheckBox = JBCheckBox("Open in browser", openInBrowser)
   private val copyLinkCheckBox = JBCheckBox("Copy URL", copyLink)
-  private val accountSelector = GiteeAccountCombobox(accounts, defaultAccount, null)
+
+//  private val accountSelector = GiteeAccountCombobox(accounts, defaultAccount, null)
+  private val accountsModel = GEAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
 
   val fileName: String?
     get() = fileNameField?.text
@@ -62,8 +68,10 @@ class GiteeCreateGistDialog(project: Project,
   val isCopyURL: Boolean
     get() = copyLinkCheckBox.isSelected
 
-  val account: GiteeAccount
-    get() = accountSelector.selectedItem as GiteeAccount
+//  val account: GiteeAccount
+//    get() = accountSelector.selectedItem as GiteeAccount
+  val account: GiteeAccount?
+    get() = accountsModel.selected
 
   init {
     title = "Create Gist"
@@ -86,22 +94,23 @@ class GiteeCreateGistDialog(project: Project,
         copyLinkCheckBox()
       }
     }
-    if (accountSelector.isEnabled) {
-      row("Create for:") {
-        accountSelector(pushX, growX)
+//    if (accountSelector.isEnabled) {
+//      row("Create for:") {
+//        accountSelector(pushX, growX)
+//      }
+//    }
+    if (accountsModel.size != 1) {
+      row(message("create.gist.dialog.create.for.field")) {
+        accountSelector(accountsModel)
       }
     }
   }
 
-  override fun getHelpId(): String? {
-    return "gitee.create.gist.dialog"
-  }
+  override fun getHelpId(): String = "gitee.create.gist.dialog"
+  override fun getDimensionServiceKey(): String = "Gitee.CreateGistDialog"
+  override fun getPreferredFocusedComponent(): JComponent = descriptionField
 
-  override fun getDimensionServiceKey(): String? {
-    return "Gitee.CreateGistDialog"
-  }
-
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return descriptionField
-  }
+  override fun getData(dataId: String): Any? =
+    if (GEAccountsHost.KEY.`is`(dataId)) accountsModel
+    else null
 }

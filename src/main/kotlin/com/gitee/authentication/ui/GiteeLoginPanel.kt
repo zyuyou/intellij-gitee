@@ -27,8 +27,8 @@ import javax.swing.JTextField
 
 internal typealias UniqueLoginPredicate = (login: String, server: GiteeServerPath) -> Boolean
 
-internal fun GiteeLoginPanel.setTokenUi() = setToken(null)
-internal fun GiteeLoginPanel.setPasswordUi() = setCredentials(null, null, true)
+//internal fun GiteeLoginPanel.setTokenUi() = setToken(null)
+//internal fun GiteeLoginPanel.setPasswordUi() = setCredentials(null, null, true)
 
 class GiteeLoginPanel(
   executorFactory: GiteeApiRequestExecutor.Factory,
@@ -154,24 +154,35 @@ class GiteeLoginPanel(
 //    }
   }
 
-  fun setCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true) {
-    if (login != null) {
-      passwordUi.setLogin(login, editableLogin)
-      tokenUi.setFixedLogin(if (editableLogin) null else login)
-    }
-    if (password != null) passwordUi.setPassword(password)
-    applyUi(passwordUi)
+//  fun setCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true) {
+//    if (login != null) {
+//      passwordUi.setLogin(login, editableLogin)
+//      tokenUi.setFixedLogin(if (editableLogin) null else login)
+//    }
+//    if (password != null) passwordUi.setPassword(password)
+//    applyUi(passwordUi)
+//  }
+
+  fun setLogin(login: String?, editable: Boolean) {
+    passwordUi.setLogin(login.orEmpty(), editable)
+    tokenUi.setFixedLogin(if (editable) null else login)
   }
 
-  fun setToken(token: String? = null) {
-    if (token != null) tokenUi.setToken(token)
-    applyUi(tokenUi)
-  }
+  fun setPassword(password: String?) = passwordUi.setPassword(password.orEmpty())
 
-  fun setError(exception: Throwable) {
-    tokenAcquisitionError = currentUi.handleAcquireError(exception)
+//  fun setToken(token: String? = null) {
+//    if (token != null) tokenUi.setToken(token)
+//    applyUi(tokenUi)
+//  }
+  fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
+
+  fun setError(exception: Throwable?) {
+    tokenAcquisitionError = exception?.let { currentUi.handleAcquireError(it) }
+//    tokenAcquisitionError = currentUi.handleAcquireError(exception)
   }
 
   fun setOAuthUi() = applyUi(oauthUi)
+  fun setPasswordUi() = applyUi(passwordUi)
+  fun setTokenUi() = applyUi(tokenUi)
 
 }

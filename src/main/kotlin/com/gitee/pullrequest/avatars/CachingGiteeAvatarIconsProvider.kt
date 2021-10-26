@@ -17,7 +17,7 @@ package com.gitee.pullrequest.avatars
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.icons.GiteeIcons
-import com.gitee.util.CachingGiteeUserAvatarLoader
+import com.gitee.util.CachingGEUserAvatarLoader
 import com.gitee.util.GiteeImageResizer
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -34,11 +34,11 @@ import javax.swing.Icon
 /**
  * @param component which will be repainted when icons are loaded
  */
-class CachingGiteeAvatarIconsProvider(private val avatarsLoader: CachingGiteeUserAvatarLoader,
-                                       private val imagesResizer: GiteeImageResizer,
-                                       private val requestExecutor: GiteeApiRequestExecutor,
-                                       private val iconSize: JBValue,
-                                       private val component: Component) : GiteeAvatarIconsProvider {
+class CachingGiteeAvatarIconsProvider(private val avatarsLoader: CachingGEUserAvatarLoader,
+                                      private val imagesResizer: GiteeImageResizer,
+                                      private val requestExecutor: GiteeApiRequestExecutor,
+                                      private val iconSize: JBValue,
+                                      private val component: Component) : GiteeAvatarIconsProvider {
 
   private val scaleContext = ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
@@ -89,7 +89,7 @@ class CachingGiteeAvatarIconsProvider(private val avatarsLoader: CachingGiteeUse
   }
 
   // helper to avoid passing all the services to clients
-  class Factory(private val avatarsLoader: CachingGiteeUserAvatarLoader,
+  class Factory(private val avatarsLoader: CachingGEUserAvatarLoader,
                 private val imagesResizer: GiteeImageResizer,
                 private val requestExecutor: GiteeApiRequestExecutor) {
     fun create(iconSize: JBValue, component: Component) = CachingGiteeAvatarIconsProvider(avatarsLoader, imagesResizer,
