@@ -6,14 +6,11 @@ import com.gitee.api.data.GiteeUser
 import com.gitee.authentication.accounts.GiteeAccount
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.ui.cloneDialog.SearchableListItem
 import javax.swing.JList
 
 sealed class GERepositoryListItem(
-    val account: GiteeAccount
-) : SearchableListItem {
-  override val stringToSearch: String?
-    get() = ""
+  val account: GiteeAccount
+) {
 
   abstract fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
                                  list: JList<out GERepositoryListItem>)
@@ -34,20 +31,19 @@ sealed class GERepositoryListItem(
   }
 
   class Repo(
-      account: GiteeAccount,
-      val user: GiteeUser,
-      val repo: GiteeRepo
+    account: GiteeAccount,
+    val user: GiteeUser,
+    val repo: GiteeRepo
   ) : GERepositoryListItem(account) {
-    override val stringToSearch get() = repo.fullName
 
     override fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
                                    list: JList<out GERepositoryListItem>): Unit =
-        with(renderer) {
-          ipad.left = 10
-          toolTipText = repo.description
+      with(renderer) {
+        ipad.left = 10
+        toolTipText = repo.description
 //          append(if (repo.owner.login == user.login) repo.name else repo.fullName)
-          append("[ ${repo.namespace.type.lang } ] ${repo.humanName}")
-        }
+        append("[ ${repo.namespace.type.lang} ] ${repo.humanName}")
+      }
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
@@ -71,21 +67,21 @@ sealed class GERepositoryListItem(
   }
 
   class Error(
-      account: GiteeAccount,
-      private val errorText: String,
-      private val linkText: String,
-      private val linkHandler: Runnable
+    account: GiteeAccount,
+    private val errorText: String,
+    private val linkText: String,
+    private val linkHandler: Runnable
   ) : GERepositoryListItem(account) {
 
     override fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
                                    list: JList<out GERepositoryListItem>) =
-        with(renderer) {
-          ipad.left = 10
-          toolTipText = null
-          append(errorText, SimpleTextAttributes.ERROR_ATTRIBUTES)
-          append(" ")
-          append(linkText, SimpleTextAttributes.LINK_ATTRIBUTES, linkHandler)
-        }
+      with(renderer) {
+        ipad.left = 10
+        toolTipText = null
+        append(errorText, SimpleTextAttributes.ERROR_ATTRIBUTES)
+        append(" ")
+        append(linkText, SimpleTextAttributes.LINK_ATTRIBUTES, linkHandler)
+      }
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true

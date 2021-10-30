@@ -11,6 +11,11 @@
     </description>
     <change-notes>
         <![CDATA[
+        <i>2021.3</i>
+        <ul>
+          <li>Compatible with idea-2021.3 </li>
+          <li>Remove some deprecated api </li>
+        </ul>
         <i>2021.2.2</i>
         <ul>
           <li>Add `Gitee` in IDEA tasks.</li>
@@ -19,18 +24,10 @@
         <ul>
           <li>Fix `GiteeSettingsConfigurable` panel loading error </li>
         </ul>
-        <i>2021.2</i>
-        <ul>
-          <li>Compatible with idea-2021.2 </li>
-          <li>Remove some deprecated api </li>
-          <li>Remove Idea tasks </li>
-        </ul>
       ]]>
     </change-notes>
 
     <resource-bundle>messages.GiteeBundle</resource-bundle>
-
-    <idea-version since-build="212.*" until-build="*.*"/>
 
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
@@ -59,7 +56,7 @@
         <applicationService serviceImplementation="com.gitee.util.CachingGEUserAvatarLoader"/>
 
 
-        <projectService serviceImplementation="com.gitee.extensions.GiteeAccountGitAuthenticationFailureManager"/>
+        <projectService serviceImplementation="com.gitee.extensions.GitAuthenticationFailureManager"/>
         <projectService serviceImplementation="com.gitee.util.GiteeProjectSettings"/>
         <projectService serviceImplementation="com.gitee.util.GiteeSharedProjectSettings"/>
         <projectService serviceImplementation="com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder"/>
@@ -69,7 +66,6 @@
         <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                              instance="com.gitee.ui.GiteeSettingsConfigurable"/>
 
-<!--        <statistics.applicationUsagesCollector implementation="com.gitee.authentication.accounts.GiteeAccountsStatisticsCollector"/>-->
 <!--        <statistics.notificationIdsHolder implementation="com.gitee.util.GiteeNotificationIdsHolder"/>-->
 
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension

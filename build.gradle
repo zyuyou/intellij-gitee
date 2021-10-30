@@ -35,8 +35,8 @@ intellij {
 
 patchPluginXml {
     version = project.version
-    sinceBuild = '212.1'
-    untilBuild = '212.*'
+    sinceBuild = '213.1'
+    untilBuild = '213.*'
 }
 
 buildSearchableOptions {

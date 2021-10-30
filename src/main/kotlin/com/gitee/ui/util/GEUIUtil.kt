@@ -66,11 +66,11 @@ object GEUIUtil {
   fun getFontEM(component: JComponent): Float {
     val metrics = component.getFontMetrics(component.font)
     //em dash character
-    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.toInt())
+    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.code)
   }
 
   fun formatActionDate(date: Date): String {
-    val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
+    val prettyDate = DateFormatUtil.formatPrettyDate(date).lowercase()
     val datePrefix = if (prettyDate.equals(UtilBundle.message("date.format.today"), true) ||
                          prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "

@@ -43,10 +43,10 @@ object GiteeApiContentHelper {
   const val V3_DIFF_JSON_MIME_TYPE = "application/vnd.gitee.diff+json"
 
   private val jackson: ObjectMapper = jacksonObjectMapper().genericConfig()
-      .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+      .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
   private val gqlJackson: ObjectMapper = jacksonObjectMapper().genericConfig()
-      .setPropertyNamingStrategy(PropertyNamingStrategy.LOWER_CAMEL_CASE)
+      .setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
 
   private fun ObjectMapper.genericConfig(): ObjectMapper =
       this.setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))

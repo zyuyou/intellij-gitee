@@ -25,14 +25,6 @@ internal class GiteeLoginDialog @JvmOverloads constructor(
 
   private val switchLoginUiLink = loginPanel.createSwitchUiLink()
 
-//  private var giteeLoginPanel = GiteeLoginPanel(executorFactory, isAccountUnique, project).apply {
-//    putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
-//  }
-
-//  internal lateinit var login: String
-//  internal lateinit var accessToken: String
-//  internal lateinit var refreshToken: String
-
   init {
     this.title = title
     setOKButtonText("Log In")
@@ -41,11 +33,6 @@ internal class GiteeLoginDialog @JvmOverloads constructor(
 
   @JvmOverloads
   fun withServer(path: String, editable: Boolean = true): GiteeLoginDialog = apply { setServer(path, editable) }
-
-  @JvmOverloads
-  fun withCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true): GiteeLoginDialog  =
-//    apply { loginPanel.setCredentials(login, password, editableLogin) }
-    apply {  }
 
   @JvmOverloads
   fun withToken(token: String? = null): GiteeLoginDialog = apply { loginPanel.setToken(token) }
@@ -95,49 +82,5 @@ internal class GiteeLoginDialog @JvmOverloads constructor(
   companion object {
     fun createSignUpLink(): JPanel = JBUI.Panels.simplePanel()
       .addToCenter(BrowserLink(GiteeBundle.message("login.sign.up"), "https://gitee.com"))
-//      .addToCenter(LinkLabel.create(GiteeBundle.message("login.sign.up")) { BrowserUtil.browse("https://gitee.com") })
-//      .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
   }
-//
-//  fun getAccessToken(): String = accessToken
-//  fun getRefreshToken(): String = refreshToken
-//
-//  override fun doOKAction() {
-//    val emptyProgressIndicator = EmptyProgressIndicator(ModalityState.stateForComponent(giteeLoginPanel))
-//    Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
-//
-//    giteeLoginPanel.acquireLoginAndToken(emptyProgressIndicator).handleOnEdt { loginInfo, throwable ->
-//      if (throwable != null && !GiteeAsyncUtil.isCancellation(throwable)) startTrackingValidation()
-//      if (loginInfo != null) {
-//        login = loginInfo.first
-//        accessToken = loginInfo.second
-//        refreshToken = loginInfo.third
-//        close(OK_EXIT_CODE, true)
-//      }
-//    }
-//  }
-//
-//  override fun createNorthPanel(): JComponent? {
-//    return message?.let {
-//      JTextArea().apply {
-//        font = UIUtil.getLabelFont()
-//        text = it
-//        isEditable = false
-//        isFocusable = false
-//        isOpaque = false
-//        border = JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP * 2)
-//        margin = JBUI.emptyInsets()
-//      }
-//    }
-//  }
-//
-//  override fun createSouthAdditionalPanel() = JBUI.Panels.simplePanel()
-//          .addToCenter(LinkLabel.create("Sign up for Gitee", Runnable { BrowserUtil.browse("https://gitee.com") }))
-//          .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
-//
-//  override fun createCenterPanel(): Wrapper = giteeLoginPanel
-//
-//  override fun getPreferredFocusedComponent(): JComponent = giteeLoginPanel.getPreferredFocus()
-//
-//  override fun doValidateAll() = giteeLoginPanel.doValidateAll()
 }

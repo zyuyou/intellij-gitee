@@ -18,7 +18,7 @@ package com.gitee.util
 
 import com.gitee.api.data.GiteeIssueLabel
 import com.gitee.api.data.GiteeUser
-import com.gitee.pullrequest.avatars.CachingGiteeAvatarIconsProvider
+import com.gitee.ui.avatars.GEAvatarIconsProvider
 import com.intellij.UtilBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
@@ -69,11 +69,11 @@ object GiteeUIUtil {
   fun getFontEM(component: JComponent): Float {
     val metrics = component.getFontMetrics(component.font)
     //em dash character
-    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.toInt())
+    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.code)
   }
 
   fun formatActionDate(date: Date): String {
-    val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
+    val prettyDate = DateFormatUtil.formatPrettyDate(date).lowercase()
     val datePrefix = if (prettyDate.equals(UtilBundle.message("date.format.today"), true) ||
         prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "
@@ -132,7 +132,7 @@ object GiteeUIUtil {
     abstract fun getText(value: T): String
     abstract fun getIcon(value: T): Icon
 
-    class Users(private val iconsProvider: CachingGiteeAvatarIconsProvider)
+    class Users(private val iconsProvider: GEAvatarIconsProvider)
       : SelectionListCellRenderer<GiteeUser>() {
       override fun getText(value: GiteeUser) = value.login
       override fun getIcon(value: GiteeUser) = iconsProvider.getIcon(value.avatarUrl)

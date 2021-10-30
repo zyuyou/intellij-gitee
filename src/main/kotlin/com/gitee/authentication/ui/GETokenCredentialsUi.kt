@@ -49,7 +49,7 @@ internal class GETokenCredentialsUi(
     row(message("credentials.refresh.token.field")) {
       cell {
         refreshTokenTextField(
-//          comment = message("login.insufficient.scopes", GiteeTokenCreator.MASTER_SCOPES),
+          comment = message("login.insufficient.scopes", GiteeTokenCreator.MASTER_SCOPES),
           constraints = *arrayOf(pushX, growX)
         )
       }

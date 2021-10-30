@@ -15,10 +15,11 @@
  */
 package com.gitee.extensions
 
-import com.gitee.authentication.accounts.AccountTokenChangedListener
+import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountManager
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -27,17 +28,15 @@ import java.util.concurrent.ConcurrentHashMap
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/extensions/GithubAccountGitAuthenticationFailureManager.kt
  * @author JetBrains s.r.o.
  */
-class GiteeAccountGitAuthenticationFailureManager {
+internal class GitAuthenticationFailureManager : Disposable {
   private val storeMap = ConcurrentHashMap<GiteeAccount, Set<String>>()
 
   init {
-    ApplicationManager.getApplication().messageBus
-      .connect()
-      .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-        override fun tokenChanged(account: GiteeAccount) {
-          storeMap.remove(account)
-        }
-      })
+    service<GEAccountManager>().addListener(this, object : AccountsListener<GiteeAccount> {
+      override fun onAccountCredentialsChanged(account: GiteeAccount) {
+        storeMap.remove(account)
+      }
+    })
   }
 
   fun ignoreAccount(url: String, account: GiteeAccount) {
@@ -45,4 +44,8 @@ class GiteeAccountGitAuthenticationFailureManager {
   }
 
   fun isAccountIgnored(url: String, account: GiteeAccount): Boolean = storeMap[account]?.contains(url) ?: false
+
+  override fun dispose() {
+    storeMap.clear()
+  }
 }

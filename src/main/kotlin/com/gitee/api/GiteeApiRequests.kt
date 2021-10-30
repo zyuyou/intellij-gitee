@@ -24,7 +24,6 @@ import com.gitee.api.requests.GiteeChangeIssueStateRequest
 import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.api.util.GiteeApiSearchQueryBuilder
 import com.gitee.api.util.GiteeApiUrlQueryBuilder
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.util.ThrowableConvertor
 import java.awt.Image
 
@@ -322,7 +321,7 @@ object GiteeApiRequests {
           GiteeApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
           override fun extractResult(response: GiteeApiResponse): String {
             return response.handleBody(ThrowableConvertor {
-              StreamUtil.readText(it, Charsets.UTF_8)
+              it.reader().use { it.readText() }
             })
           }
         }.withOperationName("get pull request diff file")

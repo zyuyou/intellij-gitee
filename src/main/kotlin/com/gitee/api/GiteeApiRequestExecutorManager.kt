@@ -16,8 +16,8 @@
 package com.gitee.api
 
 import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountManager
 import com.gitee.exceptions.GiteeMissingTokenException
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -42,7 +42,7 @@ class GiteeApiRequestExecutorManager {
   }
 
   internal fun tokenChanged(account: GiteeAccount) {
-    val tokens = service<GiteeAccountManager>().getTokensForAccount(account)
+    val tokens = service<GEAccountManager>().findCredentialsPair(account)
     if (tokens == null) executors.remove(account) else executors[account]?.tokens = tokens
   }
 
