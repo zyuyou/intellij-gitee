@@ -110,7 +110,7 @@ sealed class GiteeApiRequest<out T>(val url: String) {
       : Get<GiteeResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GiteeApiResponse): GiteeResponsePage<T> {
-        return GiteeResponsePage.parseFromHeaderPage(parseJsonSearchPage(response, clazz).items, url,
+        return GiteeResponsePage.parseFromHeaderPage(parseJsonList(response, clazz), url,
             response.findHeader(GiteeResponsePage.HEADER_TOTAL_PAGE)?.toInt())
       }
     }

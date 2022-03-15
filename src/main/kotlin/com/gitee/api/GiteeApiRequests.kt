@@ -511,12 +511,16 @@ object GiteeApiRequests {
               pagination: GiteeRequestPagination? = null) =
         get(getUrl(server, Search.urlSuffix, urlSuffix,
           GiteeApiUrlQueryBuilder.urlQuery {
-            param("q", GiteeApiSearchQueryBuilder.searchQuery {
-              qualifier("repo", repoPath?.toString().orEmpty())
-              qualifier("state", state)
-              qualifier("assignee", assignee)
-              query(query)
-            })
+            //            param("q", GiteeApiSearchQueryBuilder.searchQuery {
+//              qualifier("repo", repoPath?.toString().orEmpty())
+//              qualifier("state", state)
+//              qualifier("assignee", assignee)
+//              query(query)
+//            })
+            param("q", query)
+            param("repo", repoPath?.toString().orEmpty())
+            param("state", state)
+            param("assignee", assignee)
             param(pagination)
           }))
 

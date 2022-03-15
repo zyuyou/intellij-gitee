@@ -53,7 +53,9 @@ class GiteeResponsePage<T> constructor(var items: List<T>,
       val findPageResult = pageRegex.find(requestUrl);
       val curPage = findPageResult?.groupValues?.get(2)?.toInt()
 
-      if (curPage == null || curPage == totalPageHeaderValue) return GiteeResponsePage(items)
+      if (curPage == null || totalPageHeaderValue == 0 || curPage == totalPageHeaderValue) {
+        return GiteeResponsePage(items)
+      }
 
       val newNextLink = requestUrl.replace(Regex("([?&]+page=)(\\d+)")) {
         "${it.groupValues[1]}${it.groupValues[2].toInt() + 1}"

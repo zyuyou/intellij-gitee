@@ -6,6 +6,7 @@ import com.gitee.authentication.GELoginRequest
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
+import com.intellij.collaboration.auth.ui.AccountsListModel
 import com.intellij.collaboration.auth.ui.AccountsListModelBase
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -16,9 +17,13 @@ import com.intellij.ui.awt.RelativePoint
 import javax.swing.JComponent
 
 class GEAccountsListModel(private val project: Project)
-  : AccountsListModelBase<GiteeAccount, String>(), GEAccountsHost {
+  : AccountsListModelBase<GiteeAccount, String>(),
+    AccountsListModel.WithDefault<GiteeAccount, String>,
+    GEAccountsHost {
 
   private val actionManager = ActionManager.getInstance()
+
+  override var defaultAccount: GiteeAccount? = null
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     val group = actionManager.getAction("Gitee.Accounts.AddAccount") as ActionGroup

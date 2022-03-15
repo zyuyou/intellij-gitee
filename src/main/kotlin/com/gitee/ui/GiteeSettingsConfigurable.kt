@@ -32,7 +32,9 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 
 /**
  * @author Yuyou Chow
@@ -104,7 +106,11 @@ internal class GiteeSettingsConfigurable internal constructor(private val projec
 //    }
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, GiteeIcons.DefaultAvatar).also {
+        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, true,
+          GiteeIcons.DefaultAvatar)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+          .also {
           DataManager.registerDataProvider(it.component) { key ->
             if (GEAccountsHost.KEY.`is`(key)) accountsModel
             else null
@@ -112,15 +118,16 @@ internal class GiteeSettingsConfigurable internal constructor(private val projec
         }
       }
       row {
-        checkBox(GiteeBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
+        checkBox(GiteeBundle.message("settings.clone.ssh"))
+          .bindSelected(settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
       }
-      row {
-        cell {
-          label(GiteeBundle.message("settings.timeout"))
-          intTextField({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 }, columns = 2, range = 0..60)
-          @Suppress("DialogTitleCapitalization")
-          label(GiteeBundle.message("settings.timeout.seconds"))
-        }
+      row(GiteeBundle.message("settings.timeout")) {
+        intTextField(range = 0..60)
+          .columns(2)
+          .bindIntText({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 })
+          .gap(RightGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
+        label(GiteeBundle.message("settings.timeout.seconds"))
       }
     }
   }
