@@ -113,16 +113,22 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
       val title = JBLabel(message("login.to.gitee"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
       addToLeft(title)
     }
+
   private val contentPanel = Wrapper()
 
   private val chooseLoginUiPanel: JPanel =
     JPanel(HorizontalLayout(0)).apply {
       border = JBEmptyBorder(getRegularPanelInsets())
 
-      val loginViaGHButton = JButton(message("login.via.gitee.action")).apply { addActionListener { setPasswordUi() } }
+      val loginViaGHButton = JButton(message("login.via.gitee.action")).apply {
+        addActionListener { setPrimaryLoginUi() }
+      }
+      val usePasswordLink = ActionLink(message("link.label.use.password")) { setPasswordUi() }
       val useTokenLink = ActionLink(message("link.label.use.token")) { setTokenUi() }
 
       add(loginViaGHButton)
+      add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
+      add(usePasswordLink)
       add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
       add(useTokenLink)
     }
@@ -141,7 +147,7 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
 
   fun setChooseLoginUi() = setContent(chooseLoginUiPanel)
 
-  fun setPrimaryLoginUi() = setPasswordUi()
+  fun setPrimaryLoginUi() = setOAuthUi()
 
   fun setTokenUi() {
     setContent(loginPanel)
@@ -151,6 +157,11 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
   fun setPasswordUi() {
     setContent(loginPanel)
     loginPanel.setPasswordUi() // after `loginPanel` is set as content to ensure correct focus behavior
+  }
+
+  fun setOAuthUi() {
+    setContent(loginPanel)
+    loginPanel.setOAuthUi() // after `loginPanel` is set as content to ensure correct focus behavior
   }
 
   private fun setContent(content: JComponent) {

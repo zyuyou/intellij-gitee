@@ -8,14 +8,12 @@ import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.Validator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.util.ui.UIUtil.getInactiveTextColor
-import org.jetbrains.concurrency.CancellablePromise
-import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
 
 internal class GEOAuthCredentialsUi(
@@ -58,24 +56,14 @@ internal class GEOAuthCredentialsUi(
   }
 
   private fun acquireToken(indicator: ProgressIndicator): String {
-    val tokenPromise = GEOAuthService.instance.requestToken()
-    try {
-      return tokenPromise.blockingGet(indicator)
-    }
-    catch (e: ProcessCanceledException) {
-      tokenPromise.cancel()
-      throw e
-    }
-  }
+    val credentialsFuture = GEOAuthService.instance.authorize()
 
-  private fun CancellablePromise<String>.blockingGet(indicator: ProgressIndicator): String {
-    while (true) {
-      checkCancelledEvenWithPCEDisabled(indicator)
-      try {
-        return blockingGet(1000) ?: throw ProcessCanceledException()
-      }
-      catch (ignored: TimeoutException) {
-      }
+    try {
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator).accessToken
+    }
+    catch (pce: ProcessCanceledException) {
+      credentialsFuture.completeExceptionally(pce)
+      throw pce
     }
   }
 }

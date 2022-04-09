@@ -74,6 +74,7 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
       "notes",
       "groups"
     )
+
 //    const val DEFAULT_CLIENT_NAME = "Gitee Integration Plugin"
     const val DEFAULT_CLIENT_ID = "fc439d90cb2ffc20cffeb70a6a4039e69847485e0fa56cfa0d1bf006098e24dd"
     const val DEFAULT_CLIENT_SECRET = "386f187646ee361049f69cd213424bdba5af03e820d10a68a68e5fb520902596"

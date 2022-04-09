@@ -1,90 +1,35 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication
 
-import com.gitee.authentication.GEOAuthCallbackHandler.Companion.authorizationCodeUrl
-import com.gitee.authentication.GEOAuthService.Companion.ACCESS_TOKEN_URL
-import com.gitee.authentication.GEOAuthService.Companion.AUTHORIZE_URL
-import com.intellij.ide.BrowserUtil.browse
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.collaboration.auth.services.OAuthServiceBase
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
-import com.intellij.util.io.DigestUtil.randomToken
-import com.intellij.util.io.DigestUtil.sha256
-import com.intellij.util.io.HttpRequests
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.CancellablePromise
-import org.jetbrains.concurrency.rejectedCancellablePromise
-import java.io.IOException
-import java.util.*
-import java.util.concurrent.atomic.AtomicReference
-
-internal fun isOAuthEnabled(): Boolean = Registry.`is`("gitee.use.oauth")
+import java.util.concurrent.CompletableFuture
 
 @Service
-internal class GEOAuthService {
-  private val currentRequest = AtomicReference<GHTokenRequest?>()
+internal class GEOAuthService : OAuthServiceBase<GECredentials>() {
+  override val name: String get() = SERVICE_NAME
 
-  fun requestToken(): CancellablePromise<String> {
-    if (!currentRequest.compareAndSet(null, GHTokenRequest())) return rejectedCancellablePromise("Already running")
-
-    val request = currentRequest.get()!!
-    request.onError { } // not to log exceptions as errors
-    request.onProcessed { currentRequest.set(null) }
-    request.startAuthorization()
-    return request
+  fun authorize(): CompletableFuture<GECredentials> {
+    val request = getGEOAuthRequest()
+    return authorize(request)
   }
 
-  fun acceptCode(code: String): Boolean {
-    val request = currentRequest.get() ?: return false
-
-    request.processCode(code)
-    return request.isSucceeded
+  override fun revokeToken(token: String) {
+    TODO("Not yet implemented")
   }
 
   companion object {
+    private const val SERVICE_NAME = "gitee/oauth"
+
+    val jacksonMapper: ObjectMapper get() = jacksonObjectMapper()
+
     val instance: GEOAuthService = service()
 
-    private val SERVICE_URL: Url = newFromEncoded("https://account.jetbrains.com/github/oauth/intellij")
-    val AUTHORIZE_URL: Url get() = SERVICE_URL.resolve("authorize")
-    val ACCESS_TOKEN_URL: Url get() = SERVICE_URL.resolve("access_token")
-    val SUCCESS_URL: Url get() = SERVICE_URL.resolve("complete")
-    val ERROR_URL: Url get() = SERVICE_URL.resolve("error")
+    val SERVICE_URL: Url = newFromEncoded("https://gitee.com/oauth")
   }
 }
-
-private class GHTokenRequest : AsyncPromise<String>() {
-  private val codeVerifier: String = randomToken()
-  private val codeChallenge: String get() = Base64.getEncoder().encodeToString(sha256().digest(codeVerifier.toByteArray()))
-
-  fun startAuthorization() {
-    val authorizeUrl = AUTHORIZE_URL.addParameters(mapOf(
-      "code_challenge" to codeChallenge,
-      "callback_url" to authorizationCodeUrl.toExternalForm()
-    ))
-
-    browse(authorizeUrl.toExternalForm())
-  }
-
-  fun processCode(code: String) {
-    try {
-      val token = acquireToken(code)
-      if (token != null) setResult(token) else setError("No token provided")
-    }
-    catch (e: IOException) {
-      setError(e)
-    }
-  }
-
-  private fun acquireToken(code: String): String? {
-    val tokenUrl = ACCESS_TOKEN_URL.addParameters(mapOf(
-      "code" to code,
-      "code_verifier" to codeVerifier
-    ))
-
-    return HttpRequests.post(tokenUrl.toExternalForm(), null).connect { it.getToken() }
-  }
-}
-
-private fun HttpRequests.Request.getToken(): String? = connection.getHeaderField("X-OAuth-Token")

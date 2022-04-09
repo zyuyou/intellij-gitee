@@ -33,7 +33,7 @@ intellij {
   pluginName.set("intellij-gitee")
   plugins.set(listOf("tasks", "git4idea"))
 
-  downloadSources.set(System.getenv("CI_BUILD").toBoolean())
+  downloadSources.set(!System.getenv("CI_BUILD").toBoolean())
 
 }
 

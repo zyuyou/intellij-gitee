@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
 internal val GiteeAccount.isGEAccount: Boolean get() = server.isGiteeDotCom()
 
@@ -67,11 +68,13 @@ internal class GEAccountManager
 }
 
 @Deprecated("Use GiteeAuthenticationManager.addListener")
+@ApiStatus.ScheduledForRemoval
 interface AccountRemovedListener {
   fun accountRemoved(removedAccount: GiteeAccount)
 }
 
 @Deprecated("Use GiteeAuthenticationManager.addListener")
+@ApiStatus.ScheduledForRemoval
 interface AccountTokenChangedListener {
   fun tokenChanged(account: GiteeAccount)
 }

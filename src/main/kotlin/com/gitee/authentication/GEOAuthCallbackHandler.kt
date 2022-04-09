@@ -1,45 +1,41 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication
 
-import com.gitee.authentication.GEOAuthService.Companion.ERROR_URL
-import com.gitee.authentication.GEOAuthService.Companion.SUCCESS_URL
-import com.intellij.util.Url
-import com.intellij.util.Urls.newFromEncoded
-import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
-import org.jetbrains.ide.BuiltInServerManager
-import org.jetbrains.ide.RestService
-import org.jetbrains.io.send
+import com.gitee.api.GiteeServerPath
+import com.intellij.collaboration.auth.OAuthCallbackHandlerBase
+import com.intellij.collaboration.auth.services.OAuthService
+import com.intellij.util.Urls
+import com.intellij.util.io.isLocalOrigin
+import com.intellij.util.io.referrer
+import io.netty.handler.codec.http.HttpRequest
 
-private const val INVALID_REQUEST_ERROR = "Invalid Request"
+internal class GEOAuthCallbackHandler : OAuthCallbackHandlerBase() {
+  override fun oauthService(): OAuthService<*> = GEOAuthService.instance
 
-internal class GEOAuthCallbackHandler : RestService() {
-  override fun getServiceName(): String = SERVICE_NAME
-
-  override fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean = true
-
-  override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    if (!urlDecoder.isAuthorizationCodeUrl) return INVALID_REQUEST_ERROR
-    val code = urlDecoder.authorizationCode ?: return INVALID_REQUEST_ERROR
-
-    val isCodeAccepted = GEOAuthService.instance.acceptCode(code)
-    sendRedirect(request, context, if (isCodeAccepted) SUCCESS_URL else ERROR_URL)
-    return null
+  override fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult {
+    val redirectUrl = if (isAccepted) {
+//      GEOAuthService.SERVICE_URL.resolve("complete")
+      Urls.newFromEncoded("https://gitee.com")
+    } else {
+      GEOAuthService.SERVICE_URL.resolve("error")
+    }
+    return AcceptCodeHandleResult.Redirect(redirectUrl)
   }
 
-  private fun sendRedirect(request: FullHttpRequest, context: ChannelHandlerContext, url: Url) {
-    val headers = DefaultHttpHeaders().set(HttpHeaderNames.LOCATION, url.toExternalForm())
+  override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
+    if (request.isLocalOrigin()) return OriginCheckResult.ALLOW
 
-    HttpResponseStatus.FOUND.send(context.channel(), request, null, headers)
-  }
+    val uri = request.referrer ?: return OriginCheckResult.ALLOW
 
-  companion object {
-    private const val SERVICE_NAME = "github/oauth"
-    private val port: Int get() = BuiltInServerManager.getInstance().port
+    try {
+      val parsedUri = Urls.parse(uri, false) ?: return OriginCheckResult.FORBID
 
-    val authorizationCodeUrl: Url get() = newFromEncoded("http://localhost:$port/$PREFIX/$SERVICE_NAME/authorization_code")
+      return if (parsedUri.authority == GiteeServerPath.DEFAULT_HOST)
+        OriginCheckResult.ALLOW else OriginCheckResult.FORBID
 
-    private val QueryStringDecoder.isAuthorizationCodeUrl: Boolean get() = path() == authorizationCodeUrl.path
-    private val QueryStringDecoder.authorizationCode: String? get() = parameters()["code"]?.firstOrNull()
+    } catch (ignored: Exception) {
+    }
+
+    return OriginCheckResult.FORBID
   }
 }

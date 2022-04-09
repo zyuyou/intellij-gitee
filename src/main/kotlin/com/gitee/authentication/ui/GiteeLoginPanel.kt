@@ -43,16 +43,10 @@ class GiteeLoginPanel(
 
   private lateinit var currentUi: GECredentialsUi
 
-//  private var passwordUi = GiteeCredentialsUI.PasswordUI(
-//    serverTextField, clientIdTextField, clientSecretTextField, ::switchToTokenUI, ::editCustomAppInfo, ::useDefaultAppInfo, executorFactory, isAccountUnique, isDialogMode
-//  )
   private var passwordUi = GEPasswordCredentialsUi(
     serverTextField, executorFactory, isAccountUnique, clientIdTextField, clientSecretTextField
   )
 
-//  private var tokenUi = GiteeCredentialsUI.TokenUI(
-//    executorFactory, isAccountUnique, serverTextField, ::switchToPasswordUI, isDialogMode
-//  )
   private var tokenUi = GETokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
 
   private var oauthUi = GEOAuthCredentialsUi(executorFactory, isAccountUnique)

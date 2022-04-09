@@ -11,15 +11,11 @@ import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.LayoutBuilder
 import java.net.UnknownHostException
 import javax.swing.JComponent
-import javax.swing.JTextField
-import javax.swing.event.DocumentEvent
 
 internal class GETokenCredentialsUi(
   private val serverTextField: ExtendableTextField,
@@ -42,7 +38,7 @@ internal class GETokenCredentialsUi(
       cell {
         accessTokenTextField(
           comment = message("login.insufficient.scopes", GiteeTokenCreator.MASTER_SCOPES),
-          constraints = *arrayOf(pushX, growX)
+          constraints = arrayOf(pushX, growX)
         )
       }
     }
@@ -50,7 +46,7 @@ internal class GETokenCredentialsUi(
       cell {
         refreshTokenTextField(
           comment = message("login.insufficient.scopes", GiteeTokenCreator.MASTER_SCOPES),
-          constraints = *arrayOf(pushX, growX)
+          constraints = arrayOf(pushX, growX)
         )
       }
     }
@@ -116,20 +112,20 @@ internal class GETokenCredentialsUi(
 
 }
 
-private val JTextField.serverValid: ComponentPredicate
-  get() = object : ComponentPredicate() {
-    override fun invoke(): Boolean = tryParseServer() != null
+//private val JTextField.serverValid: ComponentPredicate
+//  get() = object : ComponentPredicate() {
+//    override fun invoke(): Boolean = tryParseServer() != null
+//
+//    override fun addListener(listener: (Boolean) -> Unit) =
+//      document.addDocumentListener(object : DocumentAdapter() {
+//        override fun textChanged(e: DocumentEvent) = listener(tryParseServer() != null)
+//      })
+//  }
 
-    override fun addListener(listener: (Boolean) -> Unit) =
-      document.addDocumentListener(object : DocumentAdapter() {
-        override fun textChanged(e: DocumentEvent) = listener(tryParseServer() != null)
-      })
-  }
-
-private fun JTextField.tryParseServer(): GiteeServerPath? =
-  try {
-    GiteeServerPath.from(text.trim())
-  }
-  catch (e: GiteeParseException) {
-    null
-  }
+//private fun JTextField.tryParseServer(): GiteeServerPath? =
+//  try {
+//    GiteeServerPath.from(text.trim())
+//  }
+//  catch (e: GiteeParseException) {
+//    null
+//  }

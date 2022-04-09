@@ -87,6 +87,13 @@ internal class CloneDialogLoginPanel(private val account: GiteeAccount?) :
     loginPanel.setPasswordUi()
   }
 
+  fun setOAuthUi() {
+    setupNewUi(true)
+    loginPanel.setOAuthUi()
+
+    login()
+  }
+
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
   override fun dispose() = Unit
