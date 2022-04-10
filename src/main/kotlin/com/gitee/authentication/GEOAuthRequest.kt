@@ -24,14 +24,12 @@ internal class GEOAuthRequest(giteeAppCred: GEAccountsUtils.GEAppCredentials): O
 
   override val authUrlWithParameters: Url = AUTHORIZE_URL.addParameters(mapOf(
     "client_id" to giteeAppCred.clientId,
-    "scope" to scope,
+    "scope" to GECredentials.scope,
     "redirect_uri" to authorizationCodeUrl.toExternalForm(),
     "response_type" to responseType,
   ))
 
   companion object {
-    private const val scope: String = "user_info projects pull_requests gists issues notes groups"
-
     private const val responseType = "code"
 
     private val AUTHORIZE_URL: Url

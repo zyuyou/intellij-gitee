@@ -281,7 +281,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
   }
 
   private fun loadUserDetails(account: GiteeAccount,
-                              executor: GiteeApiRequestExecutor.WithTokensAuth) {
+                              executor: GiteeApiRequestExecutor.WithCredentialsAuth) {
     progressManager.run(object : Task.Backgroundable(project, GiteeBundle.message("progress.title.not.visible")) {
       lateinit var user: GiteeAuthenticatedUser
       lateinit var iconProvider: GEAvatarIconsProvider
@@ -310,7 +310,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
   }
 
   private fun loadRepositories(account: GiteeAccount,
-                               executor: GiteeApiRequestExecutor.WithTokensAuth) {
+                               executor: GiteeApiRequestExecutor.WithCredentialsAuth) {
     repositoriesByAccount.remove(account)
     errorsByAccount.remove(account)
 

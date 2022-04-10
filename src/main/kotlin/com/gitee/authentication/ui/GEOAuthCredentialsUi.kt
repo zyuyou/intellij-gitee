@@ -3,6 +3,7 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GEOAuthService
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.Validator
@@ -31,14 +32,14 @@ internal class GEOAuthCredentialsUi(
     server: GiteeServerPath,
     executor: GiteeApiRequestExecutor,
     indicator: ProgressIndicator
-  ): Triple<String, String, String> {
+  ): Pair<String, GECredentials> {
     executor as GiteeApiRequestExecutor.WithTokenAuth
 
-    val token = acquireToken(indicator)
-    executor.token = token
+    val credentials = acquireToken(indicator)
+    executor.token = credentials.accessToken
 
     val login = GETokenCredentialsUi.acquireLogin(server, executor, indicator, isAccountUnique, null)
-    return Triple(login, token, token)
+    return Pair(login, credentials)
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo = GETokenCredentialsUi.handleError(error)
@@ -55,11 +56,11 @@ internal class GEOAuthCredentialsUi(
     }
   }
 
-  private fun acquireToken(indicator: ProgressIndicator): String {
+  private fun acquireToken(indicator: ProgressIndicator): GECredentials {
     val credentialsFuture = GEOAuthService.instance.authorize()
 
     try {
-      return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator).accessToken
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator)
     }
     catch (pce: ProcessCanceledException) {
       credentialsFuture.completeExceptionally(pce)

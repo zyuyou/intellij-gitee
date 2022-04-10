@@ -17,8 +17,8 @@ package com.gitee.api
 
 import com.gitee.api.GiteeApiRequestExecutor.Factory.Companion.getInstance
 import com.gitee.api.GiteeServerPath.Companion.from
-import com.gitee.api.data.GiteeAuthorization
 import com.gitee.api.data.GiteeErrorMessage
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.*
 import com.gitee.util.GiteeSettings
@@ -110,11 +110,11 @@ sealed class GiteeApiRequestExecutor {
     }
   }
 
-  class WithTokensAuth internal constructor(giteeSettings: GiteeSettings, tokens: Pair<String, String>,
-                                            private val authDataChangedSupplier: (tokens: Pair<String, String>) -> Unit) : Base(giteeSettings) {
+  class WithCredentialsAuth internal constructor(giteeSettings: GiteeSettings, credentials: GECredentials,
+                                                 private val authDataChangedSupplier: (credentials: GECredentials) -> Unit) : Base(giteeSettings) {
 
     @Volatile
-    internal var tokens: Pair<String, String> = tokens
+    internal var credentials: GECredentials = credentials
       set(value) {
         field = value
         authDataChangedEventDispatcher.multicaster.authDataChanged()
@@ -133,29 +133,27 @@ sealed class GiteeApiRequestExecutor {
         createRequestBuilder(request)
           .tuner { connection ->
             request.additionalHeaders.forEach(connection::addRequestProperty)
-            connection.addRequestProperty("Authorization", "token ${tokens.first}")
+            connection.addRequestProperty("Authorization", "token ${credentials.accessToken}")
           }
           .execute(request, indicator)
 
       } catch (e: GiteeAccessTokenExpiredException) {
-        if (tokens.second == "") throw e
+        if (credentials.refreshToken == "") throw e
 
         val serverPath = from(request.url.substringBefore('?'))
 
-        val authorization: GiteeAuthorization = GiteeTokenCreator(
+        val newCredentials: GECredentials = GiteeTokenCreator(
           from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
           getInstance().create(),
           DumbProgressIndicator()
-        ).updateMaster(tokens.second)
+        ).updateMaster(credentials.refreshToken)
 
-        tokens = authorization.accessToken to authorization.refreshToken
-
-        authDataChangedSupplier(tokens)
+        authDataChangedSupplier(newCredentials)
 
         return createRequestBuilder(request)
           .tuner { connection ->
             request.additionalHeaders.forEach(connection::addRequestProperty)
-            connection.addRequestProperty("Authorization", "token ${authorization.accessToken}")
+            connection.addRequestProperty("Authorization", "token ${newCredentials.accessToken}")
           }
           .execute(request, indicator)
       }
@@ -236,12 +234,16 @@ sealed class GiteeApiRequestExecutor {
         HttpURLConnection.HTTP_FORBIDDEN -> {
 
           when {
-            jsonError?.containsReasonMessage("API rate limit exceeded") == true -> GiteeRateLimitExceededException(jsonError.presentableError)
-            jsonError?.containsReasonMessage("Access token is expired") == true -> GiteeAccessTokenExpiredException(jsonError.presentableError)
-            jsonError?.containsErrorMessage("invalid_grant") == true -> GiteeAuthenticationException("${jsonError.error} : ${jsonError.errorDescription
-              ?: ""}")
-            else -> GiteeAuthenticationException("Request response: " + (jsonError?.presentableError
-              ?: if (errorText != "") errorText else statusLine))
+            jsonError?.containsReasonMessage("API rate limit exceeded") == true ->
+              GiteeRateLimitExceededException(jsonError.presentableError)
+            jsonError?.containsReasonMessage("Access token is expired") == true ->
+              GiteeAccessTokenExpiredException(jsonError.presentableError)
+            jsonError?.containsReasonMessage("Access token is required") == true ->
+              GiteeAccessTokenExpiredException(jsonError.presentableError)
+            jsonError?.containsErrorMessage("invalid_grant") == true ->
+              GiteeAuthenticationException("${jsonError.error} : ${jsonError.errorDescription?: ""}")
+            else ->
+              GiteeAuthenticationException("Request response: " + (jsonError?.presentableError?: if (errorText != "") errorText else statusLine))
           }
         }
         else -> {
@@ -299,8 +301,8 @@ sealed class GiteeApiRequestExecutor {
     }
 
     @CalledInAny
-    fun create(tokens: Pair<String, String>, authDataChangedSupplier: (tokens: Pair<String, String>) -> Unit): WithTokensAuth {
-      return WithTokensAuth(GiteeSettings.getInstance(), tokens, authDataChangedSupplier)
+    fun create(credentials: GECredentials, authDataChangedSupplier: (credentials: GECredentials) -> Unit): WithCredentialsAuth {
+      return WithCredentialsAuth(GiteeSettings.getInstance(), credentials, authDataChangedSupplier)
     }
 
     @CalledInAny

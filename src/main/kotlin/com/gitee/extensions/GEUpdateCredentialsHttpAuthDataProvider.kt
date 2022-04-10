@@ -13,7 +13,7 @@ import java.awt.Component
 
 private val authenticationManager get() = GiteeAuthenticationManager.getInstance()
 
-internal class GEUpdateTokenHttpAuthDataProvider(
+internal class GEUpdateCredentialsHttpAuthDataProvider(
   private val project: Project,
   private val account: GiteeAccount
 ) : InteractiveGitHttpAuthDataProvider {
@@ -21,8 +21,8 @@ internal class GEUpdateTokenHttpAuthDataProvider(
   @RequiresEdt
   override fun getAuthData(parentComponent: Component?): AuthData? {
     if (!authenticationManager.requestReLogin(account, project, parentComponent)) return null
-    val token = authenticationManager.getTokenForAccount(account) ?: return null
+    val credentials = authenticationManager.getCredentialsForAccount(account) ?: return null
 
-    return GEAccountAuthData(account, GIT_AUTH_PASSWORD_SUBSTITUTE, token)
+    return GEAccountAuthData(account, GIT_AUTH_PASSWORD_SUBSTITUTE, credentials)
   }
 }

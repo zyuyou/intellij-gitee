@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
+import static com.gitee.i18n.GiteeBundle.message;
+
 /**
  * @author Yuyou Chow
  * <p>
@@ -53,11 +55,13 @@ public class GiteeComment extends SimpleComment {
 		builder.append("</td><td>");
 
 		if (getAuthor() != null) {
-			builder.append("<b>Author:</b> <a href=\"").append(myUserHtmlUrl).append("\">").append(getAuthor()).append("</a><br>");
+			builder.append("<b>").append(message("task.comment.author")).append("</b> <a href=\"").
+					append(myUserHtmlUrl).append("\">").append(getAuthor()).append("</a><br>");
 		}
 
 		if (getDate() != null) {
-			builder.append("<b>Date:</b> ").append(DateFormatUtil.formatDateTime(getDate())).append("<br>");
+			builder.append("<b>").append(message("task.comment.date")).append("</b> ")
+					.append(DateFormatUtil.formatDateTime(getDate())).append("<br>");
 		}
 
 		builder.append("</td></tr></table>");

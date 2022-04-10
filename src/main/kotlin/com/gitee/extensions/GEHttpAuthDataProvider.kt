@@ -6,6 +6,7 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.data.GiteeAuthenticatedUser
 import com.gitee.authentication.GEAccountAuthData
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
@@ -24,17 +25,17 @@ internal class GEHttpAuthDataProvider : GitHttpAuthDataProvider {
 
   override fun getAuthData(project: Project, url: String): GEAccountAuthData? {
     val account = getGitAuthenticationAccounts(project, url, null).singleOrNull() ?: return null
-    val token = GiteeAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
-    val accountDetails = getAccountDetails(account, token) ?: return null
+    val credentials = GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account) ?: return null
+    val accountDetails = getAccountDetails(account, credentials) ?: return null
 
-    return GEAccountAuthData(account, accountDetails.login, token)
+    return GEAccountAuthData(account, accountDetails.login, credentials)
   }
 
   override fun getAuthData(project: Project, url: String, login: String): GEAccountAuthData? {
     val account = getGitAuthenticationAccounts(project, url, login).singleOrNull() ?: return null
-    val token = GiteeAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
+    val credentials = GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account) ?: return null
 
-    return GEAccountAuthData(account, login, token)
+    return GEAccountAuthData(account, login, credentials)
   }
 
   override fun forgetPassword(project: Project, url: String, authData: AuthData) {
@@ -59,15 +60,17 @@ internal class GEHttpAuthDataProvider : GitHttpAuthDataProvider {
   }
 }
 
-private fun getAccountDetails(account: GiteeAccount, token: String? = null): GiteeAuthenticatedUser? =
+private fun getAccountDetails(account: GiteeAccount, credentials: GECredentials? = null): GiteeAuthenticatedUser? =
   try {
-    service<GiteeAccountInformationProvider>().getInformation(getRequestExecutor(account, token), DumbProgressIndicator(), account)
+    service<GiteeAccountInformationProvider>().getInformation(getRequestExecutor(account, credentials), DumbProgressIndicator(), account)
   }
   catch (e: Exception) {
     if (e !is ProcessCanceledException) LOG.info("Cannot load details for $account", e)
     null
   }
 
-private fun getRequestExecutor(account: GiteeAccount, token: String?): GiteeApiRequestExecutor =
-  if (token != null) GiteeApiRequestExecutor.Factory.getInstance().create(token)
-  else GiteeApiRequestExecutorManager.getInstance().getExecutor(account)
+private fun getRequestExecutor(account: GiteeAccount, credentials: GECredentials?): GiteeApiRequestExecutor =
+  if (credentials != null)
+    GiteeApiRequestExecutor.Factory.getInstance().create(credentials.accessToken)
+  else
+    GiteeApiRequestExecutorManager.getInstance().getExecutor(account)

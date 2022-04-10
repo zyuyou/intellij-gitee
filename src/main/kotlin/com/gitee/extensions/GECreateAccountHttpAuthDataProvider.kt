@@ -3,6 +3,7 @@ package com.gitee.extensions
 
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GEAccountAuthData
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.util.GiteeUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
@@ -23,8 +24,8 @@ internal class GECreateAccountHttpAuthDataProvider(
   @RequiresEdt
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val account = requestNewAccount(parentComponent) ?: return null
-    val token = getOrRequestToken(account, project, parentComponent) ?: return null
-    return GEAccountAuthData(account, login ?: GIT_AUTH_PASSWORD_SUBSTITUTE, token)
+    val credentials = getOrRequestCredentials(account, project, parentComponent) ?: return null
+    return GEAccountAuthData(account, login ?: GIT_AUTH_PASSWORD_SUBSTITUTE, credentials)
   }
 
   private fun requestNewAccount(parentComponent: Component?): GiteeAccount? =
@@ -32,10 +33,7 @@ internal class GECreateAccountHttpAuthDataProvider(
     else authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
 
   companion object {
-    fun getOrRequestToken(account: GiteeAccount, project: Project, parentComponent: Component?): String? =
-      authenticationManager.getTokenForAccount(account) ?: authenticationManager.requestNewTokens(account, project, parentComponent)
-
-//    fun getOrRequestTokens(account: GiteeAccount, project: Project, parentComponent: Component?): Pair<String, String>? =
-//      authenticationManager.getTokensForAccount(account) ?: authenticationManager.requestNewTokens(account, project, parentComponent)
+    fun getOrRequestCredentials(account: GiteeAccount, project: Project, parentComponent: Component?): GECredentials? =
+      authenticationManager.getCredentialsForAccount(account) ?: authenticationManager.requestNewCredentials(account, project, parentComponent)
   }
 }

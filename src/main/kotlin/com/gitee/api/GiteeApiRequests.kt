@@ -22,8 +22,8 @@ import com.gitee.api.requests.AuthorizationCreateRequest
 import com.gitee.api.requests.AuthorizationUpdateRequest
 import com.gitee.api.requests.GiteeChangeIssueStateRequest
 import com.gitee.api.util.GiteeApiPagesLoader
-import com.gitee.api.util.GiteeApiSearchQueryBuilder
 import com.gitee.api.util.GiteeApiUrlQueryBuilder
+import com.gitee.authentication.GECredentials
 import com.intellij.util.ThrowableConvertor
 import java.awt.Image
 
@@ -511,12 +511,6 @@ object GiteeApiRequests {
               pagination: GiteeRequestPagination? = null) =
         get(getUrl(server, Search.urlSuffix, urlSuffix,
           GiteeApiUrlQueryBuilder.urlQuery {
-            //            param("q", GiteeApiSearchQueryBuilder.searchQuery {
-//              qualifier("repo", repoPath?.toString().orEmpty())
-//              qualifier("state", state)
-//              qualifier("assignee", assignee)
-//              query(query)
-//            })
             param("q", query)
             param("repo", repoPath?.toString().orEmpty())
             param("state", state)
@@ -541,14 +535,14 @@ object GiteeApiRequests {
   object Auth : Entity("/oauth/token") {
     @JvmStatic
     fun create(server: GiteeServerPath, scopes: List<String>, login: String, password: CharArray) =
-      Post.formUrlEncoded<GiteeAuthorization>(
+      Post.formUrlEncoded<GECredentials>(
         getBaseUrl(server, urlSuffix),
         AuthorizationCreateRequest(scopes, login, String(password), server.clientId, server.clientSecret)
       ).withOperationName("create authorization")
 
     @JvmStatic
     fun update(server: GiteeServerPath, refreshToken: String) =
-      Post.formUrlEncoded<GiteeAuthorization>(
+      Post.formUrlEncoded<GECredentials>(
         getBaseUrl(server, urlSuffix),
         AuthorizationUpdateRequest(refreshToken)
       ).withOperationName("create authorization")

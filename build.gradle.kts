@@ -52,7 +52,7 @@ tasks {
     sinceBuild.set(properties("ideaBuildVersion"))
     untilBuild.set("${properties("ideaBuildVersion")}.*")
     changeNotes.set(
-      provider { changelog.getLatest().toHTML() }
+      provider { changelog.getOrNull("${project.version}")?.toHTML() ?: changelog.getLatest().toHTML() }
     )
   }
 

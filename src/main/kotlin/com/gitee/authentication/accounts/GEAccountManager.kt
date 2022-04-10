@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.authentication.accounts
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
+import com.gitee.authentication.accounts.GEAccountsUtils.jacksonMapper
 import com.gitee.util.GiteeUtil
 import com.intellij.collaboration.auth.AccountManagerBase
 import com.intellij.collaboration.auth.AccountsListener
@@ -18,18 +21,25 @@ internal val GiteeAccount.isGEAccount: Boolean get() = server.isGiteeDotCom()
  */
 @Service
 internal class GEAccountManager
-  : AccountManagerBase<GiteeAccount, String>(GiteeUtil.SERVICE_DISPLAY_NAME) {
+  : AccountManagerBase<GiteeAccount, GECredentials>(GiteeUtil.SERVICE_DISPLAY_NAME) {
 
   override fun accountsRepository() = service<GEPersistentAccounts>()
 
-  override fun serializeCredentials(credentials: String): String = credentials
-  override fun deserializeCredentials(credentials: String): String = credentials
+  override fun serializeCredentials(credentials: GECredentials): String =
+    jacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(credentials)
+
+  override fun deserializeCredentials(credentials: String): GECredentials {
+    try {
+      return jacksonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(credentials, GECredentials::class.java)
+    } catch (ignore: Exception) {
+      return GECredentials.EmptyCredentials
+    }
+  }
+
 
   fun findCredentialsPair(account: GiteeAccount): Pair<String, String>? {
     return super.findCredentials(account)?.let { credentials ->
-      credentials.split("&").let { credentialsList ->
-        if (credentialsList.size == 1) Pair(credentialsList[0], "") else Pair(credentialsList[0], credentialsList[1])
-      }
+      Pair(credentials.accessToken, credentials.refreshToken)
     }
   }
 

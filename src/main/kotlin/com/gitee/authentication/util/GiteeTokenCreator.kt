@@ -18,7 +18,7 @@ package com.gitee.authentication.util
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
-import com.gitee.api.data.GiteeAuthorization
+import com.gitee.authentication.GECredentials
 import com.gitee.exceptions.GiteeStatusCodeException
 import com.intellij.openapi.progress.ProgressIndicator
 import java.io.IOException
@@ -36,17 +36,17 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
                         private val indicator: ProgressIndicator) {
 
   @Throws(IOException::class)
-  fun createMaster(login: String, password: CharArray): GiteeAuthorization {
+  fun createMaster(login: String, password: CharArray): GECredentials {
     return safeCreate(MASTER_SCOPES, login, password)
   }
 
   @Throws(IOException::class)
-  fun updateMaster(refreshToken: String): GiteeAuthorization {
+  fun updateMaster(refreshToken: String): GECredentials {
     return safeUpdate(refreshToken)
   }
 
   @Throws(IOException::class)
-  private fun safeCreate(scopes: List<String>, login: String, password: CharArray): GiteeAuthorization {
+  private fun safeCreate(scopes: List<String>, login: String, password: CharArray): GECredentials {
     try {
       return executor.execute(indicator, GiteeApiRequests.Auth.create(server, scopes, login, password))
     } catch (e: GiteeStatusCodeException) {
@@ -56,7 +56,7 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
   }
 
   @Throws(IOException::class)
-  private fun safeUpdate(refreshToken: String): GiteeAuthorization {
+  private fun safeUpdate(refreshToken: String): GECredentials {
     try {
       return executor.execute(indicator, GiteeApiRequests.Auth.update(server, refreshToken))
     } catch (e: GiteeStatusCodeException) {
@@ -72,10 +72,10 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
       "issues",
       "user_info",
       "notes",
-      "groups"
+      "groups",
+      "email"
     )
 
-//    const val DEFAULT_CLIENT_NAME = "Gitee Integration Plugin"
     const val DEFAULT_CLIENT_ID = "fc439d90cb2ffc20cffeb70a6a4039e69847485e0fa56cfa0d1bf006098e24dd"
     const val DEFAULT_CLIENT_SECRET = "386f187646ee361049f69cd213424bdba5af03e820d10a68a68e5fb520902596"
   }

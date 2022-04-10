@@ -2,6 +2,7 @@
 package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.i18n.GiteeBundle.message
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -13,8 +14,7 @@ import com.intellij.ui.components.DropDownLink
 import javax.swing.JButton
 
 internal interface GEAccountsHost {
-  fun addAccount(server: GiteeServerPath, login: String, token: String)
-  fun addAccount(server: GiteeServerPath, login: String, tokens: Pair<String, String>)
+  fun addAccount(server: GiteeServerPath, login: String, credentials: GECredentials)
 
   fun isAccountUnique(login: String, server: GiteeServerPath): Boolean
 

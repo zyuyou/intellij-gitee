@@ -16,19 +16,7 @@
 package com.gitee.exceptions;
 
 public class GiteeAccessTokenExpiredException extends GiteeAuthenticationException {
-  public GiteeAccessTokenExpiredException() {
-    super();
-  }
-
   public GiteeAccessTokenExpiredException(String message) {
     super(message);
-  }
-
-  public GiteeAccessTokenExpiredException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public GiteeAccessTokenExpiredException(Throwable cause) {
-    super(cause);
   }
 }

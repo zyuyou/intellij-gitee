@@ -42,15 +42,6 @@ class GiteeAccountInformationProvider : Disposable {
     .expireAfterAccess(30, TimeUnit.MINUTES)
     .build<GiteeAccount, GiteeAuthenticatedUser>()
 
-//  init {
-//    ApplicationManager.getApplication().messageBus
-//      .connect()
-//      .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-//        override fun tokenChanged(account: GiteeAccount) {
-//          informationCache.invalidate(account)
-//        }
-//      })
-//  }
   init {
     service<GEAccountManager>().addListener(this, object : AccountsListener<GiteeAccount> {
       override fun onAccountListChanged(old: Collection<GiteeAccount>, new: Collection<GiteeAccount>) {

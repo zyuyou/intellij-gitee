@@ -78,7 +78,11 @@ private class GECloneDialogExtensionComponent(project: Project) : GECloneDialogE
     }
 
   override fun createAccountMenuLoginActions(account: GiteeAccount?): Collection<AccountMenuItem.Action> =
-    listOf(createLoginAction(account), createLoginWithTokenAction(account))
+    listOf(
+      createLoginAction(account),
+      createLoginWithPasswordAction(account),
+      createLoginWithTokenAction(account)
+    )
 
   private fun createLoginAction(account: GiteeAccount?): AccountMenuItem.Action {
     val isExistingAccount = account != null
@@ -92,9 +96,18 @@ private class GECloneDialogExtensionComponent(project: Project) : GECloneDialogE
     )
   }
 
+  private fun createLoginWithPasswordAction(account: GiteeAccount?): AccountMenuItem.Action =
+    AccountMenuItem.Action(
+      message("login.with.password.action"),
+      {
+        switchToLogin(account)
+        getLoginPanel()?.setPasswordUi()
+      }
+    )
+
   private fun createLoginWithTokenAction(account: GiteeAccount?): AccountMenuItem.Action =
     AccountMenuItem.Action(
-      message("login.with.token.action"),
+      message("login.with.tokens.action"),
       {
         switchToLogin(account)
         getLoginPanel()?.setTokenUi()
@@ -124,7 +137,7 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
         addActionListener { setPrimaryLoginUi() }
       }
       val usePasswordLink = ActionLink(message("link.label.use.password")) { setPasswordUi() }
-      val useTokenLink = ActionLink(message("link.label.use.token")) { setTokenUi() }
+      val useTokenLink = ActionLink(message("link.label.use.tokens")) { setTokenUi() }
 
       add(loginViaGHButton)
       add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })

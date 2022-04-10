@@ -2,6 +2,7 @@
 package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GELoginRequest
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GEAccountManager
@@ -17,8 +18,8 @@ import com.intellij.ui.awt.RelativePoint
 import javax.swing.JComponent
 
 class GEAccountsListModel(private val project: Project)
-  : AccountsListModelBase<GiteeAccount, String>(),
-    AccountsListModel.WithDefault<GiteeAccount, String>,
+  : AccountsListModelBase<GiteeAccount, GECredentials>(),
+    AccountsListModel.WithDefault<GiteeAccount, GECredentials>,
     GEAccountsHost {
 
   private val actionManager = ActionManager.getInstance()
@@ -41,21 +42,14 @@ class GEAccountsListModel(private val project: Project)
     ) ?: return
 
     account.name = authData.login
-    newCredentials[account] = authData.token
+    newCredentials[account] = authData.credentials
     notifyCredentialsChanged(account)
   }
 
-  override fun addAccount(server: GiteeServerPath, login: String, token: String) {
+  override fun addAccount(server: GiteeServerPath, login: String, credentials: GECredentials) {
     val account = GEAccountManager.createAccount(login, server)
     accountsListModel.add(account)
-    newCredentials[account] = token
-    notifyCredentialsChanged(account)
-  }
-
-  override fun addAccount(server: GiteeServerPath, login: String, tokens: Pair<String, String>) {
-    val account = GEAccountManager.createAccount(login, server)
-    accountsListModel.add(account)
-    newCredentials[account] = "${tokens.first}&${tokens.second}"
+    newCredentials[account] = credentials
     notifyCredentialsChanged(account)
   }
 

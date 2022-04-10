@@ -5,7 +5,7 @@ import com.gitee.authentication.GEAccountAuthData
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeChooseAccountDialog
-import com.gitee.extensions.GECreateAccountHttpAuthDataProvider.Companion.getOrRequestToken
+import com.gitee.extensions.GECreateAccountHttpAuthDataProvider.Companion.getOrRequestCredentials
 import com.gitee.i18n.GiteeBundle
 import com.gitee.util.GiteeUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
 import com.intellij.openapi.project.Project
@@ -24,7 +24,7 @@ internal class GESelectAccountHttpAuthDataProvider(
   @RequiresEdt
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val (account, setDefault) = chooseAccount(parentComponent) ?: return null
-    val token = getOrRequestToken(account, project, parentComponent) ?: return null
+    val token = getOrRequestCredentials(account, project, parentComponent) ?: return null
     if (setDefault) GiteeAuthenticationManager.getInstance().setDefaultAccount(project, account)
 
     return GEAccountAuthData(account, GIT_AUTH_PASSWORD_SUBSTITUTE, token)

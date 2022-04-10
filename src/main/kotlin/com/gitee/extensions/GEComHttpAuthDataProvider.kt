@@ -30,7 +30,7 @@ private fun getAuthDataOrCancel(project: Project, url: String, login: String?): 
   val accounts = GiteeAuthenticationManager.getInstance().getAccounts().filter { it.server.matches(url) }
   val provider = when (accounts.size) {
     0 -> GECreateAccountHttpAuthDataProvider(project, DEFAULT_SERVER, login)
-    1 -> GEUpdateTokenHttpAuthDataProvider(project, accounts.first())
+    1 -> GEUpdateCredentialsHttpAuthDataProvider(project, accounts.first())
     else -> GESelectAccountHttpAuthDataProvider(project, accounts)
   }
   val authData = invokeAndWaitIfNeeded(ModalityState.any()) { provider.getAuthData(null) }

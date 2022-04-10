@@ -8,19 +8,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.ui.components.BrowserLink
+import com.intellij.util.ui.JBUI
+import git4idea.i18n.GitBundle
 import java.awt.Component
-import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.JPanel
 
-class AddGEAccountAction : DumbAwareAction() {
+class AddGEAccountWithPasswordAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.getData(GEAccountsHost.KEY) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val accountsHost = e.getData(GEAccountsHost.KEY)!!
-    val dialog = GEOAuthLoginDialog(e.project, e.getData(PlatformDataKeys.CONTEXT_COMPONENT), accountsHost::isAccountUnique)
+    val dialog = GEPasswordLoginDialog(e.project, e.getData(PlatformDataKeys.CONTEXT_COMPONENT), accountsHost::isAccountUnique)
     dialog.setServer(GiteeServerPath.DEFAULT_HOST, false)
 
     if (dialog.showAndGet()) {
@@ -29,24 +31,20 @@ class AddGEAccountAction : DumbAwareAction() {
   }
 }
 
-internal class GEOAuthLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
+internal class GEPasswordLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
   BaseLoginDialog(project, parent, GiteeApiRequestExecutor.Factory.getInstance(), isAccountUnique) {
 
   init {
     title = message("login.to.gitee")
-    loginPanel.setOAuthUi()
+    setOKButtonText(GitBundle.message("login.dialog.button.login"))
     init()
   }
 
-  override fun createActions(): Array<Action> = arrayOf(cancelAction)
+  override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
 
-  override fun show() {
-    doOKAction()
-    super.show()
+  override fun createSouthAdditionalPanel(): JPanel {
+    return JBUI.Panels.simplePanel().addToCenter(
+      BrowserLink(message("login.sign.up"), "https://gitee.com")
+    )
   }
-
-  override fun createCenterPanel(): JComponent =
-    simplePanel(loginPanel)
-      .withPreferredWidth(200)
-      .setPaddingCompensated()
 }

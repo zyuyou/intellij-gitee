@@ -15,6 +15,7 @@
  */
 package com.gitee.api
 
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
@@ -34,7 +35,7 @@ import java.awt.Component
  */
 class GiteeApiRequestExecutorManager {
 
-  private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor.WithTokensAuth>()
+  private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor.WithCredentialsAuth>()
 
   companion object {
     @JvmStatic
@@ -42,54 +43,43 @@ class GiteeApiRequestExecutorManager {
   }
 
   internal fun tokenChanged(account: GiteeAccount) {
-    val tokens = service<GEAccountManager>().findCredentialsPair(account)
-    if (tokens == null) executors.remove(account) else executors[account]?.tokens = tokens
+    val credentials = service<GEAccountManager>().findCredentials(account)
+    if (credentials == null)
+      executors.remove(account)
+    else
+      executors[account]?.credentials = credentials
   }
 
   @RequiresEdt
-  fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithTokensAuth? {
+  fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithCredentialsAuth? {
     return getOrTryToCreateExecutor(account) {
-      GiteeAuthenticationManager.getInstance().requestNewTokens(account, project) ?.let {
-        val tokens = it.split("&")
-        if(tokens.size == 1) {
-          it to ""
-        } else {
-          tokens[0] to tokens[1]
-        }
-      }
+      GiteeAuthenticationManager.getInstance().requestNewCredentials(account, project)
     }
   }
 
   @RequiresEdt
-  fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor.WithTokensAuth? {
+  fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor.WithCredentialsAuth? {
     return getOrTryToCreateExecutor(account) {
-      GiteeAuthenticationManager.getInstance().requestNewTokens(account, null, parentComponent) ?.let {
-        val tokens = it.split("&")
-        if(tokens.size == 1) {
-          it to ""
-        } else {
-          tokens[0] to tokens[1]
-        }
-      }
+      GiteeAuthenticationManager.getInstance().requestNewCredentials(account, null, parentComponent)
     }
   }
 
   @RequiresEdt
   @Throws(GiteeMissingTokenException::class)
-  fun getExecutor(account: GiteeAccount): GiteeApiRequestExecutor.WithTokensAuth {
+  fun getExecutor(account: GiteeAccount): GiteeApiRequestExecutor.WithCredentialsAuth {
     return getOrTryToCreateExecutor(account) { throw GiteeMissingTokenException(account) }!!
   }
 
   private fun getOrTryToCreateExecutor(account: GiteeAccount,
-                                       missingTokensHandler: () -> Pair<String, String>?): GiteeApiRequestExecutor.WithTokensAuth? {
+                                       missingTokensHandler: () -> GECredentials?): GiteeApiRequestExecutor.WithCredentialsAuth? {
 
     // 先从本地credential系统取, 如果没有 => missingTokensHandler弹窗请求输入
     // 如果本地credential取到, 创建附带刷新回调的executor
     return executors.getOrPut(account) {
-      (GiteeAuthenticationManager.getInstance().getTokensForAccount(account) ?: missingTokensHandler())
-        ?.let { tokens ->
-          GiteeApiRequestExecutor.Factory.getInstance().create(tokens) { newTokens ->
-            GiteeAuthenticationManager.getInstance().updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
+      (GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account) ?: missingTokensHandler())
+        ?.let { credentials ->
+          GiteeApiRequestExecutor.Factory.getInstance().create(credentials) { newCredentials ->
+            GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, newCredentials)
           }
         } ?: return null
     }

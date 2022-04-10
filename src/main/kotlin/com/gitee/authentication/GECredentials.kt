@@ -14,4 +14,14 @@ class GECredentials(
   override fun isAccessTokenValid(): Boolean {
     return System.currentTimeMillis() < (createdAt + expiresIn) * 1000
   }
+
+  companion object {
+    private const val _empty = ""
+    val EmptyCredentials = GECredentials(_empty, _empty, 0, _empty, _empty, 0)
+
+    const val scope: String = "user_info projects pull_requests gists issues notes groups"
+
+    fun createCredentials(accessToken: String, refreshToken: String) =
+      GECredentials(accessToken, refreshToken, 86400, "bearer", scope, System.currentTimeMillis() / 1000)
+  }
 }

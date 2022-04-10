@@ -67,7 +67,6 @@ internal class CloneDialogLoginPanel(private val account: GiteeAccount?) :
     if (account != null) {
       loginPanel.setServer(account.server.toUrl(), false)
       loginPanel.setLogin(account.name, false)
-//      loginPanel.setCredentials(account.name, null, false)
     }
 
     loginButton.addActionListener { login() }
@@ -104,10 +103,6 @@ internal class CloneDialogLoginPanel(private val account: GiteeAccount?) :
       add(inlineCancelPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { left = JBUIScale.scale(6) }) })
     })
     add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
-
-//    loginPanel.footer = { buttonPanel() } // footer is used to put buttons in 2-nd column - align under text boxes
-//    add(loginPanel)
-//    add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
   }
 
   private fun setupNewUi(isOAuth: Boolean) {
@@ -154,14 +149,14 @@ internal class CloneDialogLoginPanel(private val account: GiteeAccount?) :
       .errorOnEdt(modalityState) {
         doValidate()
       }
-      .successOnEdt(modalityState) { (login, accessToken, refreshToken) ->
-        val token = "${accessToken}&${refreshToken}"
+      .successOnEdt(modalityState) { (login, credentials) ->
+//        val token = "${accessToken}&${refreshToken}"
 
         if (account != null) {
-          authenticationManager.updateAccountToken(account, token)
+          authenticationManager.updateAccountCredentials(account, credentials)
         }
         else {
-          authenticationManager.registerAccount(login, loginPanel.getServer(), token)
+          authenticationManager.registerAccount(login, loginPanel.getServer(), credentials)
         }
       }
   }

@@ -23,14 +23,6 @@
 
         <applicationService serviceImplementation="com.gitee.util.GiteeSettings"/>
 
-<!--        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountManager"/>-->
-<!--        <applicationService serviceImplementation="com.gitee.authentication.GiteeAuthenticationManager"/>-->
-<!--        <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutor$Factory"/>-->
-<!--        <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutorManager"/>-->
-<!--        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountInformationProvider"/>-->
-<!--        <applicationService serviceImplementation="com.gitee.util.CachingGEUserAvatarLoader"/>-->
-<!--        <applicationService serviceImplementation="com.gitee.util.GiteeImageResizer"/>-->
-
         <applicationService serviceImplementation="com.gitee.authentication.accounts.GEPersistentAccounts"/>
         <applicationService serviceImplementation="com.gitee.authentication.GiteeAuthenticationManager"/>
         <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutor$Factory"/>
@@ -111,6 +103,7 @@
 
         <group id="Gitee.Accounts.AddAccount">
             <action id="Gitee.Accounts.AddGEAccount" class="com.gitee.authentication.ui.AddGEAccountAction"/>
+            <action id="Gitee.Accounts.AddGEAccountWithPassword" class="com.gitee.authentication.ui.AddGEAccountWithPasswordAction"/>
             <action id="Gitee.Accounts.AddGEAccountWithTokens" class="com.gitee.authentication.ui.AddGEAccountWithTokensAction"/>
             <separator/>
             <action id="Gitee.Accounts.AddGEEAccount" class="com.gitee.authentication.ui.AddGEEAccountAction"/>

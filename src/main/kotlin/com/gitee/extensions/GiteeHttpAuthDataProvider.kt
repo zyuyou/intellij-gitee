@@ -18,6 +18,7 @@ package com.gitee.extensions
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequestExecutorManager
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
@@ -42,18 +43,17 @@ class GiteeHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun getAuthData(project: Project, url: String): GiteeAccountAuthData? {
     return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
       try {
-        val tokens = GiteeAuthenticationManager.getInstance().getTokensForAccount(account) ?: return null
+        val credentials = GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account) ?: return null
 
         val username = service<GiteeAccountInformationProvider>().getInformation(
-          GiteeApiRequestExecutor.Factory.getInstance().create(tokens) {
-//            GiteeAuthenticationManager.getInstance().refreshNewTokens(account, it)
-            newTokens -> GiteeAuthenticationManager.getInstance().updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
+          GiteeApiRequestExecutor.Factory.getInstance().create(credentials) {
+            newCredentials -> GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, newCredentials)
           },
           DumbProgressIndicator(),
           account
         ).login
 
-        GiteeAccountAuthData(account, username, tokens.first)
+        GiteeAccountAuthData(account, username, credentials)
       } catch (e: IOException) {
         LOG.info("Cannot load username for $account", e)
         null
@@ -63,7 +63,9 @@ class GiteeHttpAuthDataProvider : GitHttpAuthDataProvider {
 
   override fun getAuthData(project: Project, url: String, login: String): GiteeAccountAuthData? {
     return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
-      return GiteeAuthenticationManager.getInstance().getTokenForAccount(account)?.let { GiteeAccountAuthData(account, login, it) }
+      return GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account)?.let {
+        GiteeAccountAuthData(account, login, it)
+      }
     }
   }
 
@@ -105,5 +107,5 @@ class GiteeHttpAuthDataProvider : GitHttpAuthDataProvider {
 
   class GiteeAccountAuthData(val account: GiteeAccount,
                              login: String,
-                             password: String) : AuthData(login, password)
+                             credentials: GECredentials) : AuthData(login, credentials.accessToken)
 }

@@ -3,6 +3,7 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
@@ -17,7 +18,6 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.LayoutBuilder
 import java.util.concurrent.CompletableFuture
@@ -26,9 +26,6 @@ import javax.swing.JPasswordField
 import javax.swing.JTextField
 
 internal typealias UniqueLoginPredicate = (login: String, server: GiteeServerPath) -> Boolean
-
-//internal fun GiteeLoginPanel.setTokenUi() = setToken(null)
-//internal fun GiteeLoginPanel.setPasswordUi() = setCredentials(null, null, true)
 
 class GiteeLoginPanel(
   executorFactory: GiteeApiRequestExecutor.Factory,
@@ -57,6 +54,7 @@ class GiteeLoginPanel(
   var footer: LayoutBuilder.() -> Unit
     get() = tokenUi.footer
     set(value) {
+      oauthUi.footer = value
       passwordUi.footer = value
       tokenUi.footer = value
       applyUi(currentUi)
@@ -71,16 +69,6 @@ class GiteeLoginPanel(
     setContent(currentUi.getPanel())
     currentUi.getPreferredFocusableComponent()?.requestFocus()
     tokenAcquisitionError = null
-  }
-
-  fun createSwitchUiLink(): LinkLabel<*> {
-    fun switchUiText(): String = if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
-    fun nextUi(): GECredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
-
-    return LinkLabel<Any?>(switchUiText(), null) { link, _ ->
-      applyUi(nextUi())
-      link.text = switchUiText()
-    }
   }
 
   fun getPreferredFocusableComponent(): JComponent? =
@@ -112,7 +100,7 @@ class GiteeLoginPanel(
     currentUi.setBusy(busy)
   }
 
-  fun acquireLoginAndToken(progressIndicator: ProgressIndicator): CompletableFuture<Triple<String, String, String>> {
+  fun acquireLoginAndToken(progressIndicator: ProgressIndicator): CompletableFuture<Pair<String, GECredentials>> {
     setBusy(true)
     tokenAcquisitionError = null
 
@@ -141,38 +129,23 @@ class GiteeLoginPanel(
       clientIdTextField.text = ""
       clientSecretTextField.text = ""
     }
-
-//    if (GiteeServerPath.from(path).host == GiteeServerPath.DEFAULT_HOST) {
-//      clientIdTextField.isEditable = false
-//      clientSecretTextField.isEditable = false
-//    }
   }
-
-//  fun setCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true) {
-//    if (login != null) {
-//      passwordUi.setLogin(login, editableLogin)
-//      tokenUi.setFixedLogin(if (editableLogin) null else login)
-//    }
-//    if (password != null) passwordUi.setPassword(password)
-//    applyUi(passwordUi)
-//  }
 
   fun setLogin(login: String?, editable: Boolean) {
     passwordUi.setLogin(login.orEmpty(), editable)
     tokenUi.setFixedLogin(if (editable) null else login)
   }
 
-  fun setPassword(password: String?) = passwordUi.setPassword(password.orEmpty())
-
-//  fun setToken(token: String? = null) {
-//    if (token != null) tokenUi.setToken(token)
-//    applyUi(tokenUi)
-//  }
-  fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
+  fun setCredentials(credentials: GECredentials?) {
+    credentials ?.let {
+      tokenUi.setFixedCredentials(credentials)
+    }
+  }
 
   fun setError(exception: Throwable?) {
-    tokenAcquisitionError = exception?.let { currentUi.handleAcquireError(it) }
-//    tokenAcquisitionError = currentUi.handleAcquireError(exception)
+    tokenAcquisitionError = exception?.let {
+      currentUi.handleAcquireError(it)
+    }
   }
 
   fun setOAuthUi() = applyUi(oauthUi)

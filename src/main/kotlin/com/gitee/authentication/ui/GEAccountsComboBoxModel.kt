@@ -2,6 +2,7 @@
 package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GEAccountsHost.Companion.createAddAccountLink
@@ -14,15 +15,11 @@ internal class GEAccountsComboBoxModel(accounts: Set<GiteeAccount>, selection: G
   CollectionComboBoxModel<GiteeAccount>(accounts.toMutableList(), selection),
   GEAccountsHost {
 
-  override fun addAccount(server: GiteeServerPath, login: String, token: String) {
-    val account = GiteeAuthenticationManager.getInstance().registerAccount(login, server, token)
+  override fun addAccount(server: GiteeServerPath, login: String, credentials: GECredentials) {
+    val account = GiteeAuthenticationManager.getInstance().registerAccount(login, server, credentials)
 
     add(account)
     selectedItem = account
-  }
-
-  override fun addAccount(server: GiteeServerPath, login: String, tokens: Pair<String, String>) {
-    addAccount(server, login, "${tokens.first}&${tokens.second}")
   }
 
   override fun isAccountUnique(login: String, server: GiteeServerPath): Boolean =

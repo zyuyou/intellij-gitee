@@ -16,12 +16,14 @@ class GiteeAccount(
   @NlsSafe
   @Attribute("name")
   override var name: String = "",
+
   @Property(style = Property.Style.ATTRIBUTE, surroundWithTag = false)
   override val server: GiteeServerPath = GiteeServerPath(),
+
   @Attribute("id")
   @VisibleForTesting
-  override val id: String = generateId())
-  : ServerAccount() {
+  override val id: String = generateId()
+) : ServerAccount() {
 
   override fun toString(): String = "$server/$name"
 }

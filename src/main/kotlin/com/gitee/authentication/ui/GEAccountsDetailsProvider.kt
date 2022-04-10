@@ -32,21 +32,16 @@ internal class GEAccountsDetailsProvider(progressIndicatorsProvider: ProgressInd
   override fun scheduleLoad(account: GiteeAccount,
                             indicator: ProgressIndicator): CompletableFuture<DetailsLoadingResult<GiteeUserDetailed>> {
 
-    val token = accountsModel.newCredentials.getOrElse(account) {
+    val credentials = accountsModel.newCredentials.getOrElse(account) {
       accountManager.findCredentials(account)
-    } ?: return CompletableFuture.completedFuture(noToken())
+    } ?: return CompletableFuture.completedFuture(noCredentials())
 
-    val tokens = token.split("&").let {
-      tokenList ->
-        if (tokenList.size == 1) Pair(tokenList[0], "") else Pair(tokenList[0], tokenList[1])
-    }
-
-    val executor = service<GiteeApiRequestExecutor.Factory>().create(tokens) {
-      newTokens -> GiteeAuthenticationManager.getInstance().updateAccountToken(account, "${newTokens.first}&${newTokens.second}")
+    val executor = service<GiteeApiRequestExecutor.Factory>().create(credentials) {
+        newCredentials -> GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, newCredentials)
     }
 
     return ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
-      val (details, scopes) = GESecurityUtil.loadCurrentUserWithScopes(executor, it, account.server)
+      val (details, _) = GESecurityUtil.loadCurrentUserWithScopes(executor, it, account.server)
 //      if (!GESecurityUtil.isEnoughScopes(scopes.orEmpty())) return@submitIOTask noScopes()
       val image = details.avatarUrl?.let { url -> CachingGEUserAvatarLoader.getInstance().requestAvatar(executor, url).join() }
       DetailsLoadingResult<GiteeUserDetailed>(details, image, null, false)
@@ -56,6 +51,5 @@ internal class GEAccountsDetailsProvider(progressIndicatorsProvider: ProgressInd
     }
   }
 
-  private fun noToken() = DetailsLoadingResult<GiteeUserDetailed>(null, null, GiteeBundle.message("account.token.missing"), true)
-  private fun noScopes() = DetailsLoadingResult<GiteeUserDetailed>(null, null, GiteeBundle.message("account.scopes.insufficient"), true)
+  private fun noCredentials() = DetailsLoadingResult<GiteeUserDetailed>(null, null, GiteeBundle.message("account.credentials.missing"), true)
 }

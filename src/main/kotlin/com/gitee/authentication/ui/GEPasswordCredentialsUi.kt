@@ -2,6 +2,7 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeLoginException
@@ -30,10 +31,6 @@ internal class GEPasswordCredentialsUi(
   private val EMAIL_LOGIN_PATTERN = Regex("[\\w!#\$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#\$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?")
   private val PHONE_NUMBER_LOGIN_PATTERN = Regex("^(?:\\+?86)?1(?:3\\d{3}|5[^4\\D]\\d{2}|8\\d{3}|7(?:[35678]\\d{2}|4(?:0\\d|1[0-2]|9\\d))|9[01356789]\\d{2}|66\\d{2})\\d{6}\$")
 
-//  private val switchUiLink = LinkLabel.create("Use Token", switchUi)
-//  private val editCustomClientLink = LinkLabel.create("Edit Custom App Info", editCustomAppInfo)
-//  private val useDefaultClientLink = LinkLabel.create("Use Default App Info", useDefaultAppInfo)
-
   private val loginTextField = JBTextField()
   private val passwordField = JPasswordField()
 
@@ -54,7 +51,7 @@ internal class GEPasswordCredentialsUi(
     row(message("credentials.password.field")) {
       passwordField(
         comment = message("credentials.password.not.saved"),
-        constraints = *arrayOf(pushX, growX)
+        constraints = arrayOf(pushX, growX)
       )
     }
   }
@@ -77,12 +74,12 @@ internal class GEPasswordCredentialsUi(
     server: GiteeServerPath,
     executor: GiteeApiRequestExecutor,
     indicator: ProgressIndicator
-  ): Triple<String, String, String> {
+  ): Pair<String, GECredentials> {
     val login = loginTextField.text.trim()
     if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
-    val authorization = GiteeTokenCreator(server, executor, indicator).createMaster(loginTextField.text, passwordField.password)
-    return Triple(loginTextField.text, authorization.accessToken, authorization.refreshToken)
+    val credentials = GiteeTokenCreator(server, executor, indicator).createMaster(loginTextField.text, passwordField.password)
+    return Pair(loginTextField.text, credentials)
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =

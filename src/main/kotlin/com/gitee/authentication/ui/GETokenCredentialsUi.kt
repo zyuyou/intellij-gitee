@@ -3,6 +3,7 @@ package com.gitee.authentication.ui
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.util.GiteeTokenCreator
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeParseException
@@ -27,13 +28,20 @@ internal class GETokenCredentialsUi(
   private val refreshTokenTextField = JBTextField()
 
   private var fixedLogin: String? = null
+  private var fixedCredentials: GECredentials? = null
 
-  fun setToken(token: String) {
+  fun setAccessToken(token: String) {
     accessTokenTextField.text = token
   }
 
+  fun setRefreshToken(token: String) {
+    refreshTokenTextField.text = token
+  }
+
   override fun LayoutBuilder.centerPanel() {
-    row(message("credentials.server.field")) { serverTextField(pushX, growX) }
+    row(message("credentials.server.field")) {
+      serverTextField(pushX, growX)
+    }
     row(message("credentials.access.token.field")) {
       cell {
         accessTokenTextField(
@@ -52,22 +60,23 @@ internal class GETokenCredentialsUi(
     }
   }
 
-//  private fun browseNewTokenUrl() = browse(buildNewTokenUrl(serverTextField.tryParseServer()!!))
-
   override fun getPreferredFocusableComponent(): JComponent = accessTokenTextField
 
-  override fun getValidator(): Validator = { notBlank(accessTokenTextField, message("login.token.cannot.be.empty")) }
+  override fun getValidator(): Validator = {
+    notBlank(accessTokenTextField, message("login.token.cannot.be.empty")) ?: notBlank(refreshTokenTextField, message("login.token.cannot.be.empty"))
+  }
 
-  override fun createExecutor() = factory.create(accessTokenTextField.text)
+  override fun createExecutor() = factory.create(fixedCredentials?.accessToken ?: accessTokenTextField.text)
 
   override fun acquireLoginAndToken(
     server: GiteeServerPath,
     executor: GiteeApiRequestExecutor,
     indicator: ProgressIndicator
-  ): Triple<String, String, String> {
+  ): Pair<String, GECredentials> {
+
     val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
 
-    return Triple(login, accessTokenTextField.text, refreshTokenTextField.text)
+    return Pair(login, fixedCredentials ?: GECredentials.createCredentials(accessTokenTextField.text, refreshTokenTextField.text))
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =
@@ -82,6 +91,15 @@ internal class GETokenCredentialsUi(
 
   fun setFixedLogin(fixedLogin: String?) {
     this.fixedLogin = fixedLogin
+  }
+
+  fun setFixedCredentials(credentials: GECredentials?) {
+    fixedCredentials = credentials
+
+    credentials ?.let {
+      setAccessToken(it.accessToken)
+      setRefreshToken(it.refreshToken)
+    }
   }
 
   companion object {
@@ -111,21 +129,3 @@ internal class GETokenCredentialsUi(
   }
 
 }
-
-//private val JTextField.serverValid: ComponentPredicate
-//  get() = object : ComponentPredicate() {
-//    override fun invoke(): Boolean = tryParseServer() != null
-//
-//    override fun addListener(listener: (Boolean) -> Unit) =
-//      document.addDocumentListener(object : DocumentAdapter() {
-//        override fun textChanged(e: DocumentEvent) = listener(tryParseServer() != null)
-//      })
-//  }
-
-//private fun JTextField.tryParseServer(): GiteeServerPath? =
-//  try {
-//    GiteeServerPath.from(text.trim())
-//  }
-//  catch (e: GiteeParseException) {
-//    null
-//  }

@@ -3,6 +3,7 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.ui.util.Validator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
@@ -21,7 +22,7 @@ internal abstract class GECredentialsUi {
     server: GiteeServerPath,
     executor: GiteeApiRequestExecutor,
     indicator: ProgressIndicator
-  ): Triple<String, String, String>
+  ): Pair<String, GECredentials>
 
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)

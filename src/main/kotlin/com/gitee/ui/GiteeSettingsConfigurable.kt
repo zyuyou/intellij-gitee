@@ -45,11 +45,6 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 internal class GiteeSettingsConfigurable internal constructor(private val project: Project)
   : BoundConfigurable(GiteeUtil.SERVICE_DISPLAY_NAME, "settings.gitee") {
 
-//  fun setDisposable(disposer: Disposable) {
-//    val defaultAccountHolder = project.service<GiteeProjectDefaultAccountHolder>()
-//
-//  }
-
   override fun createPanel(): DialogPanel {
     val defaultAccountHolder = project.service<GiteeProjectDefaultAccountHolder>()
     val accountManager = service<GEAccountManager>()
@@ -58,69 +53,33 @@ internal class GiteeSettingsConfigurable internal constructor(private val projec
     val indicatorsProvider = ProgressIndicatorsProvider().also {
       Disposer.register(disposable!!, it)
     }
+
     val accountsModel = GEAccountsListModel(project)
     val detailsProvider = GEAccountsDetailsProvider(indicatorsProvider, accountManager, accountsModel)
 
-
-//    return panel {
-//      row {
-//        val accountsPanel = GiteeAccountsPanel(project, GiteeApiRequestExecutor.Factory.getInstance(), CachingGEUserAvatarLoader.getInstance(), GiteeImageResizer.getInstance()).apply {
-//          Disposer.register(disposable!!, this)
-//        }
-//        component(accountsPanel)
-//          .onIsModified { accountsPanel.isModified(accountManager.accounts, defaultAccountHolder.account) }
-//          .onReset {
-//            val accountsMap = accountManager.accounts.associateWith { accountManager.getTokensForAccount(it) }
-//            accountsPanel.setAccounts(accountsMap, defaultAccountHolder.account)
-//            accountsPanel.clearNewTokens()
-//            accountsPanel.loadExistingAccountsDetails()
-//          }
-//          .onApply {
-//            val (accountsTokenMap, defaultAccount) = accountsPanel.getAccounts()
-//            accountManager.accounts = accountsTokenMap.keys
-//            accountsTokenMap.filterValues { it != null }
-//              .mapValues { "${it.value?.first}&${it.value?.second}" }
-//              .forEach(accountManager::updateAccountToken)
-//            defaultAccountHolder.account = defaultAccount
-//            accountsPanel.clearNewTokens()
-//          }
-//
-//        ApplicationManager.getApplication().messageBus.connect(disposable!!)
-//          .subscribe(GiteeAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC,
-//            object : AccountTokenChangedListener {
-//              override fun tokenChanged(account: GiteeAccount) {
-//                if (!isModified) reset()
-//              }
-//            })
-//      }
-//      row {
-//        checkBox(GiteeBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
-//      }
-//      row {
-//        cell {
-//          label(GiteeBundle.message("settings.timeout"))
-//          intTextField({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 }, columns = 2, range = 0..60)
-//          label(GiteeBundle.message("settings.timeout.seconds"))
-//        }
-//      }
-//    }
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, true,
+        accountsPanel(
+          accountManager, defaultAccountHolder, accountsModel,
+          detailsProvider, disposable!!, true,
           GiteeIcons.DefaultAvatar)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
           .also {
-          DataManager.registerDataProvider(it.component) { key ->
-            if (GEAccountsHost.KEY.`is`(key)) accountsModel
-            else null
+            DataManager.registerDataProvider(it.component) { key ->
+            if (GEAccountsHost.KEY.`is`(key))
+              accountsModel
+            else
+              null
           }
         }
-      }
+      }.resizableRow()
+
       row {
         checkBox(GiteeBundle.message("settings.clone.ssh"))
           .bindSelected(settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
       }
+
       row(GiteeBundle.message("settings.timeout")) {
         intTextField(range = 0..60)
           .columns(2)

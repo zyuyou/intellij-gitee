@@ -2,35 +2,20 @@
 package com.gitee.tasks
 
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GELoginRequest
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.exceptions.GiteeParseException
 import com.intellij.openapi.project.Project
 
 private object GERepositoryEditorKt {
-  fun askToken(project: Project, host: String): String? {
+  fun askCredentials(project: Project, host: String): GECredentials? {
     val server = tryParse(host) ?: return null
 
     return GiteeAuthenticationManager.getInstance().login(
       project, null,
       GELoginRequest(server = server)
-    )?.token
-  }
-
-  fun askTokens(project: Project, host: String): Pair<String, String>? {
-    val server = tryParse(host) ?: return null
-
-    return GiteeAuthenticationManager.getInstance().login(
-      project, null,
-      GELoginRequest(server = server)
-    )?.token?.let {
-      val tokens = it.split("&")
-      if(tokens.size == 1) {
-        it to ""
-      } else {
-        tokens[0] to tokens[1]
-      }
-    }
+    )?.credentials
   }
 
   private fun tryParse(host: String): GiteeServerPath? {

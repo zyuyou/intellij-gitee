@@ -3,11 +3,11 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
+import com.gitee.authentication.GECredentials
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -31,19 +31,17 @@ internal abstract class BaseLoginDialog(
   protected val loginPanel = GiteeLoginPanel(executorFactory, isAccountUnique)
 
   private var _login = ""
-  private var _token = ""
-  private var _accessToken = ""
-  private var _refreshToken = ""
+  private var _credentials = GECredentials.EmptyCredentials
 
   val login: String get() = _login
-  val token: String get() = _token
-  val accessToken: String get() = _accessToken
-  val refreshToken: String get() = _refreshToken
+  val credentials: GECredentials get() = _credentials
 
   val server: GiteeServerPath get() = loginPanel.getServer()
 
   fun setLogin(login: String?, editable: Boolean) = loginPanel.setLogin(login, editable)
-  fun setToken(token: String?) = loginPanel.setToken(token)
+
+  fun setCredentials(credentials: GECredentials?) = loginPanel.setCredentials(credentials)
+
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
   fun setError(exception: Throwable) {
@@ -58,17 +56,16 @@ internal abstract class BaseLoginDialog(
   override fun doOKAction() {
     val modalityState = ModalityState.stateForComponent(loginPanel)
     val emptyProgressIndicator = EmptyProgressIndicator(modalityState)
-    Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
+    Disposer.register(disposable) { emptyProgressIndicator.cancel() }
 
     startGettingToken()
 
     loginPanel.acquireLoginAndToken(emptyProgressIndicator)
       .completionOnEdt(modalityState) { finishGettingToken() }
-      .successOnEdt(modalityState) { (login, accessToken, refreshToken) ->
+      .successOnEdt(modalityState) { (login, credentials) ->
+
         _login = login
-        _token = "${accessToken}&${refreshToken}"
-        _accessToken = accessToken
-        _refreshToken = refreshToken
+        _credentials = credentials
 
         close(OK_EXIT_CODE, true)
       }

@@ -16,6 +16,7 @@
 
 package com.gitee.tasks;
 
+import com.gitee.authentication.GECredentials;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
@@ -26,7 +27,6 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +35,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
+import static com.gitee.i18n.GiteeBundle.message;
+
 /**
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/tasks/GiteeRepositoryEditor.java
  * @author Dennis.Ushakov
@@ -42,16 +44,25 @@ import java.awt.*;
 public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository> {
 	private MyTextField myRepoAuthor;
 	private MyTextField myRepoName;
+
 	private MyTextField myAccessToken;
 	private MyTextField myRefreshToken;
+
 	private JBCheckBox myShowNotAssignedIssues;
-	private JButton myTokenButton;
+	private JButton myCredentialsButton;
 	private JBLabel myHostLabel;
 	private JBLabel myRepositoryLabel;
 	private JBLabel myTokenLabel;
 
+	private long myCrendentialsExpiresIn;
+	private String myCrendentialsTokenType;
+	private String myCrendentialsScope;
+	private long myCrendentialsCreatedAt;
+
 	public GiteeRepositoryEditor(final Project project, final GiteeRepository repository, Consumer<? super GiteeRepository> changeListener) {
 		super(project, repository, changeListener);
+
+		GECredentials credentials = repository.getCredentials();
 
 		myUrlLabel.setVisible(false);
 		myUsernameLabel.setVisible(false);
@@ -62,20 +73,27 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 
 		myRepoAuthor.setText(repository.getRepoAuthor());
 		myRepoName.setText(repository.getRepoName());
-		myAccessToken.setText(repository.getPasswordTokens().getFirst());
-		myRefreshToken.setText(repository.getPasswordTokens().getSecond());
+		myAccessToken.setEditable(false);
+		myAccessToken.setText(credentials.getAccessToken());
+		myRefreshToken.setEditable(false);
+		myRefreshToken.setText(credentials.getRefreshToken());
 		myShowNotAssignedIssues.setSelected(!repository.isAssignedIssuesOnly());
 
 		DocumentListener buttonUpdater = new DocumentAdapter() {
 			@Override
 			protected void textChanged(@NotNull DocumentEvent e) {
-				updateTokenButton();
+				updateCredentialsButton();
 			}
 		};
 
 		myURLText.getDocument().addDocumentListener(buttonUpdater);
 		myRepoAuthor.getDocument().addDocumentListener(buttonUpdater);
 		myRepoName.getDocument().addDocumentListener(buttonUpdater);
+
+		myCrendentialsExpiresIn = credentials.getExpiresIn();
+		myCrendentialsTokenType = credentials.getTokenType();
+		myCrendentialsScope = credentials.getScope();
+		myCrendentialsCreatedAt = credentials.getCreatedAt();
 	}
 
 	@Override
@@ -83,23 +101,23 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		super.afterTestConnection(connectionSuccessful);
 
 		if (connectionSuccessful) {
-			myAccessToken.setText(myRepository.getPasswordTokens().getFirst());
-			myRefreshToken.setText(myRepository.getPasswordTokens().getSecond());
+			myAccessToken.setText(myRepository.getCredentials().getAccessToken());
+			myRefreshToken.setText(myRepository.getCredentials().getRefreshToken());
 		}
 	}
 
 	@Nullable
 	@Override
 	protected JComponent createCustomPanel() {
-		myHostLabel = new JBLabel("Host:", SwingConstants.RIGHT);
+		myHostLabel = new JBLabel(message("task.repo.host.field"), SwingConstants.RIGHT);
 
 		JPanel myHostPanel = new JPanel(new BorderLayout(5, 0));
 		myHostPanel.add(myURLText, BorderLayout.CENTER);
 		myHostPanel.add(myShareUrlCheckBox, BorderLayout.EAST);
 
-		myRepositoryLabel = new JBLabel("Repository:", SwingConstants.RIGHT);
-		myRepoAuthor = new MyTextField("Repository Owner");
-		myRepoName = new MyTextField("Repository Name");
+		myRepositoryLabel = new JBLabel(message("task.repo.repository.field"), SwingConstants.RIGHT);
+		myRepoAuthor = new MyTextField(message("task.repo.owner.field.empty.hint"));
+		myRepoName = new MyTextField(message("task.repo.name.field.empty.hint"));
 		myRepoAuthor.setPreferredSize("SomelongNickname");
 		myRepoName.setPreferredSize("SomelongReponame-with-suffixes");
 
@@ -109,22 +127,26 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		myRepoPanel.add(new JLabel("/"), bag.next().fillCellNone().insets(0, 5, 0, 5).weightx(0));
 		myRepoPanel.add(myRepoName, bag.next());
 
-		myTokenLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
-		myAccessToken = new MyTextField("OAuth2 access token");
-		myRefreshToken = new MyTextField("OAuth2 refresh token");
-		myTokenButton = new JButton("Create API token");
-		myTokenButton.addActionListener(e -> {
-			generateToken();
+		myTokenLabel = new JBLabel(message("task.repo.token.field"), SwingConstants.RIGHT);
+		myAccessToken = new MyTextField(message("task.repo.access.token.field.empty.hint"));
+		myRefreshToken = new MyTextField(message("task.repo.refresh.token.field.empty.hint"));
+		myCredentialsButton = new JButton(message("task.repo.credentials.create.button"));
+		myCredentialsButton.addActionListener(e -> {
+			generateCredentials();
 			doApply();
 		});
 
-		JPanel myTokenPanel = new JPanel();
-		myTokenPanel.setLayout(new BorderLayout(5, 5));
-		myTokenPanel.add(myAccessToken, BorderLayout.CENTER);
-//		myTokenPanel.add(myRefreshToken, BorderLayout.CENTER);
-		myTokenPanel.add(myTokenButton, BorderLayout.EAST);
+		JPanel myCredentialsPanel = new JPanel();
+		myCredentialsPanel.setLayout(new GridLayout(1, 2, 5, 0));
+		myCredentialsPanel.add(myAccessToken);
+		myCredentialsPanel.add(myRefreshToken);
 
 		myShowNotAssignedIssues = new JBCheckBox("Include issues not assigned to me");
+
+		JPanel myOthersPanel = new JPanel();
+		myOthersPanel.setLayout(new BorderLayout(5, 5));
+		myOthersPanel.add(myShowNotAssignedIssues, BorderLayout.CENTER);
+		myOthersPanel.add(myCredentialsButton, BorderLayout.EAST);
 
 		installListener(myRepoAuthor);
 		installListener(myRepoName);
@@ -133,12 +155,12 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		installListener(myShowNotAssignedIssues);
 
 		return FormBuilder.createFormBuilder()
-			.setAlignLabelOnRight(true)
-			.addLabeledComponent(myHostLabel, myHostPanel)
-			.addLabeledComponent(myRepositoryLabel, myRepoPanel)
-			.addLabeledComponent(myTokenLabel, myTokenPanel)
-			.addComponentToRightColumn(myShowNotAssignedIssues)
-			.getPanel();
+        .setAlignLabelOnRight(true)
+				.addLabeledComponent(myHostLabel, myHostPanel)
+				.addLabeledComponent(myRepositoryLabel, myRepoPanel)
+        .addLabeledComponent(myTokenLabel, myCredentialsPanel)
+        .addComponentToRightColumn(myOthersPanel)
+        .getPanel();
 	}
 
 	@Override
@@ -146,23 +168,33 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		super.apply();
 		myRepository.setRepoName(getRepoName());
 		myRepository.setRepoAuthor(getRepoAuthor());
-		myRepository.setPasswordTokens(getAccessToken(), getRefreshToken());
+		myRepository.setCredentials(
+				GECredentials.Companion.createCredentials(getAccessToken(), getRefreshToken())
+		);
+		myRepository.setCredentials(
+				new GECredentials(
+						getAccessToken(),
+						getRefreshToken(),
+						myCrendentialsExpiresIn,
+						myCrendentialsTokenType,
+						myCrendentialsScope,
+						myCrendentialsCreatedAt
+				)
+		);
 		myRepository.storeCredentials();
 		myRepository.setAssignedIssuesOnly(isAssignedIssuesOnly());
 	}
 
-	private void generateToken() {
-//		GiteeLoginDialog dialog = new GiteeLoginDialog(GiteeApiRequestExecutor.Factory.getInstance(), myProject);
-//		dialog.withServer(getHost(), false);
-//		if (dialog.showAndGet()) {
-//			myAccessToken.setText(dialog.getAccessToken());
-//			myRefreshToken.setText(dialog.getRefreshToken());
-//		}
+	private void generateCredentials() {
+		GECredentials credentials = GERepositoryEditorKt.INSTANCE.askCredentials(myProject, getHost());
+		if(credentials != null) {
+			myAccessToken.setText(credentials.getAccessToken());
+			myRefreshToken.setText(credentials.getRefreshToken());
 
-		Pair<String, String> tokens = GERepositoryEditorKt.INSTANCE.askTokens(myProject, getHost());
-		if(tokens != null) {
-			myAccessToken.setText(tokens.getFirst());
-			myRefreshToken.setText(tokens.getSecond());
+			myCrendentialsExpiresIn = credentials.getExpiresIn();
+			myCrendentialsTokenType = credentials.getTokenType();
+			myCrendentialsScope = credentials.getScope();
+			myCrendentialsCreatedAt = credentials.getCreatedAt();
 		}
 	}
 
@@ -174,11 +206,14 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		myTokenLabel.setAnchor(anchor);
 	}
 
-	private void updateTokenButton() {
-		if (StringUtil.isEmptyOrSpaces(getHost()) || StringUtil.isEmptyOrSpaces(getRepoAuthor()) || StringUtil.isEmptyOrSpaces(getRepoName())) {
-			myTokenButton.setEnabled(false);
+	private void updateCredentialsButton() {
+		if (StringUtil.isEmptyOrSpaces(getHost()) ||
+				StringUtil.isEmptyOrSpaces(getRepoAuthor()) ||
+				StringUtil.isEmptyOrSpaces(getRepoName())) {
+
+			myCredentialsButton.setEnabled(false);
 		} else {
-			myTokenButton.setEnabled(true);
+			myCredentialsButton.setEnabled(true);
 		}
 	}
 
