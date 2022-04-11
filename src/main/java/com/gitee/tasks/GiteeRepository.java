@@ -372,7 +372,7 @@ public class GiteeRepository extends BaseRepository {
     setUser("");
   }
 
-  public GECredentials getCredentials() {
+  public GECredentials getDeserializeCredentials() {
     try {
       return jacksonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(getPassword(), GECredentials.class);
     } catch (Exception e) {
@@ -381,7 +381,7 @@ public class GiteeRepository extends BaseRepository {
     }
   }
 
-  public void setCredentials(@NotNull GECredentials credentials) {
+  public void setSerializeCredentials(@NotNull GECredentials credentials) {
     try {
       setPassword(jacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(credentials));
     } catch (Exception e) {
@@ -407,8 +407,8 @@ public class GiteeRepository extends BaseRepository {
 
   @NotNull
   private GiteeApiRequestExecutor getExecutor() {
-    return GiteeApiRequestExecutor.Factory.getInstance().create(getCredentials(), (credentials) -> {
-      setCredentials(credentials);
+    return GiteeApiRequestExecutor.Factory.getInstance().create(getDeserializeCredentials(), (credentials) -> {
+      setSerializeCredentials(credentials);
       storeCredentials();
       return Unit.INSTANCE;
     });

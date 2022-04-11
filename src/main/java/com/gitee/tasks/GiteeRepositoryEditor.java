@@ -62,7 +62,7 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 	public GiteeRepositoryEditor(final Project project, final GiteeRepository repository, Consumer<? super GiteeRepository> changeListener) {
 		super(project, repository, changeListener);
 
-		GECredentials credentials = repository.getCredentials();
+		GECredentials credentials = repository.getDeserializeCredentials();
 
 		myUrlLabel.setVisible(false);
 		myUsernameLabel.setVisible(false);
@@ -101,8 +101,10 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		super.afterTestConnection(connectionSuccessful);
 
 		if (connectionSuccessful) {
-			myAccessToken.setText(myRepository.getCredentials().getAccessToken());
-			myRefreshToken.setText(myRepository.getCredentials().getRefreshToken());
+			GECredentials credentials = myRepository.getDeserializeCredentials();
+
+			myAccessToken.setText(credentials.getAccessToken());
+			myRefreshToken.setText(credentials.getRefreshToken());
 		}
 	}
 
@@ -168,10 +170,7 @@ public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository>
 		super.apply();
 		myRepository.setRepoName(getRepoName());
 		myRepository.setRepoAuthor(getRepoAuthor());
-		myRepository.setCredentials(
-				GECredentials.Companion.createCredentials(getAccessToken(), getRefreshToken())
-		);
-		myRepository.setCredentials(
+		myRepository.setSerializeCredentials(
 				new GECredentials(
 						getAccessToken(),
 						getRefreshToken(),
