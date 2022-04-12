@@ -19,6 +19,7 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
+import com.gitee.authentication.accounts.GEAccountsUtils
 import com.gitee.exceptions.GiteeStatusCodeException
 import com.intellij.openapi.progress.ProgressIndicator
 import java.io.IOException
@@ -37,7 +38,7 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
 
   @Throws(IOException::class)
   fun createMaster(login: String, password: CharArray): GECredentials {
-    return safeCreate(MASTER_SCOPES, login, password)
+    return safeCreate(login, password)
   }
 
   @Throws(IOException::class)
@@ -46,11 +47,11 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
   }
 
   @Throws(IOException::class)
-  private fun safeCreate(scopes: List<String>, login: String, password: CharArray): GECredentials {
+  private fun safeCreate(login: String, password: CharArray): GECredentials {
     try {
-      return executor.execute(indicator, GiteeApiRequests.Auth.create(server, scopes, login, password))
+      return executor.execute(indicator, GiteeApiRequests.Auth.create(server, GEAccountsUtils.APP_CLIENT_SCOPE, login, password))
     } catch (e: GiteeStatusCodeException) {
-      e.setDetails("Can't create token: scopes - $scopes")
+      e.setDetails("Can't create token: scopes - ${GEAccountsUtils.APP_CLIENT_SCOPE}")
       throw e
     }
   }
@@ -62,21 +63,5 @@ class GiteeTokenCreator(private val server: GiteeServerPath,
     } catch (e: GiteeStatusCodeException) {
       throw e
     }
-  }
-
-  companion object {
-    val MASTER_SCOPES = listOf(
-      "projects",
-      "pull_requests",
-      "gists",
-      "issues",
-      "user_info",
-      "notes",
-      "groups",
-      "email"
-    )
-
-    const val DEFAULT_CLIENT_ID = "fc439d90cb2ffc20cffeb70a6a4039e69847485e0fa56cfa0d1bf006098e24dd"
-    const val DEFAULT_CLIENT_SECRET = "386f187646ee361049f69cd213424bdba5af03e820d10a68a68e5fb520902596"
   }
 }

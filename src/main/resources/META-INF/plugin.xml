@@ -41,8 +41,6 @@
         <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                              instance="com.gitee.ui.GiteeSettingsConfigurable"/>
 
-<!--        <statistics.notificationIdsHolder implementation="com.gitee.util.GiteeNotificationIdsHolder"/>-->
-
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
                 implementation="com.gitee.ui.cloneDialog.GECloneDialogExtension"/>
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
@@ -100,6 +98,8 @@
 
             <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
         </group>
+
+        <action id="Gitee.Break.Api.Requests" class="com.gitee.api.GERequestExecutorBreaker$Action"/>
 
         <group id="Gitee.Accounts.AddAccount">
             <action id="Gitee.Accounts.AddGEAccount" class="com.gitee.authentication.ui.AddGEAccountAction"/>

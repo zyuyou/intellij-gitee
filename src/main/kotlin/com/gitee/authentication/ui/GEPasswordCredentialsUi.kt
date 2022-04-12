@@ -66,9 +66,7 @@ internal class GEPasswordCredentialsUi(
       { notBlank(passwordField, message("credentials.password.cannot.be.empty")) }
     )
 
-  override fun createExecutor(): GiteeApiRequestExecutor.WithPasswordOAuth2 {
-    return executorFactory.create()
-  }
+  override fun createExecutor(): GiteeApiRequestExecutor.NoAuth = executorFactory.create()
 
   override fun acquireLoginAndToken(
     server: GiteeServerPath,

@@ -4,7 +4,7 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.util.GiteeTokenCreator
+import com.gitee.authentication.accounts.GEAccountsUtils
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeParseException
 import com.gitee.i18n.GiteeBundle.message
@@ -45,7 +45,7 @@ internal class GETokenCredentialsUi(
     row(message("credentials.access.token.field")) {
       cell {
         accessTokenTextField(
-          comment = message("login.insufficient.scopes", GiteeTokenCreator.MASTER_SCOPES),
+          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
           constraints = arrayOf(pushX, growX)
         )
       }
@@ -53,7 +53,7 @@ internal class GETokenCredentialsUi(
     row(message("credentials.refresh.token.field")) {
       cell {
         refreshTokenTextField(
-          comment = message("login.insufficient.scopes", GiteeTokenCreator.MASTER_SCOPES),
+          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
           constraints = arrayOf(pushX, growX)
         )
       }
@@ -66,7 +66,7 @@ internal class GETokenCredentialsUi(
     notBlank(accessTokenTextField, message("login.token.cannot.be.empty")) ?: notBlank(refreshTokenTextField, message("login.token.cannot.be.empty"))
   }
 
-  override fun createExecutor() = factory.create(fixedCredentials?.accessToken ?: accessTokenTextField.text)
+  override fun createExecutor() = factory.create()
 
   override fun acquireLoginAndToken(
     server: GiteeServerPath,

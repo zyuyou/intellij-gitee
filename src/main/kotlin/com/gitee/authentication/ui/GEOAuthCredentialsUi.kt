@@ -26,17 +26,17 @@ internal class GEOAuthCredentialsUi(
 
   override fun getValidator(): Validator = { null }
 
-  override fun createExecutor(): GiteeApiRequestExecutor = factory.create("")
+  override fun createExecutor(): GiteeApiRequestExecutor = factory.create()
 
   override fun acquireLoginAndToken(
     server: GiteeServerPath,
     executor: GiteeApiRequestExecutor,
     indicator: ProgressIndicator
   ): Pair<String, GECredentials> {
-    executor as GiteeApiRequestExecutor.WithTokenAuth
+    executor as GiteeApiRequestExecutor.WithCredentialsAuth
 
     val credentials = acquireToken(indicator)
-    executor.token = credentials.accessToken
+    executor.credentials = credentials
 
     val login = GETokenCredentialsUi.acquireLogin(server, executor, indicator, isAccountUnique, null)
     return Pair(login, credentials)

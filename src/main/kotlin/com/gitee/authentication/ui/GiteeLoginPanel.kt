@@ -4,7 +4,7 @@ package com.gitee.authentication.ui
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.util.GiteeTokenCreator
+import com.gitee.authentication.accounts.GEAccountsUtils
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.util.completionOnEdt
@@ -35,8 +35,8 @@ class GiteeLoginPanel(
   private val serverTextField = ExtendableTextField(GiteeServerPath.DEFAULT_HOST, 0)
   private var tokenAcquisitionError: ValidationInfo? = null
 
-  private var clientIdTextField = JBTextField(GiteeTokenCreator.DEFAULT_CLIENT_ID, 5)
-  private var clientSecretTextField = JPasswordField(GiteeTokenCreator.DEFAULT_CLIENT_SECRET, 5)
+  private var clientIdTextField = JBTextField(GEAccountsUtils.APP_CLIENT_ID, 5)
+  private var clientSecretTextField = JPasswordField(GEAccountsUtils.APP_CLIENT_SECRET, 5)
 
   private lateinit var currentUi: GECredentialsUi
 

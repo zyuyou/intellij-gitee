@@ -76,40 +76,6 @@ sealed class GiteeApiRequestExecutor {
       }
     }, disposable)
 
-  class WithPasswordOAuth2 internal constructor(giteeSettings: GiteeSettings) : Base(giteeSettings) {
-
-    @Throws(IOException::class, ProcessCanceledException::class)
-    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
-      indicator.checkCanceled()
-
-      return createRequestBuilder(request).execute(request, indicator)
-    }
-  }
-
-  class WithTokenAuth internal constructor(giteeSettings: GiteeSettings,
-                                           token: String,
-                                           private val useProxy: Boolean) : Base(giteeSettings) {
-
-    @Volatile
-    internal var token: String = token
-      set(value) {
-        field = value
-        authDataChangedEventDispatcher.multicaster.authDataChanged()
-      }
-
-    @Throws(IOException::class, ProcessCanceledException::class)
-    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
-      indicator.checkCanceled()
-      return createRequestBuilder(request)
-        .tuner { connection ->
-          request.additionalHeaders.forEach(connection::addRequestProperty)
-          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token")
-        }
-        .useProxy(useProxy)
-        .execute(request, indicator)
-    }
-  }
-
   class WithCredentialsAuth internal constructor(giteeSettings: GiteeSettings, credentials: GECredentials,
                                                  private val authDataChangedSupplier: (credentials: GECredentials) -> Unit) : Base(giteeSettings) {
 
@@ -122,18 +88,16 @@ sealed class GiteeApiRequestExecutor {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
-      indicator.checkCanceled()
-      return executeWithAccessToken(indicator, request)
-    }
-
-    private fun <T> executeWithAccessToken(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
+      if(service<GERequestExecutorBreaker>().isRequestsShouldFail) error(
+        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds."
+      )
       indicator.checkCanceled()
 
       return try {
         createRequestBuilder(request)
           .tuner { connection ->
             request.additionalHeaders.forEach(connection::addRequestProperty)
-            connection.addRequestProperty("Authorization", "token ${credentials.accessToken}")
+            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "token ${credentials.accessToken}")
           }
           .execute(request, indicator)
 
@@ -153,10 +117,22 @@ sealed class GiteeApiRequestExecutor {
         return createRequestBuilder(request)
           .tuner { connection ->
             request.additionalHeaders.forEach(connection::addRequestProperty)
-            connection.addRequestProperty("Authorization", "token ${newCredentials.accessToken}")
+            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "token ${newCredentials.accessToken}")
           }
           .execute(request, indicator)
       }
+    }
+  }
+
+  class NoAuth internal constructor(giteeSettings: GiteeSettings) : Base(giteeSettings) {
+    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
+      indicator.checkCanceled()
+      return createRequestBuilder(request)
+        .tuner { connection ->
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+        }
+        .useProxy(true)
+        .execute(request, indicator)
     }
   }
 
@@ -291,24 +267,12 @@ sealed class GiteeApiRequestExecutor {
   class Factory {
 
     @CalledInAny
-    fun create(token: String): WithTokenAuth {
-      return create(token, true)
-    }
-
-    @CalledInAny
-    fun create(token: String, useProxy: Boolean = true): WithTokenAuth {
-      return WithTokenAuth(GiteeSettings.getInstance(), token, useProxy)
-    }
-
-    @CalledInAny
     fun create(credentials: GECredentials, authDataChangedSupplier: (credentials: GECredentials) -> Unit): WithCredentialsAuth {
       return WithCredentialsAuth(GiteeSettings.getInstance(), credentials, authDataChangedSupplier)
     }
 
     @CalledInAny
-    fun create(): WithPasswordOAuth2 {
-      return WithPasswordOAuth2(GiteeSettings.getInstance())
-    }
+    fun create() = NoAuth(GiteeSettings.getInstance())
 
     companion object {
       @JvmStatic

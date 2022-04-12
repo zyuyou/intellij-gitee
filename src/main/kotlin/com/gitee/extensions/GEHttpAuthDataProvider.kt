@@ -71,6 +71,8 @@ private fun getAccountDetails(account: GiteeAccount, credentials: GECredentials?
 
 private fun getRequestExecutor(account: GiteeAccount, credentials: GECredentials?): GiteeApiRequestExecutor =
   if (credentials != null)
-    GiteeApiRequestExecutor.Factory.getInstance().create(credentials.accessToken)
+    GiteeApiRequestExecutor.Factory.getInstance().create(credentials) { newCredentials ->
+      GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, newCredentials)
+    }
   else
     GiteeApiRequestExecutorManager.getInstance().getExecutor(account)

@@ -24,8 +24,9 @@ internal object GEAccountsUtils {
 
   val jacksonMapper: ObjectMapper get() = jacksonObjectMapper()
 
-  private const val APP_CLIENT_ID: String = "b7837ec65bcb294b0e2a31e5669b788a3185829524af4d818c3c2a35b186366d"
-  private const val APP_CLIENT_SECRET: String = "85891acdb745502e19e02e3bbcd405dd303190c8a3fcf29a6ca7a2796b76f918"
+  const val APP_CLIENT_ID: String = "b7837ec65bcb294b0e2a31e5669b788a3185829524af4d818c3c2a35b186366d"
+  const val APP_CLIENT_SECRET: String = "85891acdb745502e19e02e3bbcd405dd303190c8a3fcf29a6ca7a2796b76f918"
+  const val APP_CLIENT_SCOPE: String = "user_info projects pull_requests gists issues notes groups"
 
   /**
    * 获取默认Gitee应用凭证

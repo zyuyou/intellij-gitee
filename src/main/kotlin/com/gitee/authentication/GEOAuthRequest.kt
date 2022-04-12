@@ -24,7 +24,7 @@ internal class GEOAuthRequest(giteeAppCred: GEAccountsUtils.GEAppCredentials): O
 
   override val authUrlWithParameters: Url = AUTHORIZE_URL.addParameters(mapOf(
     "client_id" to giteeAppCred.clientId,
-    "scope" to GECredentials.scope,
+    "scope" to GEAccountsUtils.APP_CLIENT_SCOPE,
     "redirect_uri" to authorizationCodeUrl.toExternalForm(),
     "response_type" to responseType,
   ))
