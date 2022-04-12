@@ -14,7 +14,7 @@
 
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
-    <depends optional="true" config-file="GiteeTracker.xml">com.intellij.tasks</depends>
+    <depends optional="true" config-file="gitee.tracker.xml">com.intellij.tasks</depends>
 
     <!-- //////////////////////////////////////////////////////////////////////////////////// -->
 
