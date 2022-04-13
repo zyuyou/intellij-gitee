@@ -19,7 +19,7 @@ import com.gitee.api.GiteeApiRequestExecutor.Factory.Companion.getInstance
 import com.gitee.api.GiteeServerPath.Companion.from
 import com.gitee.api.data.GiteeErrorMessage
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.util.GiteeTokenCreator
+import com.gitee.authentication.util.GiteeCredentialsCreator
 import com.gitee.exceptions.*
 import com.gitee.util.GiteeSettings
 import com.intellij.openapi.Disposable
@@ -106,11 +106,11 @@ sealed class GiteeApiRequestExecutor {
 
         val serverPath = from(request.url.substringBefore('?'))
 
-        val newCredentials: GECredentials = GiteeTokenCreator(
+        val newCredentials: GECredentials = GiteeCredentialsCreator(
           from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
           getInstance().create(),
           DumbProgressIndicator()
-        ).updateMaster(credentials.refreshToken)
+        ).refresh(credentials.refreshToken)
 
         authDataChangedSupplier(newCredentials)
 

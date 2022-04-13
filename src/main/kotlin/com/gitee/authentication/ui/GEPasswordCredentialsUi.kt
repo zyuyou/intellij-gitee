@@ -3,7 +3,7 @@ package com.gitee.authentication.ui
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.util.GiteeTokenCreator
+import com.gitee.authentication.util.GiteeCredentialsCreator
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeLoginException
 import com.gitee.exceptions.GiteeParseException
@@ -76,7 +76,7 @@ internal class GEPasswordCredentialsUi(
     val login = loginTextField.text.trim()
     if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
-    val credentials = GiteeTokenCreator(server, executor, indicator).createMaster(loginTextField.text, passwordField.password)
+    val credentials = GiteeCredentialsCreator(server, executor, indicator).create(loginTextField.text, passwordField.password)
     return Pair(loginTextField.text, credentials)
   }
 

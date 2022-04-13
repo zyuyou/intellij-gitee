@@ -32,17 +32,17 @@ import java.io.IOException
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/util/GithubTokenCreator.kt
  * @author JetBrains s.r.o.
  */
-class GiteeTokenCreator(private val server: GiteeServerPath,
-                        private val executor: GiteeApiRequestExecutor,
-                        private val indicator: ProgressIndicator) {
+class GiteeCredentialsCreator(private val server: GiteeServerPath,
+                              private val executor: GiteeApiRequestExecutor,
+                              private val indicator: ProgressIndicator) {
 
   @Throws(IOException::class)
-  fun createMaster(login: String, password: CharArray): GECredentials {
+  fun create(login: String, password: CharArray): GECredentials {
     return safeCreate(login, password)
   }
 
   @Throws(IOException::class)
-  fun updateMaster(refreshToken: String): GECredentials {
+  fun refresh(refreshToken: String): GECredentials {
     return safeUpdate(refreshToken)
   }
 
