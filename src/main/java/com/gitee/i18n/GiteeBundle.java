@@ -24,11 +24,6 @@ public class GiteeBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static String message2(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return message(key, params);
-  }
-
-  @NotNull
   public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }

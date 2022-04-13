@@ -67,6 +67,8 @@
     <actions>
         <action id="Gitee.Share" class="com.gitee.actions.GiteeShareAction">
             <add-to-group group-id="Vcs.Import"/>
+            <add-to-group group-id="Vcs.ToolbarWidget.ShareProject" relative-to-action="Start.Use.Vcs" anchor="before"/>
+            <override-text place="Vcs.Toolbar.Widget"/>
         </action>
 
         <action id="Gitee.Sync.Fork" class="com.gitee.actions.GiteeSyncForkAction">

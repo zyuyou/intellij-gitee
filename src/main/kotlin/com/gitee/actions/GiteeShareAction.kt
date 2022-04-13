@@ -44,6 +44,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.*
@@ -84,7 +85,7 @@ import javax.swing.JPanel
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/GithubShareAction.kt
  * @author JetBrains s.r.o.
  */
-class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.project.title"), GiteeBundle.message2("gitee.share.project.desc"), GiteeIcons.Gitee_icon) {
+class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.project.title"), GiteeBundle.message("gitee.share.project.desc"), GiteeIcons.Gitee_icon) {
 
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
@@ -138,23 +139,6 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
       val accountInformationProvider = service<GiteeAccountInformationProvider>()
       val gitHelper = service<GiteeGitHelper>()
       val git = service<Git>()
-
-//      if (!authManager.ensureHasAccounts(project)) return
-//      val accounts = authManager.getAccounts()
-//      val progressManager = service<ProgressManager>()
-//      val requestExecutorManager = service<GiteeApiRequestExecutorManager>()
-//      val accountInformationProvider = service<GiteeAccountInformationProvider>()
-//      val gitHelper = service<GiteeGitHelper>()
-//      val git = service<Git>()
-//      val possibleRemotes = gitRepository?.let(gitHelper::getAccessibleRemoteUrls).orEmpty()
-
-//      if (possibleRemotes.isNotEmpty()) {
-//        val existingRemotesDialog = GiteeExistingRemotesDialog(project, possibleRemotes)
-//        DialogManager.show(existingRemotesDialog)
-//        if (!existingRemotesDialog.isOK) {
-//          return
-//        }
-//      }
 
       val accountInformationLoader = object : (GiteeAccount, Component) -> Pair<Boolean, Set<String>> {
         private val loadedInfo = mutableMapOf<GiteeAccount, Pair<Boolean, Set<String>>>()
@@ -397,14 +381,17 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
   @TestOnly
   class GiteeExistingRemotesDialog(project: Project, private val remotes: List<String>) : DialogWrapper(project) {
     init {
-      title = GiteeBundle.message2("gitee.project.is.already.on.text")
-      setOKButtonText("Share Anyway")
+      title = GiteeBundle.message("gitee.project.is.already.on.text")
+      setOKButtonText(GiteeBundle.message("share.anyway.button"))
       init()
     }
 
     override fun createCenterPanel(): JComponent? {
       val mainText = JBLabel(
-        if (remotes.size == 1) GiteeBundle.message("share.action.remote.is.on.gitee") else GiteeBundle.message("share.action.remotes.are.on.gitee")
+        if (remotes.size == 1)
+          GiteeBundle.message("share.action.remote.is.on.gitee")
+        else
+          GiteeBundle.message("share.action.remotes.are.on.gitee")
       )
 
       val remotesPanel = JPanel().apply {
@@ -452,8 +439,10 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message2("gitee.share.proje
     override fun createCenterPanel(): JComponent? {
       val tree = super.createCenterPanel()
 
-      myCommitMessagePanel = CommitMessage(myProject)
-      myCommitMessagePanel!!.setCommitMessage("Initial commit")
+      val commitMessage = CommitMessage(myProject)
+      Disposer.register(disposable, commitMessage)
+      commitMessage.setCommitMessage("Initial commit")
+      myCommitMessagePanel = commitMessage
 
       val splitter = Splitter(true)
       splitter.setHonorComponentsMinimumSize(true)
