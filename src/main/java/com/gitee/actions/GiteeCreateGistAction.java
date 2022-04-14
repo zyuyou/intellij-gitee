@@ -67,7 +67,6 @@ import static java.util.Objects.requireNonNull;
  */
 public class GiteeCreateGistAction extends DumbAwareAction {
 	private static final Logger LOG = GiteeUtil.LOG;
-	private static final String FAILED_TO_CREATE_GIST = "Can't create Gist";
 
 	private static final Condition<@Nullable VirtualFile> FILE_WITH_CONTENT = f -> f != null && !(f.getFileType().isBinary());
 
