@@ -1,5 +1,6 @@
 package com.gitee.authentication
 
+import com.gitee.authentication.accounts.GEAccountsUtils
 import com.intellij.collaboration.auth.credentials.CredentialsWithRefresh
 
 class GECredentials(
@@ -16,12 +17,10 @@ class GECredentials(
   }
 
   companion object {
-    private const val _empty = ""
-    val EmptyCredentials = GECredentials(_empty, _empty, 0, _empty, _empty, 0)
-
-    const val scope: String = "user_info projects pull_requests gists issues notes groups"
+    private const val empty_str = ""
+    val EmptyCredentials = GECredentials(empty_str, empty_str, 0, empty_str, empty_str, 0)
 
     fun createCredentials(accessToken: String, refreshToken: String) =
-      GECredentials(accessToken, refreshToken, 86400, "bearer", scope, System.currentTimeMillis() / 1000)
+      GECredentials(accessToken, refreshToken, 86400, "bearer", GEAccountsUtils.APP_CLIENT_SCOPE, System.currentTimeMillis() / 1000)
   }
 }

@@ -35,7 +35,7 @@ import java.awt.Component
  */
 class GiteeApiRequestExecutorManager {
 
-  private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor.WithCredentialsAuth>()
+  private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth>()
 
   companion object {
     @JvmStatic
@@ -51,14 +51,14 @@ class GiteeApiRequestExecutorManager {
   }
 
   @RequiresEdt
-  fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithCredentialsAuth? {
+  fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth? {
     return getOrTryToCreateExecutor(account) {
       GiteeAuthenticationManager.getInstance().requestNewCredentials(account, project)
     }
   }
 
   @RequiresEdt
-  fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor.WithCredentialsAuth? {
+  fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth? {
     return getOrTryToCreateExecutor(account) {
       GiteeAuthenticationManager.getInstance().requestNewCredentials(account, null, parentComponent)
     }
@@ -66,12 +66,12 @@ class GiteeApiRequestExecutorManager {
 
   @RequiresEdt
   @Throws(GiteeMissingTokenException::class)
-  fun getExecutor(account: GiteeAccount): GiteeApiRequestExecutor.WithCredentialsAuth {
+  fun getExecutor(account: GiteeAccount): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth {
     return getOrTryToCreateExecutor(account) { throw GiteeMissingTokenException(account) }!!
   }
 
   private fun getOrTryToCreateExecutor(account: GiteeAccount,
-                                       missingTokensHandler: () -> GECredentials?): GiteeApiRequestExecutor.WithCredentialsAuth? {
+                                       missingTokensHandler: () -> GECredentials?): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth? {
 
     // 先从本地credential系统取, 如果没有 => missingTokensHandler弹窗请求输入
     // 如果本地credential取到, 创建附带刷新回调的executor

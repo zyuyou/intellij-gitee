@@ -26,7 +26,7 @@ internal class GEOAuthCredentialsUi(
 
   override fun getValidator(): Validator = { null }
 
-  override fun createExecutor(): GiteeApiRequestExecutor = factory.create()
+  override fun createExecutor(): GiteeApiRequestExecutor = factory.create(GECredentials.EmptyCredentials)
 
   override fun acquireLoginAndToken(
     server: GiteeServerPath,

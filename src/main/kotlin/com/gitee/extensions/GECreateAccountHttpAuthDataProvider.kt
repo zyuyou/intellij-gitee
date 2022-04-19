@@ -29,8 +29,10 @@ internal class GECreateAccountHttpAuthDataProvider(
   }
 
   private fun requestNewAccount(parentComponent: Component?): GiteeAccount? =
-    if (login != null) authenticationManager.requestNewAccountForServer(serverPath, login, project, parentComponent)
-    else authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
+    if (login != null)
+      authenticationManager.requestNewAccountForServer(serverPath, login, project, parentComponent)
+    else
+      authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
 
   companion object {
     fun getOrRequestCredentials(account: GiteeAccount, project: Project, parentComponent: Component?): GECredentials? =

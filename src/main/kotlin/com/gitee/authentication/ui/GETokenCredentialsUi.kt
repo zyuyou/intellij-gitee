@@ -66,7 +66,7 @@ internal class GETokenCredentialsUi(
     notBlank(accessTokenTextField, message("login.token.cannot.be.empty")) ?: notBlank(refreshTokenTextField, message("login.token.cannot.be.empty"))
   }
 
-  override fun createExecutor() = factory.create()
+  override fun createExecutor() = factory.create(accessTokenTextField.text)
 
   override fun acquireLoginAndToken(
     server: GiteeServerPath,

@@ -76,8 +76,8 @@ sealed class GiteeApiRequestExecutor {
       }
     }, disposable)
 
-  class WithCredentialsAuth internal constructor(giteeSettings: GiteeSettings, credentials: GECredentials,
-                                                 private val authDataChangedSupplier: (credentials: GECredentials) -> Unit) : Base(giteeSettings) {
+  class WithCreateOrUpdateCredentialsAuth internal constructor(giteeSettings: GiteeSettings, credentials: GECredentials,
+                                                               private val authDataChangedSupplier: (credentials: GECredentials) -> Unit) : Base(giteeSettings) {
 
     @Volatile
     internal var credentials: GECredentials = credentials
@@ -121,6 +121,54 @@ sealed class GiteeApiRequestExecutor {
           }
           .execute(request, indicator)
       }
+    }
+  }
+
+  class WithCredentialsAuth internal constructor(giteeSettings: GiteeSettings, credentials: GECredentials) : Base(giteeSettings) {
+
+    @Volatile
+    internal var credentials: GECredentials = credentials
+      set(value) {
+        field = value
+        authDataChangedEventDispatcher.multicaster.authDataChanged()
+      }
+
+    @Throws(IOException::class, ProcessCanceledException::class)
+    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
+      if(service<GERequestExecutorBreaker>().isRequestsShouldFail) error(
+        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds."
+      )
+      indicator.checkCanceled()
+
+      return createRequestBuilder(request)
+        .tuner { connection ->
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "token ${credentials.accessToken}")
+        }
+        .execute(request, indicator)
+    }
+  }
+
+  class WithTokenAuth internal constructor(giteeSettings: GiteeSettings,
+                                           accessToken: String) : Base(giteeSettings) {
+    @Volatile
+    internal var accessToken: String = accessToken
+      set(value) {
+        field = value
+        authDataChangedEventDispatcher.multicaster.authDataChanged()
+      }
+
+    @Throws(IOException::class, ProcessCanceledException::class)
+    override fun <T> execute(indicator: ProgressIndicator, request: GiteeApiRequest<T>): T {
+      if (service<GERequestExecutorBreaker>().isRequestsShouldFail) error(
+        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds.")
+      indicator.checkCanceled()
+      return createRequestBuilder(request)
+        .tuner { connection ->
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "token $accessToken")
+        }
+        .execute(request, indicator)
     }
   }
 
@@ -267,9 +315,15 @@ sealed class GiteeApiRequestExecutor {
   class Factory {
 
     @CalledInAny
-    fun create(credentials: GECredentials, authDataChangedSupplier: (credentials: GECredentials) -> Unit): WithCredentialsAuth {
-      return WithCredentialsAuth(GiteeSettings.getInstance(), credentials, authDataChangedSupplier)
+    fun create(credentials: GECredentials, authDataChangedSupplier: (credentials: GECredentials) -> Unit): WithCreateOrUpdateCredentialsAuth {
+      return WithCreateOrUpdateCredentialsAuth(GiteeSettings.getInstance(), credentials, authDataChangedSupplier)
     }
+
+    @CalledInAny
+    fun create(accessToken: String) = WithTokenAuth(GiteeSettings.getInstance(), accessToken)
+
+    @CalledInAny
+    fun create(credentials: GECredentials) = WithCredentialsAuth(GiteeSettings.getInstance(), credentials)
 
     @CalledInAny
     fun create() = NoAuth(GiteeSettings.getInstance())

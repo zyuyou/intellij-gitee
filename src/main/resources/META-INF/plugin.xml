@@ -31,7 +31,7 @@
         <applicationService serviceImplementation="com.gitee.util.CachingGEUserAvatarLoader"/>
 
 
-        <projectService serviceImplementation="com.gitee.extensions.GitAuthenticationFailureManager"/>
+        <projectService serviceImplementation="com.gitee.extensions.GEGitAuthenticationFailureManager"/>
         <projectService serviceImplementation="com.gitee.util.GiteeProjectSettings"/>
         <projectService serviceImplementation="com.gitee.util.GiteeSharedProjectSettings"/>
         <projectService serviceImplementation="com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder"/>
@@ -56,7 +56,7 @@
     </projectListeners>
 
     <extensions defaultExtensionNs="Git4Idea">
-        <GitHttpAuthDataProvider implementation="com.gitee.extensions.GiteeHttpAuthDataProvider"/>
+        <GitHttpAuthDataProvider implementation="com.gitee.extensions.GEHttpAuthDataProvider"/>
         <GitHttpAuthDataProvider implementation="com.gitee.extensions.GEComHttpAuthDataProvider"/>
 
         <gitRepositoryHostingService implementation="com.gitee.extensions.GERepositoryHostingService"/>
