@@ -14,10 +14,9 @@ internal class GEOAuthCallbackHandler : OAuthCallbackHandlerBase() {
 
   override fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult {
     val redirectUrl = if (isAccepted) {
-//      GEOAuthService.SERVICE_URL.resolve("complete")
-      Urls.newFromEncoded("https://gitee.com")
+      GEOAuthService.SERVICE_URL.resolve("intellij/complete")
     } else {
-      GEOAuthService.SERVICE_URL.resolve("error")
+      GEOAuthService.SERVICE_URL.resolve("intellij/error")
     }
     return AcceptCodeHandleResult.Redirect(redirectUrl)
   }
