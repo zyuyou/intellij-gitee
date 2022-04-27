@@ -106,18 +106,18 @@ sealed class GiteeApiRequestExecutor {
 
         val serverPath = from(request.url.substringBefore('?'))
 
-        val newCredentials: GECredentials = GiteeCredentialsCreator(
+        credentials = GiteeCredentialsCreator(
           from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
           getInstance().create(),
           DumbProgressIndicator()
         ).refresh(credentials.refreshToken)
 
-        authDataChangedSupplier(newCredentials)
+        authDataChangedSupplier(credentials)
 
         return createRequestBuilder(request)
           .tuner { connection ->
             request.additionalHeaders.forEach(connection::addRequestProperty)
-            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "token ${newCredentials.accessToken}")
+            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "token ${credentials.accessToken}")
           }
           .execute(request, indicator)
       }
