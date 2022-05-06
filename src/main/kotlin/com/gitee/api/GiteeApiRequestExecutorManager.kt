@@ -87,7 +87,9 @@ class GiteeApiRequestExecutorManager {
                 account.server,
                 GiteeApiRequestExecutor.Factory.getInstance().create(),
                 DumbProgressIndicator()
-              ).refresh(credentials.refreshToken)
+              ).refresh(credentials.refreshToken).apply {
+                GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, this)
+              }
             } else {
               credentials
             }
