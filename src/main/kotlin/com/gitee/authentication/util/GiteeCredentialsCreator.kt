@@ -61,6 +61,7 @@ class GiteeCredentialsCreator(private val server: GiteeServerPath,
     try {
       return executor.execute(indicator, GiteeApiRequests.Auth.update(server, refreshToken))
     } catch (e: GiteeStatusCodeException) {
+      e.setDetails("Can't update token: scopes - ${GEAccountsUtils.APP_CLIENT_SCOPE}")
       throw e
     }
   }

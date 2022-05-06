@@ -104,15 +104,18 @@ sealed class GiteeApiRequestExecutor {
       } catch (e: GiteeAccessTokenExpiredException) {
         if (credentials.refreshToken == "") throw e
 
-        val serverPath = from(request.url.substringBefore('?'))
+        // 这里需要重新判断下是否过期, 后台运行refresk_token可能被多次刷新
+        if(!credentials.isAccessTokenValid()) {
+          val serverPath = from(request.url.substringBefore('?'))
 
-        credentials = GiteeCredentialsCreator(
-          from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
-          getInstance().create(),
-          DumbProgressIndicator()
-        ).refresh(credentials.refreshToken)
+          credentials = GiteeCredentialsCreator(
+            from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
+            getInstance().create(),
+            DumbProgressIndicator()
+          ).refresh(credentials.refreshToken)
 
-        authDataChangedSupplier(credentials)
+          authDataChangedSupplier(credentials)
+        }
 
         return createRequestBuilder(request)
           .tuner { connection ->
@@ -281,7 +284,6 @@ sealed class GiteeApiRequestExecutor {
     }
 
     private fun getErrorText(connection: HttpURLConnection): String {
-//      return connection.errorStream?.let { it -> InputStreamReader(it).use { it.readText() } } ?: ""
       val errorStream = connection.errorStream ?: return ""
       val stream = if (connection.contentEncoding == "gzip") GZIPInputStream(errorStream) else errorStream
       return InputStreamReader(stream, Charsets.UTF_8).use { it.readText() }

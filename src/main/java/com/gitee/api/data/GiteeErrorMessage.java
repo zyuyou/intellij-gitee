@@ -29,23 +29,13 @@ public class GiteeErrorMessage {
   @Nullable
   public String message;
 
-  @Nullable
-  public String error;
-  @Nullable
-  public String errorDescription;
-
   private List<Error> errors;
 
-//  public static class Error {
-//    @Nullable
-//    public String resource;
-//    @Nullable
-//    public String field;
-//    @Nullable
-//    public String code;
-//    @Nullable
-//    public String message;
-//  }
+  @Nullable
+  public String error;
+
+  @Nullable
+  public String errorDescription;
 
   @Nullable
   public String getMessage() {
@@ -61,7 +51,7 @@ public class GiteeErrorMessage {
   @Nullable
   public String getPresentableError() {
     if (errors == null) {
-      return message;
+      return "[" + error + "] " + errorDescription;
     } else {
       StringBuilder s = new StringBuilder();
       s.append(message);
@@ -117,13 +107,10 @@ public class GiteeErrorMessage {
 
   public boolean containsErrorMessage(@NotNull String message) {
     if (errors == null) {
-      if (error == null) return false;
+      if(error != null && error.contains(message))
+        return true;
 
-      if (error.contains(message)) return true;
-
-      if (errorDescription == null) return false;
-
-      if (errorDescription.contains(message)) return true;
+      return errorDescription != null && errorDescription.contains(message);
     } else {
       for (Error error : errors) {
         if (error.getCode().contains(message)) return true;
