@@ -7,7 +7,6 @@ import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeChooseAccountDialog
 import com.gitee.extensions.GECreateAccountHttpAuthDataProvider.Companion.getOrRequestCredentials
 import com.gitee.i18n.GiteeBundle
-import com.gitee.util.GiteeUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -27,7 +26,7 @@ internal class GESelectAccountHttpAuthDataProvider(
     val token = getOrRequestCredentials(account, project, parentComponent) ?: return null
     if (setDefault) GiteeAuthenticationManager.getInstance().setDefaultAccount(project, account)
 
-    return GEAccountAuthData(account, GIT_AUTH_PASSWORD_SUBSTITUTE, token)
+    return GEAccountAuthData(account, account.name, token)
   }
 
   private fun chooseAccount(parentComponent: Component?): Pair<GiteeAccount, Boolean>? {

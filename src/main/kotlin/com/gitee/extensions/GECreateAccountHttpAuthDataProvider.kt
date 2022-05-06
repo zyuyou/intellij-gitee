@@ -6,7 +6,6 @@ import com.gitee.authentication.GEAccountAuthData
 import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.util.GiteeUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -25,7 +24,7 @@ internal class GECreateAccountHttpAuthDataProvider(
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val account = requestNewAccount(parentComponent) ?: return null
     val credentials = getOrRequestCredentials(account, project, parentComponent) ?: return null
-    return GEAccountAuthData(account, login ?: GIT_AUTH_PASSWORD_SUBSTITUTE, credentials)
+    return GEAccountAuthData(account, login ?: account.name, credentials)
   }
 
   private fun requestNewAccount(parentComponent: Component?): GiteeAccount? =

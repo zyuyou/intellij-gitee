@@ -4,7 +4,6 @@ package com.gitee.extensions
 import com.gitee.authentication.GEAccountAuthData
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.util.GiteeUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -23,6 +22,6 @@ internal class GEUpdateCredentialsHttpAuthDataProvider(
     if (!authenticationManager.requestReLogin(account, project, parentComponent)) return null
     val credentials = authenticationManager.getCredentialsForAccount(account) ?: return null
 
-    return GEAccountAuthData(account, GIT_AUTH_PASSWORD_SUBSTITUTE, credentials)
+    return GEAccountAuthData(account, account.name, credentials)
   }
 }
