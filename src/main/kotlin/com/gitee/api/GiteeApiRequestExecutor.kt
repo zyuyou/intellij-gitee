@@ -185,7 +185,6 @@ sealed class GiteeApiRequestExecutor {
         .tuner { connection ->
           request.additionalHeaders.forEach(connection::addRequestProperty)
         }
-        .useProxy(true)
         .execute(request, indicator)
     }
   }
@@ -269,6 +268,8 @@ sealed class GiteeApiRequestExecutor {
             jsonError?.containsReasonMessage("Access token is expired") == true ->
               GiteeAccessTokenExpiredException(jsonError.message)
             jsonError?.containsReasonMessage("Access token is required") == true ->
+              GiteeAccessTokenExpiredException(jsonError.message)
+            jsonError?.containsReasonMessage("Access token does not exist") == true ->
               GiteeAccessTokenExpiredException(jsonError.message)
             jsonError?.containsErrorMessage("invalid_grant") == true ->
               GiteeAuthenticationException(jsonError.presentableError)
