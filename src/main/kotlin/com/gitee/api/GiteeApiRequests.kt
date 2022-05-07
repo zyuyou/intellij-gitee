@@ -545,7 +545,7 @@ object GiteeApiRequests {
       Post.formUrlEncoded<GECredentials>(
         getBaseUrl(server, urlSuffix),
         AuthorizationUpdateRequest(refreshToken)
-      ).withOperationName("create authorization")
+      ).withOperationName("update authorization")
 
     @JvmStatic
     fun get(server: GiteeServerPath) = Get.jsonList<GiteeAuthorization>(getUrl(server, urlSuffix))
@@ -554,7 +554,7 @@ object GiteeApiRequests {
 
   abstract class Entity(val urlSuffix: String)
 
-  private fun getBaseUrl(server: GiteeServerPath, suffix: String) = server.toUrl() + suffix
+  private fun getBaseUrl(server: GiteeServerPath, suffix: String) = server.toHostUrl() + suffix
 
   private fun getUrl(repository: GERepositoryCoordinates, vararg suffixes: String) =
       getUrl(repository.serverPath, Repos.urlSuffix, "/", repository.repositoryPath.toString(), *suffixes)

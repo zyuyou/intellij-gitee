@@ -101,6 +101,10 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
     return getSchemaUrlPart() + host + getPortUrlPart() + StringUtil.notNullize(suffix)
   }
 
+  fun toHostUrl(): String {
+    return getSchemaUrlPart() + host + getPortUrlPart()
+  }
+
   @NotNull
   fun toUrl(showSchema: Boolean): String {
     val builder = StringBuilder()

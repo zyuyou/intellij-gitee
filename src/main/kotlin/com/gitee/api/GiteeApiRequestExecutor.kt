@@ -106,15 +106,18 @@ sealed class GiteeApiRequestExecutor {
 
         // 这里需要重新判断下是否过期, 后台运行refresk_token可能被多次刷新
         if(!credentials.isAccessTokenValid()) {
-          val serverPath = from(request.url.substringBefore('?'))
-
-          credentials = GiteeCredentialsCreator(
-            from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: "")),
-            getInstance().create(),
-            DumbProgressIndicator()
-          ).refresh(credentials.refreshToken)
-
-          authDataChangedSupplier(credentials)
+          try {
+            GiteeCredentialsCreator(
+              from(request.url.substringBefore('?')),
+              getInstance().create(),
+              DumbProgressIndicator()
+            ).refresh(credentials.refreshToken)
+          } catch (ie: GiteeAuthenticationException) {
+            null
+          }?.let {
+            credentials = it
+            authDataChangedSupplier(credentials)
+          }
         }
 
         return createRequestBuilder(request)
@@ -262,13 +265,13 @@ sealed class GiteeApiRequestExecutor {
 
           when {
             jsonError?.containsReasonMessage("API rate limit exceeded") == true ->
-              GiteeRateLimitExceededException(jsonError.presentableError)
+              GiteeRateLimitExceededException(jsonError.message)
             jsonError?.containsReasonMessage("Access token is expired") == true ->
-              GiteeAccessTokenExpiredException(jsonError.presentableError)
+              GiteeAccessTokenExpiredException(jsonError.message)
             jsonError?.containsReasonMessage("Access token is required") == true ->
-              GiteeAccessTokenExpiredException(jsonError.presentableError)
+              GiteeAccessTokenExpiredException(jsonError.message)
             jsonError?.containsErrorMessage("invalid_grant") == true ->
-              GiteeAuthenticationException("${jsonError.error} : ${jsonError.errorDescription?: ""}")
+              GiteeAuthenticationException(jsonError.presentableError)
             else ->
               GiteeAuthenticationException("Request response: " + (jsonError?.presentableError?: if (errorText != "") errorText else statusLine))
           }

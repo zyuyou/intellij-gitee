@@ -36,13 +36,6 @@ internal class GEAccountManager
     }
   }
 
-
-  fun findCredentialsPair(account: GiteeAccount): Pair<String, String>? {
-    return super.findCredentials(account)?.let { credentials ->
-      Pair(credentials.accessToken, credentials.refreshToken)
-    }
-  }
-
   init {
     @Suppress("DEPRECATION")
     addListener(this, object : AccountsListener<GiteeAccount> {

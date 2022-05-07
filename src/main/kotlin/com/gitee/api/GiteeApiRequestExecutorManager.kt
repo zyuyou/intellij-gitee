@@ -19,10 +19,8 @@ import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.util.GiteeCredentialsCreator
 import com.gitee.exceptions.GiteeMissingTokenException
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Component
@@ -80,21 +78,7 @@ class GiteeApiRequestExecutorManager {
     return executors.getOrPut(account) {
       (GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account) ?: missingTokensHandler())
         ?.let { credentials ->
-          // 凭证已经过期
-          val validCredentials =
-            if(!credentials.isAccessTokenValid() && credentials.refreshToken != "") {
-              GiteeCredentialsCreator(
-                account.server,
-                GiteeApiRequestExecutor.Factory.getInstance().create(),
-                DumbProgressIndicator()
-              ).refresh(credentials.refreshToken).apply {
-                GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, this)
-              }
-            } else {
-              credentials
-            }
-
-          GiteeApiRequestExecutor.Factory.getInstance().create(validCredentials) { newCredentials ->
+          GiteeApiRequestExecutor.Factory.getInstance().create(credentials) { newCredentials ->
             GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, newCredentials)
           }
         } ?: return null
