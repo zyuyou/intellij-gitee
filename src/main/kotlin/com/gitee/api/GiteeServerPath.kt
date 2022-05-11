@@ -146,15 +146,6 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
   }
 
   override fun equals(other: Any?): Boolean {
-//    if (this === other) return true
-//    if (other !is GiteeServerPath) return false
-//
-//    val path = other as GiteeServerPath?
-//
-//    return useHttp == path!!.useHttp
-//      && host == path.host
-//      && port == path.port
-//      && suffix == path.suffix
     return equals(other, false);
   }
 

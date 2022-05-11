@@ -31,4 +31,8 @@ class GitRemoteUrlCoordinates(val url: String, val remote: GitRemote, val reposi
   override fun hashCode(): Int {
     return url.hashCode()
   }
+
+  override fun toString(): String {
+    return "(url='$url', remote=${remote.name}, repository=$repository)"
+  }
 }

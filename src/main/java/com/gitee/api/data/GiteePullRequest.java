@@ -17,7 +17,10 @@
 package com.gitee.api.data;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.gitee.api.data.pullrequest.GEPullRequestRequestedReviewer;
+import com.gitee.api.data.pullrequest.GEPullRequestState;
 import com.gitee.api.data.util.GiteeLink;
+import com.gitee.pullrequest.data.GEPRIdentifier;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +32,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-public class GiteePullRequest {
+public class GiteePullRequest implements GEPRIdentifier {
   private long id;
   private String url;
   private long number;
   private String title;
-  private GiteeIssueState state;
+  private GEPullRequestState state;
   private GiteeUser user;
 
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
@@ -66,8 +69,9 @@ public class GiteePullRequest {
     return url;
   }
 
-  public long getId() {
-    return id;
+  @NotNull
+  public String getId() {
+    return String.valueOf(id);
   }
 
   public long getNumber() {
@@ -80,7 +84,7 @@ public class GiteePullRequest {
   }
 
   @NotNull
-  public GiteeIssueState getState() {
+  public GEPullRequestState getState() {
     return state;
   }
 
@@ -117,6 +121,27 @@ public class GiteePullRequest {
   @NotNull
   public List<GiteeUser> getTesters() {
     return testers;
+  }
+
+  @NotNull
+  public List<GEPullRequestRequestedReviewer> getReviewers() {
+    return Collections.emptyList();
+  }
+
+  public GEActor getAuthor() {
+    return null;
+  }
+
+  public boolean isDraft() {
+    return false;
+  }
+
+  public boolean viewerCanUpdate() {
+    return false;
+  }
+
+  public boolean viewerDidAuthor() {
+    return false;
   }
 
   @NotNull

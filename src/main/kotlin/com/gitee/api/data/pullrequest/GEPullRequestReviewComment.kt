@@ -6,22 +6,24 @@ import com.gitee.api.data.GEActor
 import com.gitee.api.data.GEComment
 import com.gitee.api.data.GECommitHash
 import com.gitee.api.data.GENode
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import java.util.*
 
-class GEPullRequestReviewComment(id: String,
-                                 val databaseId: Long,
-                                 val url: String,
-                                 author: GEActor?,
-                                 bodyHTML: String,
-                                 createdAt: Date,
-                                 val path: String,
-                                 val commit: GECommitHash,
-                                 val position: Int?,
-                                 val originalCommit: GECommitHash?,
-                                 val originalPosition: Int,
-                                 val replyTo: GENode?,
-                                 val diffHunk: String,
-                                 @JsonProperty("pullRequestReview") pullRequestReview: GENode)
-  : GEComment(id, author, bodyHTML, createdAt) {
-  val reviewId = pullRequestReview.id
+@GraphQLFragment("/graphql/fragment/pullRequestReviewComment.graphql")
+open class GEPullRequestReviewComment(id: String,
+                                      val databaseId: Long,
+                                      val url: String,
+                                      author: GEActor?,
+                                      body: String,
+                                      createdAt: Date,
+                                      val state: GEPullRequestReviewCommentState,
+                                      val commit: GECommitHash?,
+                                      val originalCommit: GECommitHash?,
+                                      val replyTo: GENode?,
+                                      val diffHunk: String,
+                                      @JsonProperty("pullRequestReview") pullRequestReview: GENode?,
+                                      val viewerCanDelete: Boolean,
+                                      val viewerCanUpdate: Boolean)
+  : GEComment(id, author, body, createdAt) {
+  val reviewId = pullRequestReview?.id
 }

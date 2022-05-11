@@ -32,6 +32,7 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
+import git4idea.repo.GitRepository
 import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 
@@ -146,91 +147,6 @@ open class GiteeOpenInBrowserActionGroup
     }
   }
 
-//  private companion object {
-//    private const val CANNOT_OPEN_IN_BROWSER = "Can't open in browser"
-//
-//    class GiteeOpenInBrowserAction(private val repoPath: GERepositoryCoordinates, val data: Data)
-//      : DumbAwareAction(repoPath.toString().replace('_', ' ')) {
-//
-//      override fun actionPerformed(e: AnActionEvent) {
-//        when (data) {
-//          is Data.Revision -> openCommitInBrowser(repoPath, data.revisionHash)
-//          is Data.File -> openFileInBrowser(data.project, data.gitRepoRoot, repoPath, data.virtualFile, e.getData(CommonDataKeys.EDITOR))
-//          is Data.URL -> BrowserUtil.browse(data.htmlUrl)
-//        }
-//      }
-//
-//      private fun openCommitInBrowser(path: GERepositoryCoordinates, revisionHash: String) {
-//        BrowserUtil.browse("${path.toUrl()}/commit/$revisionHash")
-//      }
-//
-//      private fun openFileInBrowser(project: Project,
-//                                    repositoryRoot: VirtualFile,
-//                                    path: GERepositoryCoordinates,
-//                                    virtualFile: VirtualFile,
-//                                    editor: Editor?) {
-//        val relativePath = VfsUtilCore.getRelativePath(virtualFile, repositoryRoot)
-//        if (relativePath == null) {
-//          GiteeNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "File is not under repository root",
-//            "Root: " + repositoryRoot.presentableUrl + ", file: " + virtualFile.presentableUrl)
-//          return
-//        }
-//
-//        val hash = getCurrentFileRevisionHash(project, virtualFile)
-//        if (hash == null) {
-//          GiteeNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't get last revision.")
-//          return
-//        }
-//
-//        val giteeUrl = makeUrlToOpen(editor, relativePath, hash, path)
-//        if (giteeUrl != null) BrowserUtil.browse(giteeUrl)
-//      }
-//
-//      private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
-//        val ref = Ref<GitRevisionNumber>()
-//        object : Task.Modal(project, "Getting Last Revision", true) {
-//          override fun run(indicator: ProgressIndicator) {
-//            ref.set(GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), "HEAD") as GitRevisionNumber?)
-//          }
-//
-//          override fun onThrowable(error: Throwable) {
-//            GiteeUtil.LOG.warn(error)
-//          }
-//        }.queue()
-//        return if (ref.isNull) null else ref.get().rev
-//      }
-//
-//      private fun makeUrlToOpen(editor: Editor?,
-//                                relativePath: String,
-//                                branch: String,
-//                                path: GERepositoryCoordinates): String? {
-//        val builder = StringBuilder()
-//
-//        if (StringUtil.isEmptyOrSpaces(relativePath)) {
-//          builder.append(path.toUrl()).append("/tree/").append(branch)
-//        } else {
-//          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(relativePath)
-//        }
-//
-//        if (editor != null && editor.document.lineCount >= 1) {
-//          // lines are counted internally from 0, but from 1 on github
-//          val selectionModel = editor.selectionModel
-//          val begin = editor.document.getLineNumber(selectionModel.selectionStart) + 1
-//          val selectionEnd = selectionModel.selectionEnd
-//          var end = editor.document.getLineNumber(selectionEnd) + 1
-//          if (editor.document.getLineStartOffset(end - 1) == selectionEnd) {
-//            end -= 1
-//          }
-//          builder.append("#L").append(begin)
-//          if (begin != end) {
-//            builder.append("-L").append(end)
-//          }
-//        }
-//        return builder.toString()
-//      }
-//    }
-//  }
-
   private companion object {
     class GiteeOpenInBrowserAction(val data: Data)
       : DumbAwareAction({ data.getName() }) {
@@ -319,5 +235,51 @@ open class GiteeOpenInBrowserActionGroup
         return builder.toString()
       }
     }
+  }
+}
+
+object GEPathUtil {
+  fun getFileURL(repository: GitRepository,
+                 path: GERepositoryCoordinates,
+                 virtualFile: VirtualFile,
+                 editor: Editor?): String? {
+    val relativePath = VfsUtilCore.getRelativePath(virtualFile, repository.root)
+    if (relativePath == null) {
+      return null
+    }
+
+    val hash = repository.currentRevision
+    if (hash == null) {
+      return null
+    }
+
+    return makeUrlToOpen(editor, relativePath, hash, path)
+  }
+
+  fun makeUrlToOpen(editor: Editor?, relativePath: String, branch: String, path: GERepositoryCoordinates): String? {
+    val builder = StringBuilder()
+
+    if (StringUtil.isEmptyOrSpaces(relativePath)) {
+      builder.append(path.toUrl()).append("/tree/").append(branch)
+    }
+    else {
+      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
+    }
+
+    if (editor != null && editor.document.lineCount >= 1) {
+      // lines are counted internally from 0, but from 1 on github
+      val selectionModel = editor.selectionModel
+      val begin = editor.document.getLineNumber(selectionModel.selectionStart) + 1
+      val selectionEnd = selectionModel.selectionEnd
+      var end = editor.document.getLineNumber(selectionEnd) + 1
+      if (editor.document.getLineStartOffset(end - 1) == selectionEnd) {
+        end -= 1
+      }
+      builder.append("#L").append(begin)
+      if (begin != end) {
+        builder.append("-L").append(end)
+      }
+    }
+    return builder.toString()
   }
 }

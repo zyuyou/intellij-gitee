@@ -46,6 +46,14 @@
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
                 implementation="com.gitee.ui.cloneDialog.GEECloneDialogExtension"/>
 
+        <virtualFileSystem key="gepr" implementationClass="com.gitee.pullrequest.GEPRVirtualFileSystem"/>
+        <fileIconProvider implementation="com.gitee.pullrequest.GEPRVirtualFileIconProvider" order="first"/>
+        <fileEditorProvider implementation="com.gitee.pullrequest.GEPREditorProvider"/>
+
+        <toolWindow id="Gitee Pull Requests" icon="com.gitee.icons.GiteeIcons.PullRequestsToolWindow"
+                    anchor="left" doNotActivateOnStart="true"
+                    factoryClass="com.gitee.pullrequest.GEPRToolWindowFactory"/>
+
     </extensions>
 
     <projectListeners>
@@ -75,14 +83,24 @@
             <add-to-group group-id="Git.Menu"/>
         </action>
 
+        <action id="Gitee.Create.Pull.Request" class="com.gitee.pullrequest.action.GEPRCreatePullRequestAction">
+            <add-to-group group-id="Git.Menu"/>
+        </action>
+        <action id="Gitee.View.Pull.Request" class="com.gitee.actions.GiteeViewPullRequestsAction">
+            <add-to-group group-id="Git.Menu"/>
+        </action>
+
         <action id="Gitee.Open.In.Browser" class="com.gitee.actions.GiteeOpenInBrowserActionGroup">
-            <add-to-group group-id="EditorPopupMenu"/>
-            <add-to-group group-id="ProjectViewPopupMenu"/>
-            <add-to-group group-id="EditorTabPopupMenu"/>
-            <add-to-group group-id="Git.LogContextMenu"/>
+            <override-text place="EditorTabPopup"/>
+            <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
+            <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
+            <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+
+            <add-to-group group-id="RevealGroup"/>
             <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
             <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
             <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+            <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
         </action>
 
         <action id="Gitee.Create.Gist" class="com.gitee.actions.GiteeCreateGistAction">
@@ -94,12 +112,64 @@
 
         <group id="Gitee.MainMenu" popup="true" text="Gitee">
             <reference ref="Gitee.Share"/>
+            <reference ref="Gitee.Create.Pull.Request"/>
+            <reference ref="Gitee.View.Pull.Request"/>
             <reference ref="Gitee.Sync.Fork"/>
             <reference ref="Gitee.Create.Gist"/>
             <reference ref="Gitee.Open.In.Browser"/>
 
             <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
         </group>
+
+        <group id="Gitee.PullRequest.ToolWindow.List.Popup">
+            <action id="Gitee.PullRequest.Show"
+                    class="com.gitee.pullrequest.action.GEPROpenPullRequestAction"/>
+            <reference id="Gitee.Open.In.Browser"/>
+            <action id="Gitee.PullRequest.List.Reload"
+                    class="com.gitee.pullrequest.action.GEPRReloadListAction" use-shortcut-of="Refresh"/>
+        </group>
+        <group id="Gitee.PullRequest.Details.Popup">
+            <action id="Gitee.PullRequest.Timeline.Show"
+                    class="com.gitee.pullrequest.action.GEPROpenPullRequestTimelineAction"/>
+            <reference id="Gitee.Open.In.Browser"/>
+            <action id="Gitee.PullRequest.Branch.Create"
+                    class="com.gitee.pullrequest.action.GEPRCreateBranchAction"/>
+            <action id="Gitee.PullRequest.Branch.Update"
+                    class="com.gitee.pullrequest.action.GEPRUpdateBranchAction"/>
+            <action id="Gitee.PullRequest.Details.Reload"
+                    class="com.gitee.pullrequest.action.GEPRReloadDetailsAction" use-shortcut-of="Refresh"/>
+        </group>
+        <action id="Gitee.PullRequest.Changes.Reload"
+                class="com.gitee.pullrequest.action.GEPRReloadChangesAction" use-shortcut-of="Refresh"/>
+        <action id="Gitee.PullRequest.Comments.Reload"
+                class="com.gitee.pullrequest.action.GEPRReloadCommentsAction" use-shortcut-of="Refresh"/>
+
+        <action id="Gitee.PullRequest.Review.Submit"
+                class="com.gitee.pullrequest.action.GEPRReviewSubmitAction"/>
+
+        <group id="Gitee.PullRequest.Changes.Toolbar">
+            <reference id="Diff.ShowDiff"/>
+            <reference id="Gitee.PullRequest.Review.Submit"/>
+            <separator/>
+            <reference id="ChangesView.GroupBy"/>
+        </group>
+
+        <group id="Gitee.PullRequest.Changes.Popup">
+            <reference id="Diff.ShowDiff"/>
+            <reference id="Diff.ShowStandaloneDiff"/>
+            <reference id="Gitee.PullRequest.Changes.Reload"/>
+            <action id="Gitee.PullRequest.Changes.MarkViewed"
+                    class="com.gitee.pullrequest.action.GEPRMarkFilesViewedAction"/>
+            <action id="Gitee.PullRequest.Changes.MarkNotViewed"
+                    class="com.gitee.pullrequest.action.GEPRMarkFilesNotViewedAction"/>
+        </group>
+
+        <group id="Gitee.PullRequest.Timeline.Popup">
+            <action id="Gitee.PullRequest.Timeline.Update"
+                    class="com.gitee.pullrequest.action.GEPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
+        </group>
+
+        <!-- //////////////////////////////////////////////////////////////////////////////////// -->
 
         <action id="Gitee.Break.Api.Requests" class="com.gitee.api.GERequestExecutorBreaker$Action"/>
 
@@ -110,6 +180,10 @@
             <separator/>
             <action id="Gitee.Accounts.AddGEEAccount" class="com.gitee.authentication.ui.AddGEEAccountAction"/>
         </group>
+
+        <action id="GiteeCopyPathProvider" class="com.gitee.GiteeCopyPathProvider" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
+            <add-to-group group-id="CopyFileReference"/>
+        </action>
 
     </actions>
 </idea-plugin>

@@ -220,7 +220,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.projec
 
           //git remote add origin git@gitee.com:login/name.git
           LOG.info("Adding Gitee as a remote host")
-          indicator.text = GiteeBundle.message("share.process.adding.gh.as.remote.host")
+          indicator.text = GiteeBundle.message("share.process.adding.ge.as.remote.host")
           git.addRemote(repository, remoteName, remoteUrl).getOutputOrThrow()
           repository.update()
 

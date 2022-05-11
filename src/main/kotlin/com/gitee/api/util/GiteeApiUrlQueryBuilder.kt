@@ -15,6 +15,7 @@
  */
 package com.gitee.api.util
 
+import com.gitee.api.data.request.GEApiRequestPagination
 import com.gitee.api.data.request.GiteeRequestPagination
 import com.intellij.util.io.URLUtil
 
@@ -42,6 +43,13 @@ class GiteeApiUrlQueryBuilder {
   fun param(pagination: GiteeRequestPagination?) {
     if (pagination != null) {
       param("page", pagination.pageNumber.toString())
+      param("per_page", pagination.pageSize.toString())
+    }
+  }
+
+  fun param(pagination: GEApiRequestPagination?) {
+    if (pagination != null) {
+      param("page", pagination.page.toString())
       param("per_page", pagination.pageSize.toString())
     }
   }

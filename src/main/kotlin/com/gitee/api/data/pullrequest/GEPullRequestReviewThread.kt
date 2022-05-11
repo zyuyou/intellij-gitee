@@ -4,22 +4,26 @@ package com.gitee.api.data.pullrequest
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.gitee.api.data.GENode
 import com.gitee.api.data.GENodes
+import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.diff.util.Side
 
+@GraphQLFragment("/graphql/fragment/pullRequestReviewThread.graphql")
 class GEPullRequestReviewThread(id: String,
                                 val isResolved: Boolean,
+                                val isOutdated: Boolean,
+                                val path: String,
+                                @JsonProperty("diffSide") val side: Side,
+                                val line: Int,
+                                val startLine: Int?,
                                 @JsonProperty("comments") comments: GENodes<GEPullRequestReviewComment>)
   : GENode(id) {
   val comments = comments.nodes
   private val root = comments.nodes.first()
 
-  val path = root.path
+  val state = root.state
   val commit = root.commit
-  val position = root.position
   val originalCommit = root.originalCommit
-  val originalPosition = root.originalPosition
   val createdAt = root.createdAt
   val diffHunk = root.diffHunk
-
   val reviewId = root.reviewId
-  val firstCommentDatabaseId = root.databaseId
 }

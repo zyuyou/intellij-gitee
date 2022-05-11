@@ -4,12 +4,10 @@ package com.gitee.util
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.util.GiteeUtil.Delegates.observableField
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.hosting.GitHostingUrlUtil
-import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -19,27 +17,28 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.EventDispatcher
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.messages.Topic
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.CalledInAny
+import kotlin.properties.Delegates
 
 @Service
 class GEProjectRepositoriesManager(private val project: Project) : Disposable {
-
-  private val updateQueue = MergingUpdateQueue("Gitee repositories update", 50, true, null, this, null, true)
-    .usePassThroughInUnitTestMode()
-  private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+  private val updateAlarm = SingleAlarm(task = ::doUpdateRepositories, delay = 50, parentDisposable = this)
 
   private val accountManager: GEAccountManager
     get() = service()
 
-  var knownRepositories by observableField(emptySet<GEGitRepositoryMapping>(), eventDispatcher)
-    private set
+  var knownRepositories by Delegates.observable(emptySet<GEGitRepositoryMapping>()) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(LIST_CHANGES_TOPIC)
+        .repositoryListChanged(newValue, project)
+    }
+  }
 
   private val serversFromDiscovery = HashSet<GiteeServerPath>()
 
@@ -52,13 +51,20 @@ class GEProjectRepositoriesManager(private val project: Project) : Disposable {
     updateRepositories()
   }
 
-  fun findKnownRepositories(repository: GitRepository) = knownRepositories.filter {
-    it.gitRemoteUrlCoordinates.repository == repository
+  fun findKnownRepositories(repository: GitRepository): List<GEGitRepositoryMapping> {
+    return knownRepositories.filter {
+      it.gitRemoteUrlCoordinates.repository == repository
+    }
   }
 
   @CalledInAny
   private fun updateRepositories() {
-    updateQueue.queue(Update.create(UPDATE_IDENTITY, ::doUpdateRepositories))
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      doUpdateRepositories()
+    }
+    else {
+      updateAlarm.request()
+    }
   }
 
   //TODO: execute on pooled thread - need to make GiteeAccountManager ready
@@ -91,7 +97,8 @@ class GEProjectRepositoriesManager(private val project: Project) : Disposable {
     val repositories = HashSet<GEGitRepositoryMapping>()
     for (remote in remotes) {
       val repository = servers.find { it.matches(remote.url) }?.let { GEGitRepositoryMapping.create(it, remote) }
-      if (repository != null) repositories.add(repository)
+      if (repository != null)
+        repositories.add(repository)
       else {
         scheduleEnterpriseServerDiscovery(remote)
       }
@@ -122,21 +129,21 @@ class GEProjectRepositoriesManager(private val project: Project) : Disposable {
     val server = GiteeServerPath(false, host, null, serverSuffix)
     val serverHttp = GiteeServerPath(true, host, null, serverSuffix)
     val server8080 = GiteeServerPath(true, host, 8080, serverSuffix)
-    LOG.debug("Scheduling GHE server discovery for $server, $serverHttp and $server8080")
+    LOG.debug("Scheduling GEE server discovery for $server, $serverHttp and $server8080")
 
     val serverManager = service<GEEnterpriseServerMetadataLoader>()
     serverManager.loadMetadata(server).successOnEdt {
-      LOG.debug("Found GHE server at $server")
+      LOG.debug("Found GEE server at $server")
       serversFromDiscovery.add(server)
       invokeLater(runnable = ::doUpdateRepositories)
     }.errorOnEdt {
       serverManager.loadMetadata(serverHttp).successOnEdt {
-        LOG.debug("Found GHE server at $serverHttp")
+        LOG.debug("Found GEE server at $serverHttp")
         serversFromDiscovery.add(serverHttp)
         invokeLater(runnable = ::doUpdateRepositories)
       }.errorOnEdt {
         serverManager.loadMetadata(server8080).successOnEdt {
-          LOG.debug("Found GHE server at $server8080")
+          LOG.debug("Found GEE server at $server8080")
           serversFromDiscovery.add(server8080)
           invokeLater(runnable = ::doUpdateRepositories)
         }
@@ -144,18 +151,27 @@ class GEProjectRepositoriesManager(private val project: Project) : Disposable {
     }
   }
 
-  fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(eventDispatcher, disposable, listener)
+  fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) {
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(LIST_CHANGES_TOPIC, object : ListChangeListener {
+      override fun repositoryListChanged(newList: Set<GEGitRepositoryMapping>, project: Project) = listener()
+    })
+  }
 
   class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
     override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
     override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
   }
 
+  interface ListChangeListener {
+    fun repositoryListChanged(newList: Set<GEGitRepositoryMapping>, project: Project)
+  }
+
   companion object {
     private val LOG = logger<GEProjectRepositoriesManager>()
 
-    private val UPDATE_IDENTITY = Any()
+    @JvmField
+    @Topic.AppLevel
+    val LIST_CHANGES_TOPIC = Topic(ListChangeListener::class.java, Topic.BroadcastDirection.NONE)
 
     private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
       val application = ApplicationManager.getApplication()

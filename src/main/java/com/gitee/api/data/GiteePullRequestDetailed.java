@@ -77,7 +77,26 @@ public class GiteePullRequestDetailed extends GiteePullRequest {
   }
 
   @NotNull
+  public String getHeadRefName() {
+    return head.getRef();
+  }
+
+  @NotNull
+  public String getHeadRefOid() {
+    return head.getSha();
+  }
+
+  public GiteeRepo getHeadRepository() {
+    return head.getRepo();
+  }
+
+  @NotNull
   public String getBaseRefName() {
     return base.getRef();
+  }
+
+  @NotNull
+  public String getBaseRefOid() {
+    return base.getSha();
   }
 }

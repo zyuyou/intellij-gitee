@@ -74,7 +74,6 @@ private fun GELoginRequest.configure(dialog: BaseLoginDialog) {
   error?.let { dialog.setError(it) }
   server?.let { dialog.setServer(it.toString(), isServerEditable) }
   login?.let { dialog.setLogin(it, isLoginEditable) }
-//  token?.let { dialog.setToken(it) }
   credentials?.let { dialog.setCredentials(it) }
 }
 

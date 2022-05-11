@@ -4,20 +4,30 @@ package com.gitee.api.data.pullrequest
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.gitee.api.data.*
+import com.gitee.pullrequest.data.GEPRIdentifier
+import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
 import java.util.*
 
+@GraphQLFragment("/graphql/fragment/pullRequestInfoShort.graphql")
 open class GEPullRequestShort(id: String,
                               val url: String,
-                              val number: Long,
-                              val title: String,
-                              val state: GiteePullRequestState,
+                              override val number: Long,
+                              @NlsSafe val title: String,
+                              val state: GEPullRequestState,
+                              val isDraft: Boolean,
                               val author: GEActor?,
                               val createdAt: Date,
                               @JsonProperty("assignees") assignees: GENodes<GEUser>,
-                              @JsonProperty("labels") labels: GENodes<GELabel>) : GENode(id) {
+                              @JsonProperty("labels") labels: GENodes<GELabel>,
+                              val viewerCanUpdate: Boolean,
+                              val viewerDidAuthor: Boolean) : GENode(id), GEPRIdentifier {
 
   @JsonIgnore
   val assignees = assignees.nodes
+
   @JsonIgnore
   val labels = labels.nodes
+
+  override fun toString(): String = "#$number $title"
 }

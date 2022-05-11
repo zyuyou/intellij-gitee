@@ -3,9 +3,9 @@ package com.gitee.api.data.pullrequest
 
 import com.gitee.api.data.GECommit
 import com.gitee.api.data.GENode
-import com.gitee.api.data.pullrequest.timeline.GiteePRTimelineItem
+import com.gitee.api.data.pullrequest.timeline.GEPRTimelineItem
 
 class GEPullRequestCommit(id: String,
                           val commit: GECommit,
                           val url: String)
-  : GENode(id), GiteePRTimelineItem
+  : GENode(id), GEPRTimelineItem

@@ -15,6 +15,7 @@
  */
 package com.gitee.api.data;
 
+import com.gitee.api.data.pullrequest.GEPullRequestRequestedReviewer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.RestModel;
@@ -23,11 +24,12 @@ import java.util.Objects;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GiteeUser {
+public class GiteeUser implements GEPullRequestRequestedReviewer {
   @NotNull public static final GiteeUser UNKNOWN = createUnknownUser();
 
   private Long id;
   private String login;
+  private String name;
 
   // https://gitee.com/api/v5/user/[name]
   private String url;
@@ -39,11 +41,13 @@ public class GiteeUser {
   private String type;
   private Boolean siteAdmin;
 
-
-
   @NotNull
   public String getNodeId() {
     return "nodeId";
+  }
+
+  public Long getId() {
+    return id;
   }
 
   @NotNull
@@ -52,15 +56,29 @@ public class GiteeUser {
   }
 
   @NotNull
+  public String getName() {
+    return name;
+  }
+
+  @NotNull
+  public String getShortName() {
+    return name;
+  }
+
+  @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
+  }
+
+  @NotNull
+  public String getUrl() {
+    return url;
   }
 
   @Nullable
   public String getAvatarUrl() {
     return avatarUrl;
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -82,6 +100,7 @@ public class GiteeUser {
     GiteeUser user = new GiteeUser();
     user.id = -1L;
     user.login = "ghost";
+    user.name = "ghost";
     return user;
   }
 }

@@ -2,8 +2,13 @@
 package com.gitee.ui.util
 
 import com.gitee.api.GERepositoryCoordinates
-import com.gitee.api.data.GELabel
-import com.gitee.api.data.GEUser
+import com.gitee.api.data.GiteeIssueLabel
+import com.gitee.api.data.GiteeIssueState
+import com.gitee.api.data.GiteeUser
+import com.gitee.api.data.pullrequest.GEPullRequestRequestedReviewer
+import com.gitee.api.data.pullrequest.GEPullRequestState
+import com.gitee.i18n.GiteeBundle
+import com.gitee.icons.GiteeIcons
 import com.gitee.ui.avatars.GEAvatarIconsProvider
 import com.gitee.util.CollectionDelta
 import com.intellij.UtilBundle
@@ -26,11 +31,11 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
+import icons.CollaborationToolsIcons
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.event.*
-import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -38,12 +43,36 @@ import javax.swing.*
 object GEUIUtil {
   const val AVATAR_SIZE = 20
 
-  fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
-    component.addPropertyChangeListener("UI", PropertyChangeListener {
-      listener.invoke(component)
-    })
-    listener.invoke(component)
-  }
+  fun getPullRequestStateIcon(state: GEPullRequestState, isDraft: Boolean): Icon =
+    if (isDraft) GiteeIcons.PullRequestDraft
+    else when (state) {
+      GEPullRequestState.CLOSED -> CollaborationToolsIcons.PullRequestClosed
+      GEPullRequestState.MERGED -> GiteeIcons.PullRequestMerged
+      GEPullRequestState.OPEN -> CollaborationToolsIcons.PullRequestOpen
+    }
+
+  @NlsSafe
+  fun getPullRequestStateText(state: GEPullRequestState, isDraft: Boolean): String =
+    if
+      (isDraft) GiteeBundle.message("pull.request.state.draft")
+    else when (state) {
+      GEPullRequestState.CLOSED -> GiteeBundle.message("pull.request.state.closed")
+      GEPullRequestState.MERGED -> GiteeBundle.message("pull.request.state.merged")
+      GEPullRequestState.OPEN -> GiteeBundle.message("pull.request.state.open")
+    }
+
+  fun getIssueStateIcon(state: GiteeIssueState): Icon =
+    when (state) {
+      GiteeIssueState.open -> GiteeIcons.IssueOpened
+      GiteeIssueState.closed -> GiteeIcons.IssueClosed
+    }
+
+  @NlsSafe
+  fun getIssueStateText(state: GiteeIssueState): String =
+    when (state) {
+      GiteeIssueState.open -> GiteeBundle.message("issue.state.open")
+      GiteeIssueState.closed -> GiteeBundle.message("issue.state.closed")
+    }
 
   fun focusPanel(panel: JComponent) {
     val focusManager = IdeFocusManager.findInstanceByComponent(panel)
@@ -51,12 +80,12 @@ object GEUIUtil {
     focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
   }
 
-  fun createIssueLabelLabel(label: GELabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
+  fun createIssueLabelLabel(label: GiteeIssueLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)
     foreground = getLabelForeground(background)
   }.andOpaque()
 
-  fun getLabelBackground(label: GELabel): JBColor {
+  fun getLabelBackground(label: GiteeIssueLabel): JBColor {
     val apiColor = ColorUtil.fromHex(label.color)
     return JBColor(apiColor, ColorUtil.darker(apiColor, 3))
   }
@@ -221,15 +250,21 @@ object GEUIUtil {
     abstract fun getText(value: T): String
     abstract fun getIcon(value: T): Icon
 
-    class Users(private val iconsProvider: GEAvatarIconsProvider)
-      : SelectionListCellRenderer<GEUser>() {
-      override fun getText(value: GEUser) = value.login
-      override fun getIcon(value: GEUser) = iconsProvider.getIcon(value.avatarUrl)
+    class PRReviewers(private val iconsProvider: GEAvatarIconsProvider)
+      : SelectionListCellRenderer<GEPullRequestRequestedReviewer>() {
+      override fun getText(value: GEPullRequestRequestedReviewer) = value.shortName
+      override fun getIcon(value: GEPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl)
     }
 
-    class Labels : SelectionListCellRenderer<GELabel>() {
-      override fun getText(value: GELabel) = value.name
-      override fun getIcon(value: GELabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
+    class Users(private val iconsProvider: GEAvatarIconsProvider)
+      : SelectionListCellRenderer<GiteeUser>() {
+      override fun getText(value: GiteeUser) = value.login
+      override fun getIcon(value: GiteeUser) = iconsProvider.getIcon(value.avatarUrl)
+    }
+
+    class Labels : SelectionListCellRenderer<GiteeIssueLabel>() {
+      override fun getText(value: GiteeIssueLabel) = value.name
+      override fun getIcon(value: GiteeIssueLabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
     }
   }
 

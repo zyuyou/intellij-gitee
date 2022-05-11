@@ -16,12 +16,17 @@
 package com.gitee.api
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.gitee.api.data.GEApiCursorPageInfoDTO
+import com.gitee.api.data.GEApiError
+import com.gitee.api.data.GEApiResponseDTO
 import com.gitee.api.data.GiteeResponsePage
-import com.gitee.api.data.GiteeSearchResult
-import com.gitee.api.data.graphql.GiteeGQLQueryRequest
-import com.gitee.api.data.graphql.GiteeGQLResponse
+import com.gitee.api.data.graphql.GEGQLError
+import com.gitee.api.data.request.query.GEApiSearchQueryResponse
+import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeConfusingException
 import com.gitee.exceptions.GiteeJsonException
+import com.intellij.collaboration.api.dto.GraphQLRequestDTO
+import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.util.ThrowableConvertor
 import java.io.IOException
 
@@ -51,7 +56,7 @@ sealed class GiteeApiRequest<out T>(val url: String) {
     return this
   }
 
-  abstract class Get<T> @JvmOverloads constructor(url: String,
+  abstract class Get<out T> @JvmOverloads constructor(url: String,
                                                   override val acceptMimeType: String? = null) : GiteeApiRequest<T>(url) {
 
     abstract class Optional<T> @JvmOverloads constructor(url: String,
@@ -114,6 +119,107 @@ sealed class GiteeApiRequest<out T>(val url: String) {
             response.findHeader(GiteeResponsePage.HEADER_TOTAL_PAGE)?.toInt())
       }
     }
+
+    abstract class ApiQuery<out T>(url: String,
+                                   private val queryName: String,
+                                   private val variablesObject: Any)
+      : Get<T>(url, GiteeApiContentHelper.JSON_MIME_TYPE) {
+
+      protected fun throwException(errors: List<GEApiError>): Nothing {
+        if (errors.any { it.type.equals("INSUFFICIENT_SCOPES", true) })
+          throw GiteeAuthenticationException("Access token has not been granted the required scopes.")
+
+        if (errors.size == 1)
+          throw GiteeConfusingException(errors.single().toString())
+
+        throw GiteeConfusingException(errors.toString())
+      }
+
+      class Parsed<T>(url: String,
+                      requestFilePath: String,
+                      variablesObject: Any,
+                      private val clazz: Class<T>)
+        : ApiQuery<GEApiSearchQueryResponse<T>>(url, requestFilePath, variablesObject) {
+        override fun extractResult(response: GiteeApiResponse): GEApiSearchQueryResponse<T> {
+          return parseResponse(response, url, clazz)
+
+//          val result: GEApiResponseDTO<out T, GEApiError> = parseApiResponse(response, clazz)
+//          val data = result.data
+//          if (data != null) return data
+//
+//          val errors = result.errors
+//
+//          if (errors == null)
+//            error("Undefined request state - both result and errors are null")
+//          else
+//            throwException(errors)
+        }
+      }
+
+      internal fun <T> parseResponse(response: GiteeApiResponse, url: String, clazz: Class<T>) : GEApiSearchQueryResponse<T> {
+        val pageRegex = Regex("([?&]+page=)(\\d+)(&per_page=)(\\d+)")
+        val findResult = pageRegex.find(url)!!
+
+        val page = findResult.groupValues[2].toInt()
+        val perPage = findResult.groupValues[4].toInt()
+
+        val totalPage = response.findHeader("total_page")!!.toInt()
+        val totalCount = response.findHeader("total_count")!!.toInt()
+
+        return GEApiSearchQueryResponse(
+          GEApiSearchQueryResponse.SearchConnection(
+            GEApiCursorPageInfoDTO(
+              (page - 1) * perPage + 1, page > 1,
+              totalCount.coerceAtMost(page * perPage), page < totalPage
+            ),
+            parseJsonList(response, clazz)
+          )
+        )
+      }
+
+      class TraversedParsed<T : Any>(url: String,
+                                     requestFilePath: String,
+                                     variablesObject: Any,
+                                     private val clazz: Class<out T>,
+                                     private vararg val pathFromData: String)
+        : ApiQuery<T>(url, requestFilePath, variablesObject) {
+
+        override fun extractResult(response: GiteeApiResponse): T {
+          return parseResponse(response, clazz, pathFromData)
+            ?: throw GiteeJsonException("Non-nullable entity is null or entity path is invalid")
+        }
+      }
+
+      class OptionalTraversedParsed<T>(url: String,
+                                       requestFilePath: String,
+                                       variablesObject: Any,
+                                       private val clazz: Class<T>,
+                                       private vararg val pathFromData: String)
+        : ApiQuery<T?>(url, requestFilePath, variablesObject) {
+        override fun extractResult(response: GiteeApiResponse): T? {
+          return parseResponse(response, clazz, pathFromData)
+        }
+      }
+
+      internal fun <T> parseResponse(response: GiteeApiResponse,
+                                     clazz: Class<T>,
+                                     pathFromData: Array<out String>): T? {
+
+        val result: GEApiResponseDTO<out JsonNode, GEApiError> = parseApiResponse(response, JsonNode::class.java)
+
+        val data = result.data
+        if (data != null && !data.isNull) {
+          var node: JsonNode = data
+          for (path in pathFromData) {
+            node = node[path] ?: break
+          }
+          if (!node.isNull) return GiteeApiContentHelper.fromJson(node.toString(), clazz, true)
+        }
+        val errors = result.errors
+        if (errors == null) return null
+        else throwException(errors)
+      }
+    }
   }
 
   abstract class Head<T> @JvmOverloads constructor(url: String,
@@ -126,7 +232,7 @@ sealed class GiteeApiRequest<out T>(val url: String) {
 
   abstract class Post<out T> @JvmOverloads constructor(override val bodyMimeType: String,
                                                        url: String,
-                                                       override val acceptMimeType: String? = null) : GiteeApiRequest.WithBody<T>(url) {
+                                                       override var acceptMimeType: String? = null) : WithBody<T>(url) {
     companion object {
       inline fun <reified T> json(url: String, body: Any, acceptMimeType: String? = null): Post<T> =
           Json(url, body, T::class.java, acceptMimeType)
@@ -160,14 +266,20 @@ sealed class GiteeApiRequest<out T>(val url: String) {
                                    private val variablesObject: Any)
       : Post<T>(GiteeApiContentHelper.JSON_MIME_TYPE, url) {
 
-      override val tokenHeaderType = GiteeApiRequestExecutor.TokenHeaderType.BEARER
-
       override val body: String
         get() {
-          val query = GiteeGQLQueryLoader.loadQuery(queryName)
-          val request = GiteeGQLQueryRequest(query, variablesObject)
+          val query = GEGQLQueryLoader.loadQuery(queryName)
+          val request = GraphQLRequestDTO(query, variablesObject)
           return GiteeApiContentHelper.toJson(request, true)
         }
+
+      protected fun throwException(errors: List<GEGQLError>): Nothing {
+        if (errors.any { it.type.equals("INSUFFICIENT_SCOPES", true) })
+          throw GiteeAuthenticationException("Access token has not been granted the required scopes.")
+
+        if (errors.size == 1) throw GiteeConfusingException(errors.single().toString())
+        throw GiteeConfusingException(errors.toString())
+      }
 
       class Parsed<out T>(url: String,
                           requestFilePath: String,
@@ -175,10 +287,13 @@ sealed class GiteeApiRequest<out T>(val url: String) {
                           private val clazz: Class<T>)
         : GQLQuery<T>(url, requestFilePath, variablesObject) {
         override fun extractResult(response: GiteeApiResponse): T {
-          val result: GiteeGQLResponse<out T> = parseGQLResponse(response, clazz)
+          val result: GraphQLResponseDTO<out T, GEGQLError> = parseGQLResponse(response, clazz)
           val data = result.data
           if (data != null) return data
-          else throw GiteeConfusingException(result.errors.toString())
+
+          val errors = result.errors
+          if (errors == null) error("Undefined request state - both result and errors are null")
+          else throwException(errors)
         }
       }
 
@@ -191,7 +306,7 @@ sealed class GiteeApiRequest<out T>(val url: String) {
 
         override fun extractResult(response: GiteeApiResponse): T {
           return parseResponse(response, clazz, pathFromData)
-              ?: throw GiteeJsonException("Non-nullable entity is null or entity path is invalid")
+            ?: throw GiteeJsonException("Non-nullable entity is null or entity path is invalid")
         }
       }
 
@@ -209,7 +324,7 @@ sealed class GiteeApiRequest<out T>(val url: String) {
       internal fun <T> parseResponse(response: GiteeApiResponse,
                                      clazz: Class<T>,
                                      pathFromData: Array<out String>): T? {
-        val result: GiteeGQLResponse<out JsonNode> = parseGQLResponse(response, JsonNode::class.java)
+        val result: GraphQLResponseDTO<out JsonNode, GEGQLError> = parseGQLResponse(response, JsonNode::class.java)
         val data = result.data
         if (data != null && !data.isNull) {
           var node: JsonNode = data
@@ -219,7 +334,8 @@ sealed class GiteeApiRequest<out T>(val url: String) {
           if (!node.isNull) return GiteeApiContentHelper.fromJson(node.toString(), clazz, true)
         }
         val errors = result.errors
-        if (errors != null) throw GiteeConfusingException(errors.toString()) else return null
+        if (errors == null) return null
+        else throwException(errors)
       }
     }
   }
@@ -261,7 +377,7 @@ sealed class GiteeApiRequest<out T>(val url: String) {
   abstract class Patch<T> @JvmOverloads constructor(override val bodyMimeType: String,
                                                     url: String,
                                                     override val acceptMimeType: String? = null)
-    : GiteeApiRequest.WithBody<T>(url) {
+    : WithBody<T>(url) {
 
     companion object {
       inline fun <reified T> json(url: String, body: Any): Patch<T> = Json(url, body, T::class.java)
@@ -307,17 +423,27 @@ sealed class GiteeApiRequest<out T>(val url: String) {
       return response.readBody(ThrowableConvertor { GiteeApiContentHelper.readJsonList(it, clazz) })
     }
 
-    private fun <T> parseJsonSearchPage(response: GiteeApiResponse, clazz: Class<T>): GiteeSearchResult<T> {
+//    private fun <T> parseJsonSearchPage(response: GiteeApiResponse, clazz: Class<T>): GiteeSearchResult<T> {
+//      return response.readBody(ThrowableConvertor {
+//        @Suppress("UNCHECKED_CAST")
+//        GiteeApiContentHelper.readJsonObject(it, GiteeSearchResult::class.java, clazz) as GiteeSearchResult<T>
+//      })
+//    }
+
+    private fun <T> parseGQLResponse(response: GiteeApiResponse, dataClass: Class<out T>): GraphQLResponseDTO<out T, GEGQLError> {
       return response.readBody(ThrowableConvertor {
         @Suppress("UNCHECKED_CAST")
-        GiteeApiContentHelper.readJsonObject(it, GiteeSearchResult::class.java, clazz) as GiteeSearchResult<T>
+        GiteeApiContentHelper.readJsonObject(it, GraphQLResponseDTO::class.java, dataClass, GEGQLError::class.java,
+          gqlNaming = true) as GraphQLResponseDTO<T, GEGQLError>
       })
     }
 
-    private fun <T> parseGQLResponse(response: GiteeApiResponse, clazz: Class<out T>): GiteeGQLResponse<out T> {
+    private fun <T> parseApiResponse(response: GiteeApiResponse, dataClass: Class<out T>): GEApiResponseDTO<out T, GEApiError> {
       return response.readBody(ThrowableConvertor {
         @Suppress("UNCHECKED_CAST")
-        GiteeApiContentHelper.readJsonObject(it, GiteeGQLResponse::class.java, clazz, gqlNaming = true) as GiteeGQLResponse<T>
+        GiteeApiContentHelper.readJsonObject(it, GEApiResponseDTO::class.java, dataClass, GEApiError::class.java)
+          as GEApiResponseDTO<T, GEApiError>
+
       })
     }
   }

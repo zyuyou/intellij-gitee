@@ -3,13 +3,16 @@ package com.gitee.api.data.pullrequest
 
 import com.gitee.api.data.GEActor
 import com.gitee.api.data.GENode
-import com.gitee.api.data.pullrequest.timeline.GiteePRTimelineItem
+import com.gitee.api.data.pullrequest.timeline.GEPRTimelineItem
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import java.util.*
 
+@GraphQLFragment("/graphql/fragment/pullRequestReview.graphql")
 open class GEPullRequestReview(id: String,
                                val url: String,
                                val author: GEActor?,
-                               val bodyHTML: String,
-                               val state: GiteePullRequestReviewState,
-                               val createdAt: Date)
-  : GENode(id), GiteePRTimelineItem
+                               val body: String,
+                               val state: GEPullRequestReviewState,
+                               val createdAt: Date,
+                               val viewerCanUpdate: Boolean)
+  : GENode(id), GEPRTimelineItem

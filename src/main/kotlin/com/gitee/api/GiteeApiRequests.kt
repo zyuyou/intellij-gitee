@@ -16,11 +16,14 @@
 package com.gitee.api
 
 import com.gitee.api.GiteeApiRequest.*
+import com.gitee.api.GiteeApiRequest.Get.ApiQuery
 import com.gitee.api.data.*
 import com.gitee.api.data.request.*
+import com.gitee.api.data.request.query.GEApiSearchQueryResponse
 import com.gitee.api.requests.AuthorizationCreateRequest
 import com.gitee.api.requests.AuthorizationUpdateRequest
 import com.gitee.api.requests.GiteeChangeIssueStateRequest
+import com.gitee.api.util.GESchemaPreview
 import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.api.util.GiteeApiUrlQueryBuilder
 import com.gitee.authentication.GECredentials
@@ -145,6 +148,11 @@ object GiteeApiRequests {
         .withOperationName("get information for repository $username/$repoName")
 
     @JvmStatic
+    fun get(repository: GERepositoryCoordinates) =
+      Get.Optional.json<GiteeRepoDetailed>(getUrl(repository.serverPath, urlSuffix, "/${repository.repositoryPath}"))
+        .withOperationName("get information for repository ${repository.repositoryPath}")
+
+    @JvmStatic
     fun delete(server: GiteeServerPath, username: String, repoName: String) =
       delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
 
@@ -163,6 +171,39 @@ object GiteeApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GiteeBranch>(url).withOperationName("get branches")
+
+      @JvmStatic
+      fun getProtection(repository: GERepositoryCoordinates, branchName: String): GiteeApiRequest<GEBranchProtectionRules> =
+        Get.json(getUrl(repository, urlSuffix, "/$branchName", "/protection"), GESchemaPreview.BRANCH_PROTECTION.mimeType)
+    }
+
+    object Commits : Entity("/commits") {
+
+      @JvmStatic
+      fun compare(repository: GERepositoryCoordinates, refA: String, refB: String) =
+        Get.json<GECommitsCompareResult>(getUrl(repository, "/compare/$refA...$refB")).withOperationName("compare refs")
+
+      @JvmStatic
+      fun getDiff(repository: GERepositoryCoordinates, ref: String) =
+        object : Get<String>(getUrl(repository, urlSuffix, "/$ref"),
+          GiteeApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GiteeApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              it.reader().use { it.readText() }
+            })
+          }
+        }.withOperationName("get diff for ref")
+
+      @JvmStatic
+      fun getDiff(repository: GERepositoryCoordinates, refA: String, refB: String) =
+        object : Get<String>(getUrl(repository, "/compare/$refA...$refB"),
+          GiteeApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GiteeApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              it.reader().use { it.readText() }
+            })
+          }
+        }.withOperationName("get diff between refs")
     }
 
     object Forks : Entity("/forks") {
@@ -260,6 +301,11 @@ object GiteeApiRequests {
           param(pagination)
         }))
 
+      @JvmStatic
+      fun updateAssignees(server: GiteeServerPath, username: String, repoName: String, id: String, assignees: Collection<String>) =
+        Patch.json<GiteeIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id),
+          GiteeAssigneesCollectionRequest(assignees))
+
       object Comments : Entity("/comments") {
         @JvmStatic
         fun create(repository: GERepositoryCoordinates, issueId: Long, body: String) =
@@ -297,6 +343,50 @@ object GiteeApiRequests {
     }
 
     object PullRequests : Entity("/pulls") {
+      fun search(server: GiteeServerPath, repoPath: GERepositoryPath, query: String, pagination: GEApiRequestPagination? = null)
+        : ApiQuery<GEApiSearchQueryResponse<GiteePullRequest>> {
+
+        return ApiQuery.Parsed(
+          getUrl(server, Repos.urlSuffix, "/${repoPath.owner}/${repoPath.repository}", urlSuffix, GiteeApiUrlQueryBuilder.urlQuery {
+            query(query)
+            param(pagination)
+          }),
+          GEGQLQueries.issueSearch,
+          mapOf(
+            "query" to query,
+            "page" to pagination?.page,
+            "pageSize" to pagination?.pageSize,
+          ),
+//          PRSearch::class.java
+          GiteePullRequest::class.java
+        )
+      }
+
+      fun findOne(repository: GERepositoryCoordinates, number: Long): ApiQuery<GiteePullRequestDetailed?> {
+        return ApiQuery.OptionalTraversedParsed(
+          getUrl(repository.serverPath, Repos.urlSuffix, "/${repository.repositoryPath}", urlSuffix, "$number"),
+          GEGQLQueries.findPullRequest,
+          mapOf(
+            "repoOwner" to repository.repositoryPath.owner,
+            "repoName" to repository.repositoryPath.repository,
+            "number" to number
+          ),
+          GiteePullRequestDetailed::class.java,
+          "repository", "pullRequest")
+      }
+
+      fun update(repository: GERepositoryCoordinates, number: Long, title: String?, description: String?): Patch<GiteePullRequestDetailed> {
+        return Patch.json(
+          getUrl(repository.serverPath, Repos.urlSuffix, "/${repository.repositoryPath}", urlSuffix, "$number"),
+          PRUpdateRequest(title, description)
+        )
+      }
+
+      private data class PRUpdateRequest(private val title: String?, private val body: String?)
+
+      private class PRSearch(search: SearchConnection<GiteePullRequest>)
+        : GEApiSearchQueryResponse<GiteePullRequest>(search)
+
       fun search(server: GiteeServerPath, repoPath: GiteeRepositoryPath, query: String)
         : GiteeApiRequest<GiteeResponsePage<GiteePullRequest>> {
 
@@ -356,28 +446,28 @@ object GiteeApiRequests {
               .withOperationName("update pull request")
 
       @JvmStatic
-      fun merge(server: GiteeServerPath, repoPath: GiteeRepositoryPath, number: Long,
+      fun merge(server: GiteeServerPath, repoPath: GERepositoryPath, number: Long,
                 commitSubject: String, commitBody: String, headSha: String) =
           Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
               GiteePullRequestMergeRequest(commitSubject, commitBody, headSha, GiteePullRequestMergeMethod.merge))
               .withOperationName("merge pull request ${number}")
 
       @JvmStatic
-      fun squashMerge(server: GiteeServerPath, repoPath: GiteeRepositoryPath, number: Long,
+      fun squashMerge(server: GiteeServerPath, repoPath: GERepositoryPath, number: Long,
                       commitSubject: String, commitBody: String, headSha: String) =
           Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
               GiteePullRequestMergeRequest(commitSubject, commitBody, headSha, GiteePullRequestMergeMethod.squash))
               .withOperationName("squash and merge pull request ${number}")
 
       @JvmStatic
-      fun rebaseMerge(server: GiteeServerPath, repoPath: GiteeRepositoryPath, number: Long,
+      fun rebaseMerge(server: GiteeServerPath, repoPath: GERepositoryPath, number: Long,
                       headSha: String) =
           Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
               GiteePullRequestMergeRebaseRequest(headSha))
               .withOperationName("rebase and merge pull request $number")
 
       @JvmStatic
-      fun getListETag(server: GiteeServerPath, repoPath: GiteeRepositoryPath) =
+      fun getListETag(server: GiteeServerPath, repoPath: GERepositoryPath) =
           object : Get<String?>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix,
               GiteeApiUrlQueryBuilder.urlQuery { param(GiteeRequestPagination(pageSize = 1)) })) {
             override fun extractResult(response: GiteeApiResponse) = response.findHeader("ETag")
@@ -385,14 +475,14 @@ object GiteeApiRequests {
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
-        fun add(server: GiteeServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
-            Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                GiteeReviewersCollectionRequest(reviewers, listOf<String>()))
+        fun add(server: GiteeServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>, teamReviewers: List<String>) =
+          Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
+            GiteeReviewersCollectionRequest(reviewers, teamReviewers))
 
         @JvmStatic
-        fun remove(server: GiteeServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
-            Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                GiteeReviewersCollectionRequest(reviewers, listOf<String>()))
+        fun remove(server: GiteeServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>, teamReviewers: List<String>) =
+          Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
+            GiteeReviewersCollectionRequest(reviewers, teamReviewers))
       }
 
       object Testers : Entity("/testers") {
@@ -411,7 +501,7 @@ object GiteeApiRequests {
         @JvmStatic
         fun add(server: GiteeServerPath, username: String, repoName: String, number: Long, assignees: Collection<String>) =
           Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-            GiteeAssigneesCollectionRequest(assignees.joinToString(",")))
+            GiteeAssigneesCollectionRequest(assignees))
 
         @JvmStatic
         fun remove(server: GiteeServerPath, username: String, repoName: String, number: Long, assignees: Collection<String>) =

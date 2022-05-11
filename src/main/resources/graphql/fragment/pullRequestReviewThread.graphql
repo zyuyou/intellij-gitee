@@ -1,0 +1,16 @@
+fragment pullRequestReviewThread on PullRequestReviewThread {
+    ...nodeInfo
+    isResolved
+    isOutdated
+    path
+    diffSide
+    line
+    originalLine
+    startLine
+    originalStartLine
+    comments(first: 100) {
+        nodes {
+            ...pullRequestReviewComment
+        }
+    }
+}

@@ -3,11 +3,13 @@ package com.gitee.api.data.request;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 public class GiteeAssigneesCollectionRequest {
-  @NotNull private final String assignees;
+  @NotNull private final Collection<String> assignees;
 
-  public GiteeAssigneesCollectionRequest(@NotNull String assignees) {
+  public GiteeAssigneesCollectionRequest(@NotNull Collection<String> assignees) {
     this.assignees = assignees;
   }
 }

@@ -2,10 +2,13 @@
 package com.gitee.api.data
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
 
+@GraphQLFragment("/graphql/fragment/labelInfo.graphql")
 class GELabel(id: String,
               val url: String,
-              val name: String,
+              @NlsSafe val name: String,
               val color: String)
   : GENode(id) {
 

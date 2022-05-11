@@ -17,5 +17,5 @@ package com.gitee.api.data
 
 @Suppress("EnumEntryName")
 enum class GiteeIssueState {
-  open, closed, merged;
+  open, closed;
 }

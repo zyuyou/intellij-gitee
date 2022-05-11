@@ -17,6 +17,7 @@ package com.gitee.api.data;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.intellij.collaboration.auth.AccountDetails;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.RestModel;
 
@@ -42,8 +43,7 @@ public class GiteeUserDetailed extends GiteeUser implements AccountDetails {
 	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", locale = "zh", timezone = "GMT+8")
 	private Date updatedAt;
 
-	@Nullable
-	public String getName() {
+	public @NotNull String getName() {
 		return name;
 	}
 

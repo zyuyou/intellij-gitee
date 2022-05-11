@@ -93,9 +93,12 @@ class GiteeAuthenticationManager internal constructor() {
     )?.registerAccount()
 
   @RequiresEdt
-  fun requestNewAccountForDefaultServer(project: Project?, useToken: Boolean = false): GiteeAccount? {
+  fun requestNewAccountForDefaultServer(project: Project?, usePassword: Boolean = false): GiteeAccount? {
     return GELoginRequest(server = GiteeServerPath.DEFAULT_SERVER, isCheckLoginUnique = true).let {
-      if (!useToken) it.loginWithPassword(project, null) else it.loginWithTokens(project, null)
+      if (!usePassword)
+        it.loginWithOAuth(project, null)
+      else
+        it.loginWithPassword(project, null)
     }?.registerAccount()
   }
 

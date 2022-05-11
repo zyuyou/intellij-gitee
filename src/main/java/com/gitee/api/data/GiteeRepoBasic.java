@@ -37,6 +37,7 @@ public class GiteeRepoBasic {
   // api url
   private String url;
   private String htmlUrl;
+  private String sshUrl;
 
   @JsonProperty("private")
   private Boolean isPrivate;
@@ -80,6 +81,12 @@ public class GiteeRepoBasic {
   }
 
   @NotNull
+  public String getSshUrl() {
+    return sshUrl;
+  }
+
+
+  @NotNull
   public GiteeUser getOwner() {
     return owner;
   }
@@ -108,6 +115,10 @@ public class GiteeRepoBasic {
   public GERepositoryPath getFullPath() {
     String[] split = fullName.split("/");
     return new GERepositoryPath(split[0], split[1]);
+  }
+
+  public String getId() {
+    return id.toString();
   }
 
   @Override

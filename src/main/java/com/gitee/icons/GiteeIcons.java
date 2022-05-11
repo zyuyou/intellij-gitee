@@ -29,7 +29,13 @@ public final class GiteeIcons {
   }
 
   public static final Icon DefaultAvatar = load("/icons/defaultAvatar.svg"); // 16x16
+  public static final Icon IssueClosed = load("/icons/issueClosed.svg");
+  public static final Icon IssueOpened = load("/icons/issueOpened.svg");
+
+  public static final Icon LocalBranch = load("/icons/localBranch.svg");
+
   public static final Icon PullRequestClosed = load("/icons/pullRequestClosed.svg"); // 16x16
+  public static final Icon PullRequestDraft = load("/icons/pullRequestDraft.svg"); /** 16x16 */
   public static final Icon PullRequestMerged = load("/icons/pullRequestMerged.svg"); // 16x16
   public static final Icon PullRequestOpen = load("/icons/pullRequestOpen.svg"); // 16x16
   public static final Icon PullRequestsToolWindow = load("/icons/pullRequestsToolWindow.svg"); // 13x13

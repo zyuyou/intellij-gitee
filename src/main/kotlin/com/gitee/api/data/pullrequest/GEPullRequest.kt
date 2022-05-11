@@ -7,33 +7,39 @@ import com.gitee.api.data.GEActor
 import com.gitee.api.data.GELabel
 import com.gitee.api.data.GENodes
 import com.gitee.api.data.GEUser
+import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
 import java.util.*
 
+@GraphQLFragment("/graphql/fragment/pullRequestInfo.graphql")
 class GEPullRequest(id: String,
                     url: String,
                     number: Long,
                     title: String,
-                    state: GiteePullRequestState,
+                    state: GEPullRequestState,
+                    isDraft: Boolean,
                     author: GEActor?,
                     createdAt: Date,
                     @JsonProperty("assignees") assignees: GENodes<GEUser>,
                     @JsonProperty("labels") labels: GENodes<GELabel>,
-                    val bodyHTML: String,
-                    val mergeable: GiteePullRequestMergeableState,
-                    @JsonProperty("reviewRequests") reviewRequests: GENodes<GiteePullRequestReviewRequest>,
+                    viewerCanUpdate: Boolean,
+                    viewerDidAuthor: Boolean,
+                    @NlsSafe val body: String,
+                    @JsonProperty("reviewRequests") reviewRequests: GENodes<GEPullRequestReviewRequest>,
                     val baseRefName: String,
                     val baseRefOid: String,
-                    headRefName: String,
+                    val baseRepository: Repository?,
+                    val headRefName: String,
                     val headRefOid: String,
-                    headRepository: Repository?,
-                    val viewerCanUpdate: Boolean,
-                    val viewerDidAuthor: Boolean)
-  : GEPullRequestShort(id, url, number, title, state, author, createdAt, assignees, labels) {
+                    val headRepository: HeadRepository?)
+  : GEPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, viewerCanUpdate, viewerDidAuthor) {
 
   @JsonIgnore
   val reviewRequests = reviewRequests.nodes
-  @JsonIgnore
-  val headLabel = headRepository?.nameWithOwner.orEmpty() + ":" + headRefName
 
-  class Repository(val nameWithOwner: String)
+  open class Repository(val owner: Owner, val isFork: Boolean)
+
+  class HeadRepository(owner: Owner, isFork: Boolean, val url: String, val sshUrl: String) : Repository(owner, isFork)
+
+  class Owner(val login: String)
 }

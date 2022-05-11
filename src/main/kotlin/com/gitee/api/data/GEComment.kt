@@ -5,6 +5,6 @@ import java.util.*
 
 open class GEComment(id: String,
                      val author: GEActor?,
-                     val bodyHtml: String,
+                     val body: String,
                      val createdAt: Date)
   : GENode(id)
