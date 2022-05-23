@@ -49,6 +49,13 @@ internal fun GELoginRequest.loginWithPassword(project: Project?, parentComponent
   return dialog.getAuthData()
 }
 
+internal fun GELoginRequest.loginRefreshTokens(project: Project?, parentComponent: Component?): GEAccountAuthData? {
+  val dialog = GERefreshTokensLoginDialog(project, parentComponent, isLoginUniqueChecker)
+  configure(dialog)
+
+  return dialog.getAuthData()
+}
+
 internal fun GELoginRequest.loginWithOAuthOrTokens(project: Project?, parentComponent: Component?): GEAccountAuthData? =
   when (promptOAuthLogin(this, project, parentComponent)) {
     Messages.YES ->

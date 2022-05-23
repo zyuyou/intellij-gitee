@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import git4idea.i18n.GitBundle
 import java.awt.Component
+import javax.swing.Action
 import javax.swing.JComponent
 
 class AddGEAccountWithTokensAction : BaseAddAccountWithTokensAction() {
@@ -59,4 +61,26 @@ internal class GETokensLoginDialog(project: Project?, parent: Component?, isAcco
   internal fun setLoginButtonText(@NlsContexts.Button text: String) = setOKButtonText(text)
 
   override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
+}
+
+internal class GERefreshTokensLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
+  BaseLoginDialog(project, parent, GiteeApiRequestExecutor.Factory.getInstance(), isAccountUnique) {
+
+  init {
+    title = message("login.to.gitee")
+    loginPanel.setRefreshTokenUi()
+    init()
+  }
+
+  override fun createActions(): Array<Action> = arrayOf(cancelAction)
+
+  override fun show() {
+    doOKAction()
+    super.show()
+  }
+
+  override fun createCenterPanel(): JComponent =
+    simplePanel(loginPanel)
+      .withPreferredWidth(200)
+      .setPaddingCompensated()
 }

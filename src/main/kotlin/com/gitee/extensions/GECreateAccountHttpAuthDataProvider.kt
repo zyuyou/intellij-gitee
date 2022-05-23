@@ -35,6 +35,12 @@ internal class GECreateAccountHttpAuthDataProvider(
 
   companion object {
     fun getOrRequestCredentials(account: GiteeAccount, project: Project, parentComponent: Component?): GECredentials? =
-      authenticationManager.getCredentialsForAccount(account) ?: authenticationManager.requestNewCredentials(account, project, parentComponent)
+      authenticationManager.getCredentialsForAccount(account)?.let {
+        // 如果已经过期, 重新刷新一下, 因为AuthData只附带了AccessToken
+        if (it.isAccessTokenValid())
+          return it
+
+        authenticationManager.requestUpdateCredentials(account, it, project, parentComponent)
+      } ?: authenticationManager.requestNewCredentials(account, project, parentComponent)
   }
 }

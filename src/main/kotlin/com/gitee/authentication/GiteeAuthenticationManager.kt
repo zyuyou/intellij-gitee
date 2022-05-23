@@ -59,6 +59,18 @@ class GiteeAuthenticationManager internal constructor() {
 
   @RequiresEdt
   @JvmOverloads
+  internal fun requestUpdateCredentials(account: GiteeAccount, expiredCredentials: GECredentials, project: Project?, parentComponent: Component? = null): GECredentials? =
+    login(
+      project, parentComponent,
+      GELoginRequest(
+        text = GiteeBundle.message("account.credentials.update.for", account),
+        server = account.server, login = account.name,
+        credentials = expiredCredentials, isCheckLoginUnique = true
+      )
+    )?.updateAccount(account)
+
+  @RequiresEdt
+  @JvmOverloads
   internal fun requestNewCredentials(account: GiteeAccount, project: Project?, parentComponent: Component? = null): GECredentials? =
     login(
       project, parentComponent,
@@ -113,9 +125,17 @@ class GiteeAuthenticationManager internal constructor() {
   @RequiresEdt
   internal fun login(project: Project?, parentComponent: Component?, request: GELoginRequest): GEAccountAuthData? =
     if (request.server?.isGiteeDotCom() == true)
-      request.loginWithOAuthOrTokens(project, parentComponent)
+      if(request.credentials != null) {
+        request.loginRefreshTokens(project, parentComponent)
+      } else {
+        request.loginWithOAuthOrTokens(project, parentComponent)
+      }
     else
-      request.loginWithTokens(project, parentComponent)
+      if(request.credentials != null) {
+        request.loginRefreshTokens(project, parentComponent)
+      } else {
+        request.loginWithTokens(project, parentComponent)
+      }
 
   @RequiresEdt
   internal fun removeAccount(account: GiteeAccount) {

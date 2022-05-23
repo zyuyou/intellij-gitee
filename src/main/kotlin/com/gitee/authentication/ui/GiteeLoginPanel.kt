@@ -48,6 +48,8 @@ class GiteeLoginPanel(
 
   private var oauthUi = GEOAuthCredentialsUi(executorFactory, isAccountUnique)
 
+  private var refreshTokenUi = GERefreshCredentialsUi(executorFactory, isAccountUnique)
+
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
@@ -139,6 +141,7 @@ class GiteeLoginPanel(
   fun setCredentials(credentials: GECredentials?) {
     credentials ?.let {
       tokenUi.setFixedCredentials(credentials)
+      refreshTokenUi.setFixedCredentials(credentials)
     }
   }
 
@@ -151,5 +154,6 @@ class GiteeLoginPanel(
   fun setOAuthUi() = applyUi(oauthUi)
   fun setPasswordUi() = applyUi(passwordUi)
   fun setTokenUi() = applyUi(tokenUi)
+  fun setRefreshTokenUi() = applyUi(refreshTokenUi)
 
 }

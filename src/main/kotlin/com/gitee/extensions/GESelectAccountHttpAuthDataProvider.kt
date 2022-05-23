@@ -23,10 +23,10 @@ internal class GESelectAccountHttpAuthDataProvider(
   @RequiresEdt
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val (account, setDefault) = chooseAccount(parentComponent) ?: return null
-    val token = getOrRequestCredentials(account, project, parentComponent) ?: return null
+    val credentials = getOrRequestCredentials(account, project, parentComponent) ?: return null
     if (setDefault) GiteeAuthenticationManager.getInstance().setDefaultAccount(project, account)
 
-    return GEAccountAuthData(account, account.name, token)
+    return GEAccountAuthData(account, account.name, credentials)
   }
 
   private fun chooseAccount(parentComponent: Component?): Pair<GiteeAccount, Boolean>? {
