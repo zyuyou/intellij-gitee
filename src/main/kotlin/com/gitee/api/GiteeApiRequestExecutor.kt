@@ -263,6 +263,8 @@ sealed class GiteeApiRequestExecutor {
         HttpURLConnection.HTTP_FORBIDDEN -> {
 
           when {
+            jsonError?.containsReasonMessage("Application has exceeded the rate limit") == true ->
+              GiteeRateLimitExceededException(jsonError.message)
             jsonError?.containsReasonMessage("API rate limit exceeded") == true ->
               GiteeRateLimitExceededException(jsonError.message)
             jsonError?.containsReasonMessage("Access token is expired") == true ->
