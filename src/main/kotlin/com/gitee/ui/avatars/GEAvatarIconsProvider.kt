@@ -7,6 +7,7 @@ import com.gitee.ui.util.GEUIUtil
 import com.gitee.util.CachingGEUserAvatarLoader
 import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
 import java.awt.Image
+import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 class GEAvatarIconsProvider(private val avatarsLoader: CachingGEUserAvatarLoader,
@@ -15,5 +16,5 @@ class GEAvatarIconsProvider(private val avatarsLoader: CachingGEUserAvatarLoader
 
   fun getIcon(key: String?): Icon = super.getIcon(key, GEUIUtil.AVATAR_SIZE)
 
-  override fun loadImage(key: String): Image? = avatarsLoader.requestAvatar(requestExecutor, key).get()
+  override fun loadImageAsync(key: String): CompletableFuture<Image?> = avatarsLoader.requestAvatar(requestExecutor, key)
 }

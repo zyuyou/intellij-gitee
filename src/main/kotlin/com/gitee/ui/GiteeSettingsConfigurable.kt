@@ -17,14 +17,14 @@ package com.gitee.ui
 
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
-import com.gitee.authentication.ui.GEAccountsDetailsProvider
+import com.gitee.authentication.ui.GEAccountsDetailsLoader
 import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.authentication.ui.GEAccountsListModel
 import com.gitee.i18n.GiteeBundle
 import com.gitee.icons.GiteeIcons
 import com.gitee.util.GiteeSettings
 import com.gitee.util.GiteeUtil
-import com.intellij.collaboration.auth.ui.AccountsPanelFactory.accountsPanel
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.ide.DataManager
 import com.intellij.openapi.components.service
@@ -55,31 +55,27 @@ internal class GiteeSettingsConfigurable internal constructor(private val projec
     }
 
     val accountsModel = GEAccountsListModel(project)
-    val detailsProvider = GEAccountsDetailsProvider(indicatorsProvider, accountManager, accountsModel)
+
+    val detailsLoader = GEAccountsDetailsLoader(accountManager, indicatorsProvider, accountsModel)
+    val panelFactory = AccountsPanelFactory(accountManager, defaultAccountHolder, accountsModel, detailsLoader, disposable!!)
 
     return panel {
       row {
-        accountsPanel(
-          accountManager, defaultAccountHolder, accountsModel,
-          detailsProvider, disposable!!, true,
-          GiteeIcons.DefaultAvatar)
+        panelFactory.accountsPanelCell(this, true, GiteeIcons.DefaultAvatar)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
           .also {
             DataManager.registerDataProvider(it.component) { key ->
-            if (GEAccountsHost.KEY.`is`(key))
-              accountsModel
-            else
-              null
+              if (GEAccountsHost.KEY.`is`(key)) accountsModel
+              else null
+            }
           }
-        }
       }.resizableRow()
 
       row {
         checkBox(GiteeBundle.message("settings.clone.ssh"))
           .bindSelected(settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
       }
-
       row(GiteeBundle.message("settings.timeout")) {
         intTextField(range = 0..60)
           .columns(2)

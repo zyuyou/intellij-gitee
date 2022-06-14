@@ -42,15 +42,17 @@ class GEAccountsListModel(private val project: Project)
     ) ?: return
 
     account.name = authData.login
-    newCredentials[account] = authData.credentials
-    notifyCredentialsChanged(account)
+//    newCredentials[account] = authData.credentials
+//    notifyCredentialsChanged(account)
+    update(authData.account, authData.credentials)
   }
 
   override fun addAccount(server: GiteeServerPath, login: String, credentials: GECredentials) {
     val account = GEAccountManager.createAccount(login, server)
-    accountsListModel.add(account)
-    newCredentials[account] = credentials
-    notifyCredentialsChanged(account)
+//    accountsListModel.add(account)
+//    newCredentials[account] = credentials
+//    notifyCredentialsChanged(account)
+    add(account, credentials)
   }
 
   override fun isAccountUnique(login: String, server: GiteeServerPath): Boolean =

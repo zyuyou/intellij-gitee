@@ -5,7 +5,6 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
 import com.intellij.collaboration.async.CompletableFutureUtil
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.application.ModalityState
@@ -58,10 +57,7 @@ internal abstract class BaseLoginDialog(
     val emptyProgressIndicator = EmptyProgressIndicator(modalityState)
     Disposer.register(disposable) { emptyProgressIndicator.cancel() }
 
-    startGettingToken()
-
     loginPanel.acquireLoginAndToken(emptyProgressIndicator)
-      .completionOnEdt(modalityState) { finishGettingToken() }
       .successOnEdt(modalityState) { (login, credentials) ->
 
         _login = login
@@ -73,7 +69,4 @@ internal abstract class BaseLoginDialog(
         if (!CompletableFutureUtil.isCancellation(it)) startTrackingValidation()
       }
   }
-
-  protected open fun startGettingToken() = Unit
-  protected open fun finishGettingToken() = Unit
 }

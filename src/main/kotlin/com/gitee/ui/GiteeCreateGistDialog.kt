@@ -103,6 +103,16 @@ class GiteeCreateGistDialog(project: Project,
       row(message("create.gist.dialog.create.for.field")) {
         accountSelector(accountsModel)
       }
+//      row(message("create.gist.dialog.create.for.field")) {
+//        comboBox(accountsModel)
+//          .horizontalAlign(HorizontalAlign.FILL)
+//          .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
+//          .resizableColumn()
+//
+//        if (accountsModel.size == 0) {
+//          cell(GEAccountsHost.createAddAccountLink())
+//        }
+//      }
     }
   }
 

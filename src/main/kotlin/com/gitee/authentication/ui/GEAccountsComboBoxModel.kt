@@ -39,5 +39,19 @@ internal class GEAccountsComboBoxModel(accounts: Set<GiteeAccount>, selection: G
           createAddAccountLink()().withLargeLeftGap()
         }
       }
+//    fun accountSelector(@Nls label: String, model: CollectionComboBoxModel<GiteeAccount>, onChange: (() -> Unit)? = null) = panel {
+//      row(label) {
+//        comboBox(model)
+//          .horizontalAlign(HorizontalAlign.FILL)
+//          .validationOnApply { if (model.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
+//          .applyToComponent { if (onChange != null) addActionListener { onChange() } }
+//      }
+//
+//      if (model.size == 0) {
+//        row {
+//          cell(createAddAccountLink())
+//        }
+//      }
+//    }
   }
 }
