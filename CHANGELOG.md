@@ -2,6 +2,12 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2022.3.0]
+- Compatible with idea-2022.3
+- Remove some deprecated api
+- Remove some deprecated files
+- Upgrade `intellij-gradle-plugin` and `gradle`
+
 ## [2022.2.0]
 - Compatible with idea-2022.1
 - Remove some deprecated api 

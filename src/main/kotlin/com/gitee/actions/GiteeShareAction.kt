@@ -66,6 +66,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
+import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
@@ -122,8 +123,8 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.projec
       val gitRepository = GiteeGitHelper.findGitRepository(project, file)
 
       val possibleRemotes = gitRepository
-        ?.let(project.service<GEProjectRepositoriesManager>()::findKnownRepositories)
-        ?.map { it.gitRemoteUrlCoordinates.url }.orEmpty()
+        ?.let(project.service<GEHostedRepositoriesManager>()::findKnownRepositories)
+        ?.map { it.remote.url }.orEmpty()
 
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GiteeExistingRemotesDialog(project, possibleRemotes)

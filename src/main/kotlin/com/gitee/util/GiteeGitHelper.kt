@@ -75,41 +75,11 @@ class GiteeGitHelper {
 
   private fun isRemoteUrlAccessible(url: String) = GiteeAuthenticationManager.getInstance().getAccounts().find { it.server.matches(url) } != null
 
-//  fun getPossibleRepositories(repository: GitRepository): Set<GiteeRepositoryPath> {
-//    val registeredServers = mutableSetOf(DEFAULT_SERVER)
-//
-//    authenticationManager.getAccounts().mapTo(registeredServers) { it.server }
-//    val repositoryPaths = mutableSetOf<GiteeRepositoryPath>()
-//
-//    for (url in repository.remotes.map { it.urls }.flatten()) {
-//      registeredServers.filter { it.matches(url) }
-//        .mapNotNullTo(repositoryPaths) { server ->
-//          GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GiteeRepositoryPath(server, it) }
-//        }
-//    }
-//    return repositoryPaths
-//  }
-
   fun getPossibleRepositories(repository: GitRepository): Set<GERepositoryCoordinates> {
     val knownServers = getKnownGiteeServers()
     return repository.getRemoteUrls().mapNotNull { url ->
       knownServers.find { it.matches(url) }
         ?.let { server -> GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GERepositoryCoordinates(server, it) } }
-    }.toSet()
-  }
-
-  fun getPossibleRemoteUrlCoordinates(project: Project): Set<GitRemoteUrlCoordinates> {
-    val repositories = project.service<GitRepositoryManager>().repositories
-    if (repositories.isEmpty()) return emptySet()
-
-    val knownServers = getKnownGiteeServers()
-
-    return repositories.flatMap { repo ->
-      repo.remotes.flatMap { remote ->
-        remote.urls.mapNotNull { url ->
-          if (knownServers.any { it.matches(url) }) GitRemoteUrlCoordinates(url, remote, repo) else null
-        }
-      }
     }.toSet()
   }
 

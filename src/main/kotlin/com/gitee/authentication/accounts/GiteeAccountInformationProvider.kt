@@ -19,11 +19,12 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.data.GiteeAuthenticatedUser
 import com.google.common.cache.CacheBuilder
-import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.async.disposingScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -43,17 +44,11 @@ class GiteeAccountInformationProvider : Disposable {
     .build<GiteeAccount, GiteeAuthenticatedUser>()
 
   init {
-    service<GEAccountManager>().addListener(this, object : AccountsListener<GiteeAccount> {
-      override fun onAccountListChanged(old: Collection<GiteeAccount>, new: Collection<GiteeAccount>) {
-        val cache = getInstance().informationCache
-        for (account in (old - new)) {
-          cache.invalidate(account)
-        }
+    disposingScope().launch {
+      service<GEAccountManager>().accountsState.collect {
+        informationCache.invalidateAll()
       }
-
-      override fun onAccountCredentialsChanged(account: GiteeAccount) =
-        getInstance().informationCache.invalidate(account)
-    })
+    }
   }
 
   @RequiresBackgroundThread

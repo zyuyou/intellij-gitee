@@ -18,7 +18,6 @@ package com.gitee.ui
 
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GEAccountsComboBoxModel
-import com.gitee.authentication.ui.GEAccountsComboBoxModel.Companion.accountSelector
 import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.i18n.GiteeBundle.message
 import com.intellij.openapi.actionSystem.DataProvider
@@ -26,7 +25,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 import javax.swing.JTextArea
 
@@ -50,69 +52,49 @@ class GiteeCreateGistDialog(project: Project,
   private val browserCheckBox = JBCheckBox("Open in browser", openInBrowser)
   private val copyLinkCheckBox = JBCheckBox("Copy URL", copyLink)
 
-//  private val accountSelector = GiteeAccountCombobox(accounts, defaultAccount, null)
   private val accountsModel = GEAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
 
-  val fileName: String?
-    get() = fileNameField?.text
-
-  val description: String
-    get() = descriptionField.text
-
-  val isSecret: Boolean
-    get() = secretCheckBox.isSelected
-
-  val isOpenInBrowser: Boolean
-    get() = browserCheckBox.isSelected
-
-  val isCopyURL: Boolean
-    get() = copyLinkCheckBox.isSelected
-
-//  val account: GiteeAccount
-//    get() = accountSelector.selectedItem as GiteeAccount
-  val account: GiteeAccount?
-    get() = accountsModel.selected
+  val fileName: String? get() = fileNameField?.text
+  val description: String get() = descriptionField.text
+  val isSecret: Boolean get() = secretCheckBox.isSelected
+  val isOpenInBrowser: Boolean get() = browserCheckBox.isSelected
+  val isCopyURL: Boolean get() = copyLinkCheckBox.isSelected
+  val account: GiteeAccount? get() = accountsModel.selected
 
   init {
-    title = "Create Gist"
+    title = message("create.gist.dialog.title")
     init()
   }
 
   override fun createCenterPanel() = panel {
     fileNameField?.let {
-      row("Filename:") {
-        it(pushX, growY)
+      row(message("create.gist.dialog.filename.field")) {
+        cell(it).align(AlignX.FILL)
       }
     }
-    row("Description:") {
-      scrollPane(descriptionField)
+    row {
+      label(message("create.gist.dialog.description.field"))
+        .align(AlignY.TOP)
+      scrollCell(descriptionField)
+        .align(Align.FILL)
     }
     row("") {
-      cell {
-        secretCheckBox()
-        browserCheckBox()
-        copyLinkCheckBox()
-      }
+      cell(secretCheckBox)
+      cell(browserCheckBox)
+      cell(copyLinkCheckBox)
     }
-//    if (accountSelector.isEnabled) {
-//      row("Create for:") {
-//        accountSelector(pushX, growX)
-//      }
-//    }
+
     if (accountsModel.size != 1) {
       row(message("create.gist.dialog.create.for.field")) {
-        accountSelector(accountsModel)
+        comboBox(accountsModel)
+          .align(AlignX.FILL)
+          .validationOnApply { if (accountsModel.selected == null) kotlin.error(message("dialog.message.account.cannot.be.empty")) else null }
+          .resizableColumn()
+
+        if (accountsModel.size == 0) {
+          cell(GEAccountsHost.createAddAccountLink())
+        }
       }
-//      row(message("create.gist.dialog.create.for.field")) {
-//        comboBox(accountsModel)
-//          .horizontalAlign(HorizontalAlign.FILL)
-//          .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
-//          .resizableColumn()
-//
-//        if (accountsModel.size == 0) {
-//          cell(GEAccountsHost.createAddAccountLink())
-//        }
-//      }
     }
   }
 

@@ -1,6 +1,11 @@
 package com.gitee.api
 
-data class GERepositoryCoordinates(val serverPath: GiteeServerPath, val repositoryPath: GERepositoryPath) {
+import git4idea.remote.hosting.HostedRepositoryCoordinates
+
+data class GERepositoryCoordinates(override val serverPath: GiteeServerPath,
+                                   val repositoryPath: GERepositoryPath)
+  : HostedRepositoryCoordinates {
+
   fun toUrl(): String {
     return serverPath.toUrl() + "/" + repositoryPath
   }

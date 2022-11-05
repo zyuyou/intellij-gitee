@@ -4,16 +4,10 @@ package com.gitee.ui.cloneDialog
 import com.gitee.api.data.GiteeRepo
 import com.gitee.api.data.GiteeUser
 import com.gitee.authentication.accounts.GiteeAccount
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
-import javax.swing.JList
 
 sealed class GERepositoryListItem(
   val account: GiteeAccount
 ) {
-
-  abstract fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
-                                 list: JList<out GERepositoryListItem>)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -36,15 +30,6 @@ sealed class GERepositoryListItem(
     val repo: GiteeRepo
   ) : GERepositoryListItem(account) {
 
-    override fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
-                                   list: JList<out GERepositoryListItem>): Unit =
-      with(renderer) {
-        ipad.left = 10
-        toolTipText = repo.description
-//          append(if (repo.owner.login == user.login) repo.name else repo.fullName)
-        append("[ ${repo.namespace.type.lang} ] ${repo.humanName}")
-      }
-
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (javaClass != other?.javaClass) return false
@@ -66,22 +51,7 @@ sealed class GERepositoryListItem(
     }
   }
 
-  class Error(
-    account: GiteeAccount,
-    private val errorText: String,
-    private val linkText: String,
-    private val linkHandler: Runnable
-  ) : GERepositoryListItem(account) {
-
-    override fun customizeRenderer(renderer: ColoredListCellRenderer<GERepositoryListItem>,
-                                   list: JList<out GERepositoryListItem>) =
-      with(renderer) {
-        ipad.left = 10
-        toolTipText = null
-        append(errorText, SimpleTextAttributes.ERROR_ATTRIBUTES)
-        append(" ")
-        append(linkText, SimpleTextAttributes.LINK_ATTRIBUTES, linkHandler)
-      }
+  class Error(account: GiteeAccount,val error: Throwable) : GERepositoryListItem(account) {
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
@@ -90,18 +60,14 @@ sealed class GERepositoryListItem(
 
       other as Error
 
-      if (errorText != other.errorText) return false
-      if (linkText != other.linkText) return false
-      if (linkHandler != other.linkHandler) return false
+      if (error != other.error) return false
 
       return true
     }
 
     override fun hashCode(): Int {
       var result = super.hashCode()
-      result = 31 * result + errorText.hashCode()
-      result = 31 * result + linkText.hashCode()
-      result = 31 * result + linkHandler.hashCode()
+      result = 31 * result + error.hashCode()
       return result
     }
   }

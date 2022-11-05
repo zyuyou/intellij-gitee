@@ -3,16 +3,12 @@ package com.gitee.ui.cloneDialog
 
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.accounts.isGEAccount
 import com.gitee.i18n.GiteeBundle.message
-import com.gitee.util.CachingGEUserAvatarLoader
 import com.gitee.util.GiteeUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -28,40 +24,23 @@ import javax.swing.JComponent
 
 private val GiteeAccount.isGEEAccount: Boolean get() = !isGEAccount
 
-private fun getGEEAccounts(): Collection<GiteeAccount> =
-  GiteeAuthenticationManager.getInstance().getAccounts().filter { it.isGEEAccount }
-
 class GEECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getName(): String = GiteeUtil.ENTERPRISE_SERVICE_DISPLAY_NAME
 
-  override fun getAccounts(): Collection<GiteeAccount> = getGEEAccounts()
+  override fun getAccounts(): Collection<GiteeAccount> = GiteeAuthenticationManager.getInstance().getAccounts().filter { it.isGEEAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    GEECloneDialogExtensionComponent(project)
+    GEECloneDialogExtensionComponent(project, modalityState)
 }
 
-private class GEECloneDialogExtensionComponent(project: Project) : GECloneDialogExtensionComponentBase(
+private class GEECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GECloneDialogExtensionComponentBase(
   project,
+  modalityState,
   GiteeAuthenticationManager.getInstance(),
   GiteeApiRequestExecutorManager.getInstance(),
-  GiteeAccountInformationProvider.getInstance(),
-  CachingGEUserAvatarLoader.getInstance()
 ) {
 
-  init {
-    service<GEAccountManager>().addListener(this, this)
-    setup()
-  }
-
-  override fun getAccounts(): Collection<GiteeAccount> = getGEEAccounts()
-
-  override fun onAccountListChanged(old: Collection<GiteeAccount>, new: Collection<GiteeAccount>) {
-    super.onAccountListChanged(old.filter { it.isGEEAccount }, new.filter { it.isGEEAccount })
-  }
-
-  override fun onAccountCredentialsChanged(account: GiteeAccount) {
-    if (account.isGEEAccount) super.onAccountCredentialsChanged(account)
-  }
+  override fun isAccountHandled(account: GiteeAccount): Boolean = account.isGEEAccount
 
   override fun createLoginPanel(account: GiteeAccount?, cancelHandler: () -> Unit): JComponent =
     GEECloneDialogLoginPanel(account).apply {

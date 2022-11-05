@@ -7,12 +7,11 @@ import com.gitee.authentication.GECredentials
 import com.gitee.authentication.accounts.GEAccountsUtils.jacksonMapper
 import com.gitee.util.GiteeUtil
 import com.intellij.collaboration.auth.AccountManagerBase
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 internal val GiteeAccount.isGEAccount: Boolean get() = server.isGiteeDotCom()
 
@@ -29,55 +28,16 @@ internal class GEAccountManager
     jacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(credentials)
 
   override fun deserializeCredentials(credentials: String): GECredentials {
-    try {
-      return jacksonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(credentials, GECredentials::class.java)
+    return try {
+      jacksonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(credentials, GECredentials::class.java)
     } catch (ignore: Exception) {
-      return GECredentials.EmptyCredentials
+      GECredentials.EmptyCredentials
     }
   }
 
-  init {
-    @Suppress("DEPRECATION")
-    addListener(this, object : AccountsListener<GiteeAccount> {
-      override fun onAccountListChanged(old: Collection<GiteeAccount>, new: Collection<GiteeAccount>) {
-        val removedPublisher = ApplicationManager.getApplication().messageBus.syncPublisher(ACCOUNT_REMOVED_TOPIC)
-        for (account in (old - new)) {
-          removedPublisher.accountRemoved(account)
-        }
-        val tokenPublisher = ApplicationManager.getApplication().messageBus.syncPublisher(ACCOUNT_TOKEN_CHANGED_TOPIC)
-        for (account in (new - old)) {
-          tokenPublisher.tokenChanged(account)
-        }
-      }
-
-      override fun onAccountCredentialsChanged(account: GiteeAccount) =
-        ApplicationManager.getApplication().messageBus.syncPublisher(ACCOUNT_TOKEN_CHANGED_TOPIC).tokenChanged(account)
-    })
-  }
+  val dummyAccountsState: StateFlow<Map<GiteeAccount, String?>> = MutableStateFlow(accounts.associateWith { "" }).asStateFlow()
 
   companion object {
-    @Deprecated("Use TOPIC")
-    @Suppress("DEPRECATION")
-    @JvmStatic
-    val ACCOUNT_REMOVED_TOPIC = Topic("GITEE_ACCOUNT_REMOVED", AccountRemovedListener::class.java)
-
-    @Deprecated("Use TOPIC")
-    @Suppress("DEPRECATION")
-    @JvmStatic
-    val ACCOUNT_TOKEN_CHANGED_TOPIC = Topic("GITEE_ACCOUNT_TOKEN_CHANGED", AccountTokenChangedListener::class.java)
-
     fun createAccount(name: String, server: GiteeServerPath) = GiteeAccount(name, server)
   }
-}
-
-@Deprecated("Use GiteeAuthenticationManager.addListener")
-@ApiStatus.ScheduledForRemoval
-interface AccountRemovedListener {
-  fun accountRemoved(removedAccount: GiteeAccount)
-}
-
-@Deprecated("Use GiteeAuthenticationManager.addListener")
-@ApiStatus.ScheduledForRemoval
-interface AccountTokenChangedListener {
-  fun tokenChanged(account: GiteeAccount)
 }

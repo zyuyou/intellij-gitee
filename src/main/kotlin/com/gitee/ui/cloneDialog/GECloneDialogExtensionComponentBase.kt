@@ -2,39 +2,31 @@
 package com.gitee.ui.cloneDialog
 
 import com.gitee.api.*
-import com.gitee.api.data.GiteeAuthenticatedUser
-import com.gitee.api.data.GiteeRepo
-import com.gitee.api.data.request.Affiliation
-import com.gitee.api.data.request.GiteeRequestPagination
-import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.authentication.ui.GEAccountsDetailsProvider
+import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeMissingTokenException
 import com.gitee.i18n.GiteeBundle
-import com.gitee.icons.GiteeIcons
-import com.gitee.ui.avatars.GEAvatarIconsProvider
 import com.gitee.util.*
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.async.disposingMainScope
+import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
-import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
+import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
@@ -43,99 +35,81 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.panel
-import com.intellij.util.IconUtil
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.cloneDialog.AccountMenuItem
-import com.intellij.util.ui.cloneDialog.AccountMenuItem.Account
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Action
-import com.intellij.util.ui.cloneDialog.AccountMenuPopupStep
-import com.intellij.util.ui.cloneDialog.AccountsMenuListPopup
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
-import java.awt.FlowLayout
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import org.jetbrains.annotations.Nls
+import java.awt.event.ActionEvent
 import java.nio.file.Paths
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
 
 internal abstract class GECloneDialogExtensionComponentBase(
   private val project: Project,
+  private val modalityState: ModalityState,
   private val authenticationManager: GiteeAuthenticationManager,
-  private val executorManager: GiteeApiRequestExecutorManager,
-  private val accountInformationProvider: GiteeAccountInformationProvider,
-  private val avatarLoader: CachingGEUserAvatarLoader
-) : VcsCloneDialogExtensionComponent(),
-    AccountsListener<GiteeAccount> {
+  private val executorManager: GiteeApiRequestExecutorManager
+) : VcsCloneDialogExtensionComponent() {
 
   private val LOG = GiteeUtil.LOG
 
-  private val progressManager: ProgressVisibilityManager
-  private val githubGitHelper: GiteeGitHelper = GiteeGitHelper.getInstance()
+  private val githeeGitHelper: GiteeGitHelper = GiteeGitHelper.getInstance()
+
+  private val cs = disposingMainScope() + modalityState.asContextElement()
 
   // UI
-  private val defaultAvatar = IconUtil.resizeSquared(GiteeIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize)
-  private val defaultPopupAvatar = IconUtil.resizeSquared(GiteeIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize)
-  private val avatarSizeUiInt = JBValue.UIInteger("GECloneDialogExtensionComponent.popupAvatarSize",
-                                                  VcsCloneDialogUiSpec.Components.popupMenuAvatarSize)
-
-
   private val wrapper: Wrapper = Wrapper()
   private val repositoriesPanel: DialogPanel
   private val repositoryList: JBList<GERepositoryListItem>
 
-  private val popupMenuMouseAdapter = object : MouseAdapter() {
-    override fun mouseClicked(e: MouseEvent?) = showPopupMenu()
-  }
-
-  private val accountsPanel: JPanel = JPanel(FlowLayout(FlowLayout.LEADING, JBUI.scale(1), 0)).apply {
-    addMouseListener(popupMenuMouseAdapter)
-  }
-
   private val searchField: SearchTextField
-  private val directoryField = SelectChildTextFieldWithBrowseButton(
-    ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance())).apply {
+  private val directoryField = TextFieldWithBrowseButton().apply {
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     fcd.isShowFileSystemRoots = true
     fcd.isHideIgnored = false
-    addBrowseFolderListener(message("clone.destination.directory.browser.title"),
-                            message("clone.destination.directory.browser.description"),
-                            project,
-                            fcd)
+    addBrowseFolderListener(
+      message("clone.destination.directory.browser.title"),
+      message("clone.destination.directory.browser.description"),
+      project,
+      fcd
+    )
   }
+  private val cloneDirectoryChildHandle = FilePathDocumentChildPathHandle.install(
+    directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance())
+  )
 
   // state
-  private val userDetailsByAccount = hashMapOf<GiteeAccount, GiteeAuthenticatedUser>()
-  private val repositoriesByAccount = hashMapOf<GiteeAccount, LinkedHashSet<GiteeRepo>>()
-  private val errorsByAccount = hashMapOf<GiteeAccount, GERepositoryListItem.Error>()
-  private val originListModel = CollectionListModel<GERepositoryListItem>()
+  private val loader = GECloneDialogRepositoryListLoaderImpl(executorManager)
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 
-  // popup menu
-  private val accountComponents = hashMapOf<GiteeAccount, JLabel>()
-  private val avatarsByAccount = hashMapOf<GiteeAccount, Icon>()
-
   protected val content: JComponent get() = wrapper.targetComponent
 
+  private val accountListModel: ListModel<GiteeAccount> = createAccountsModel()
+
   init {
-    repositoryList = JBList(originListModel).apply {
-      cellRenderer = GERepositoryListCellRenderer { getAccounts() }
+    repositoryList = JBList(loader.listModel).apply {
+      cellRenderer = GERepositoryListCellRenderer(ErrorHandler()) { getAccounts() }
       isFocusable = false
-      selectionModel = SingleSelectionModel()
+      selectionModel = loader.listSelectionModel
     }.also {
       val mouseAdapter = GERepositoryMouseAdapter(it)
       it.addMouseListener(mouseAdapter)
@@ -144,6 +118,11 @@ internal abstract class GECloneDialogExtensionComponentBase(
         if (evt.valueIsAdjusting) return@addListSelectionListener
         updateSelectedUrl()
       }
+    }
+
+    //TODO: fix jumping selection in the presence of filter
+    loader.addLoadingStateListener {
+      repositoryList.setPaintBusy(loader.loading)
     }
 
     searchField = SearchTextField(false).also {
@@ -160,70 +139,93 @@ internal abstract class GECloneDialogExtensionComponentBase(
       }
     }
 
-    progressManager = object : ProgressVisibilityManager() {
-      override fun setProgressVisible(visible: Boolean) = repositoryList.setPaintBusy(visible)
+    @Suppress("LeakingThis")
+    val parentDisposable: Disposable = this
+    Disposer.register(parentDisposable, loader)
 
-      override fun getModalityState() = ModalityState.any()
-    }
+    val accountDetailsProvider = GEAccountsDetailsProvider(cs, authenticationManager.accountManager)
 
-    Disposer.register(this, progressManager)
+    val accountsPanel = CompactAccountsPanelFactory(accountListModel)
+      .create(accountDetailsProvider, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
 
     repositoriesPanel = panel {
       row {
-        cell(isFullWidth = true) {
-          searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY)
-          accountsPanel()
-        }
+        cell(searchField.textEditor)
+          .resizableColumn()
+          .align(Align.FILL)
+        cell(JSeparator(JSeparator.VERTICAL))
+          .align(AlignY.FILL)
+        cell(accountsPanel)
+          .align(AlignY.FILL)
       }
       row {
-        ScrollPaneFactory.createScrollPane(repositoryList)(push, grow)
-      }
+        scrollCell(repositoryList)
+          .resizableColumn()
+          .align(Align.FILL)
+      }.resizableRow()
+
       row(GiteeBundle.message("clone.dialog.directory.field")) {
-        directoryField(growX, pushX)
+        cell(directoryField)
+          .align(AlignX.FILL)
+          .validationOnApply {
+            CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
+          }
       }
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
+
+    setupAccountsListeners()
   }
 
-  protected abstract fun getAccounts(): Collection<GiteeAccount>
+  protected abstract fun isAccountHandled(account: GiteeAccount): Boolean
+
+  protected fun getAccounts(): Collection<GiteeAccount> = accountListModel.itemsSet
 
   protected abstract fun createLoginPanel(account: GiteeAccount?, cancelHandler: () -> Unit): JComponent
 
-  fun setup() {
-    val accounts = getAccounts()
-    if (accounts.isNotEmpty()) {
-      switchToRepositories()
-      accounts.forEach(::addAccount)
-    }
-    else {
-      switchToLogin(null)
-    }
-  }
+  private fun setupAccountsListeners() {
+    accountListModel.addListDataListener(object : ListDataListener {
 
-  override fun onAccountListChanged(old: Collection<GiteeAccount>, new: Collection<GiteeAccount>) {
-    val removed = old - new
-    if (removed.isNotEmpty()) {
-      removeAccounts(removed)
-      dialogStateListener.onListItemChanged()
-    }
-    val added = new - old
-    if (added.isNotEmpty()) {
-      for (account in added) {
-        if (repositoriesByAccount[account] != null) continue
-        addAccount(account)
+      private var currentList by Delegates.observable(emptySet<GiteeAccount>()) { _, oldValue, newValue ->
+        val delta = CollectionDelta(oldValue, newValue)
+        for (account in delta.removedItems) {
+          loader.clear(account)
+        }
+        for (account in delta.newItems) {
+          loader.loadRepositories(account)
+        }
+
+        if (newValue.isEmpty()) {
+          switchToLogin(null)
+        }
+        else {
+          switchToRepositories()
+        }
+        dialogStateListener.onListItemChanged()
       }
-      switchToRepositories()
-      dialogStateListener.onListItemChanged()
-    }
-  }
 
-  override fun onAccountCredentialsChanged(account: GiteeAccount) {
-    if (repositoriesByAccount[account] != null) return
+      init {
+        currentList = accountListModel.itemsSet
+      }
 
-    dialogStateListener.onListItemChanged()
-    addAccount(account)
-    switchToRepositories()
+      override fun intervalAdded(e: ListDataEvent) {
+        currentList = accountListModel.itemsSet
+      }
+
+      override fun intervalRemoved(e: ListDataEvent) {
+        currentList = accountListModel.itemsSet
+      }
+
+      override fun contentsChanged(e: ListDataEvent) {
+        for (i in e.index0..e.index1) {
+          val account = accountListModel.getElementAt(i)
+          loader.clear(account)
+          loader.loadRepositories(account)
+        }
+        switchToRepositories()
+        dialogStateListener.onListItemChanged()
+      }
+    })
   }
 
   protected fun switchToLogin(account: GiteeAccount?) {
@@ -240,137 +242,12 @@ internal abstract class GECloneDialogExtensionComponentBase(
     updateSelectedUrl()
   }
 
-  private fun addAccount(account: GiteeAccount) {
-    repositoriesByAccount.remove(account)
-
-    val label = accountComponents.getOrPut(account) {
-      JLabel().apply {
-        icon = defaultAvatar
-        toolTipText = account.name
-        isOpaque = false
-        addMouseListener(popupMenuMouseAdapter)
-      }
-    }
-    accountsPanel.add(label)
-
-    try {
-      val executor = executorManager.getExecutor(account)
-      loadUserDetails(account, executor)
-      loadRepositories(account, executor)
-    }
-    catch (e: GiteeMissingTokenException) {
-      errorsByAccount[account] = GERepositoryListItem.Error(account,
-                                                            GiteeBundle.message("account.token.missing"),
-                                                            GiteeBundle.message("login.link"),
-                                                            Runnable { switchToLogin(account) })
-      refillRepositories()
-    }
-  }
-
-  private fun removeAccounts(accounts: Collection<GiteeAccount>) {
-    for (account in accounts) {
-      repositoriesByAccount.remove(account)
-      accountComponents.remove(account).let {
-        accountsPanel.remove(it)
-      }
-    }
-    accountsPanel.revalidate()
-    accountsPanel.repaint()
-    refillRepositories()
-    if (getAccounts().isEmpty()) switchToLogin(null)
-  }
-
-  private fun loadUserDetails(account: GiteeAccount,
-                              executor: GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth) {
-    progressManager.run(object : Task.Backgroundable(project, GiteeBundle.message("progress.title.not.visible")) {
-      lateinit var user: GiteeAuthenticatedUser
-      lateinit var iconProvider: GEAvatarIconsProvider
-
-      override fun run(indicator: ProgressIndicator) {
-        user = accountInformationProvider.getInformation(executor, indicator, account)
-        iconProvider = GEAvatarIconsProvider(avatarLoader, executor)
-      }
-
-      override fun onSuccess() {
-        userDetailsByAccount[account] = user
-        val avatar = iconProvider.getIcon(user.avatarUrl, avatarSizeUiInt.get())
-        avatarsByAccount[account] = avatar
-        accountComponents[account]?.icon = IconUtil.resizeSquared(avatar, VcsCloneDialogUiSpec.Components.avatarSize)
-        refillRepositories()
-      }
-
-      override fun onThrowable(error: Throwable) {
-        LOG.error(error)
-        errorsByAccount[account] = GERepositoryListItem.Error(account,
-                                                              GiteeBundle.message("clone.error.load.repositories"),
-                                                              GiteeBundle.message("retry.link"),
-                                                              Runnable { addAccount(account) })
-      }
-    })
-  }
-
-  private fun loadRepositories(account: GiteeAccount,
-                               executor: GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth) {
-    repositoriesByAccount.remove(account)
-    errorsByAccount.remove(account)
-
-    progressManager.run(object : Task.Backgroundable(project, GiteeBundle.message("progress.title.not.visible")) {
-      override fun run(indicator: ProgressIndicator) {
-        val repoPagesRequest = GiteeApiRequests.CurrentUser.Repos.pages(account.server,
-                                                                         affiliation = Affiliation.combine(Affiliation.OWNER,
-                                                                                                           Affiliation.COLLABORATOR),
-                                                                         pagination = GiteeRequestPagination.DEFAULT)
-        val pageItemsConsumer: (List<GiteeRepo>) -> Unit = {
-          runInEdt {
-            repositoriesByAccount.getOrPut(account) { UpdateOrderLinkedHashSet() }.addAll(it)
-            refillRepositories()
-          }
-        }
-        GiteeApiPagesLoader.loadAll(executor, indicator, repoPagesRequest, pageItemsConsumer)
-
-        val orgsRequest = GiteeApiRequests.CurrentUser.Orgs.pages(account.server)
-        val userOrganizations = GiteeApiPagesLoader.loadAll(executor, indicator, orgsRequest).sortedBy { it.login }
-
-        for (org in userOrganizations) {
-          val orgRepoRequest = GiteeApiRequests.Organisations.Repos.pages(account.server, org.login, GiteeRequestPagination.DEFAULT)
-          GiteeApiPagesLoader.loadAll(executor, indicator, orgRepoRequest, pageItemsConsumer)
-        }
-      }
-
-      override fun onThrowable(error: Throwable) {
-        LOG.error(error)
-        errorsByAccount[account] = GERepositoryListItem.Error(account,
-                                                              GiteeBundle.message("clone.error.load.repositories"),
-                                                              GiteeBundle.message("retry.link"),
-                                                              Runnable { loadRepositories(account, executor) })
-      }
-    })
-  }
-
-  private fun refillRepositories() {
-    val selectedValue = repositoryList.selectedValue
-    originListModel.removeAll()
-    for (account in getAccounts()) {
-      if (errorsByAccount[account] != null) {
-        originListModel.add(errorsByAccount[account])
-      }
-      val user = userDetailsByAccount[account] ?: continue
-      val repos = repositoriesByAccount[account] ?: continue
-      for (repo in repos) {
-        originListModel.add(GERepositoryListItem.Repo(account, user, repo))
-      }
-    }
-    repositoryList.setSelectedValue(selectedValue, false)
-    ScrollingUtil.ensureSelectionExists(repositoryList)
-  }
-
   override fun getView() = wrapper
 
-  override fun doValidateAll(): List<ValidationInfo> {
-    val list = ArrayList<ValidationInfo>()
-    ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
-    return list
-  }
+  override fun doValidateAll(): List<ValidationInfo> =
+    (wrapper.targetComponent as? DialogPanel)?.validationsOnApply?.values?.flatten()?.mapNotNull {
+      it.validate()
+    } ?: emptyList()
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val parent = Paths.get(directoryField.text).toAbsolutePath().parent
@@ -423,7 +300,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
     }
     val githubRepoPath = getGiteeRepoPath(searchField.text)
     if (githubRepoPath != null) {
-      selectedUrl = githubGitHelper.getRemoteUrl(githubRepoPath.serverPath,
+      selectedUrl = githeeGitHelper.getRemoteUrl(githubRepoPath.serverPath,
                                                  githubRepoPath.repositoryPath.owner,
                                                  githubRepoPath.repositoryPath.repository)
       repositoryList.emptyText.appendText(GiteeBundle.message("clone.dialog.text", selectedUrl!!))
@@ -431,7 +308,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
     }
     val selectedValue = repositoryList.selectedValue
     if (selectedValue is GERepositoryListItem.Repo) {
-      selectedUrl = githubGitHelper.getRemoteUrl(selectedValue.account.server,
+      selectedUrl = githeeGitHelper.getRemoteUrl(selectedValue.account.server,
                                                  selectedValue.repo.userName,
                                                  selectedValue.repo.name)
       return
@@ -464,61 +341,17 @@ internal abstract class GECloneDialogExtensionComponentBase(
     dialogStateListener.onOkActionEnabled(urlSelected)
     if (urlSelected) {
       val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl!!), GitUtil.DOT_GIT)
-      directoryField.trySetChildPath(path)
+      cloneDirectoryChildHandle.trySetChildPath(path)
     }
   }
 
-  /**
-   * Since each repository can be in several states at the same time (shared access for a collaborator and shared access for org member) and
-   * repositories for collaborators are loaded in separate request before repositories for org members, we need to update order of re-added
-   * repo in order to place it close to other organization repos
-   */
-  private class UpdateOrderLinkedHashSet<T> : LinkedHashSet<T>() {
-    override fun add(element: T): Boolean {
-      val wasThere = remove(element)
-      super.add(element)
-      // Contract is "true if this set did not already contain the specified element"
-      return !wasThere
-    }
+  private inner class AccountsPopupConfig : CompactAccountsPanelFactory.PopupConfig<GiteeAccount> {
+    override val avatarSize: Int = VcsCloneDialogUiSpec.Components.popupMenuAvatarSize
+
+    override fun createActions(): Collection<Action> = createAccountMenuLoginActions(null)
   }
 
   protected abstract fun createAccountMenuLoginActions(account: GiteeAccount?): Collection<Action>
-
-  private fun showPopupMenu() {
-    val menuItems = mutableListOf<AccountMenuItem>()
-    val project = ProjectManager.getInstance().defaultProject
-
-    for ((index, account) in getAccounts().withIndex()) {
-      val user = userDetailsByAccount[account]
-
-      val accountTitle = user?.login ?: account.name
-      val serverInfo = account.server.toUrl().removePrefix("http://").removePrefix("https://")
-      val avatar = avatarsByAccount[account] ?: defaultPopupAvatar
-      val accountActions = mutableListOf<Action>()
-      val showSeparatorAbove = index != 0
-
-      if (user == null) {
-        accountActions += createAccountMenuLoginActions(account)
-        accountActions += Action(GiteeBundle.message("accounts.remove"), { authenticationManager.removeAccount(account) },
-                                 showSeparatorAbove = true)
-      }
-      else {
-        if (account != authenticationManager.getDefaultAccount(project)) {
-          accountActions += Action(CollaborationToolsBundle.message("accounts.set.default"),
-                                   { authenticationManager.setDefaultAccount(project, account) })
-        }
-        accountActions += Action(GiteeBundle.message("open.on.gitee.action"), { BrowserUtil.browse(user.htmlUrl) },
-                                 AllIcons.Ide.External_link_arrow)
-        accountActions += Action(GiteeBundle.message("accounts.log.out"), { authenticationManager.removeAccount(account) },
-                                 showSeparatorAbove = true)
-      }
-
-      menuItems += Account(accountTitle, serverInfo, avatar, accountActions, showSeparatorAbove)
-    }
-    menuItems += createAccountMenuLoginActions(null)
-
-    AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems)).showUnderneathOf(accountsPanel)
-  }
 
   private fun createFocusFilterFieldAction(searchField: SearchTextField) {
     val action = DumbAwareAction.create {
@@ -529,5 +362,76 @@ internal abstract class GECloneDialogExtensionComponentBase(
     }
     val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_FIND)
     action.registerCustomShortcutSet(shortcuts, repositoriesPanel, this)
+  }
+
+  private fun createAccountsModel(): ListModel<GiteeAccount> {
+    val accountsState = authenticationManager.accountManager.accountsState
+    val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
+
+    cs.launch(Dispatchers.Main.immediate) {
+      val prev = accountsState.value.filterKeys(::isAccountHandled)
+
+      accountsState.collect {
+        val new = it.filterKeys(::isAccountHandled)
+
+        new.forEach { (acc, token) ->
+          if (!prev.containsKey(acc)) {
+            model.add(acc)
+          }
+          else if (prev[acc] != token) {
+            model.contentsChanged(acc)
+          }
+        }
+
+        prev.forEach { (acc, _) ->
+          if (!new.containsKey(acc)) {
+            model.remove(acc)
+          }
+        }
+      }
+    }
+    return model
+  }
+
+  private inner class ErrorHandler : GERepositoryListCellRenderer.ErrorHandler {
+
+    override fun getPresentableText(error: Throwable): @Nls String = when (error) {
+      is GiteeMissingTokenException -> GiteeBundle.message("account.token.missing")
+      is GiteeAuthenticationException -> GiteeBundle.message("credentials.invalid.auth.data", "")
+      else -> GiteeBundle.message("clone.error.load.repositories")
+    }
+
+    override fun getAction(account: GiteeAccount, error: Throwable) = when (error) {
+      is GiteeAuthenticationException -> object : AbstractAction(GiteeBundle.message("accounts.relogin")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          switchToLogin(account)
+        }
+      }
+      else -> object : AbstractAction(GiteeBundle.message("retry.link")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          loader.clear(account)
+          loader.loadRepositories(account)
+        }
+      }
+    }
+  }
+
+  companion object {
+    internal val <E> ListModel<E>.items
+      get() = Iterable {
+        object : Iterator<E> {
+          private var idx = -1
+
+          override fun hasNext(): Boolean = idx < size - 1
+
+          override fun next(): E {
+            idx++
+            return getElementAt(idx)
+          }
+        }
+      }
+
+    internal val <E> ListModel<E>.itemsSet
+      get() = items.toSet()
   }
 }

@@ -2,17 +2,23 @@
 package com.gitee.ui.cloneDialog
 
 import com.gitee.authentication.accounts.GiteeAccount
+import com.gitee.ui.util.getName
 import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
+import javax.swing.Action
 import javax.swing.JList
 
-class GERepositoryListCellRenderer(private val accountsSupplier: () -> Collection<GiteeAccount>) : ColoredListCellRenderer<GERepositoryListItem>() {
+class GERepositoryListCellRenderer(private val errorHandler: ErrorHandler,
+                                   private val accountsSupplier: () -> Collection<GiteeAccount>) :
+  ColoredListCellRenderer<GERepositoryListItem>() {
+
   private val nameRenderer = AccountNameRenderer()
 
   override fun getListCellRendererComponent(list: JList<out GERepositoryListItem>,
@@ -39,7 +45,29 @@ class GERepositoryListCellRenderer(private val accountsSupplier: () -> Collectio
                                      value: GERepositoryListItem,
                                      index: Int,
                                      selected: Boolean,
-                                     hasFocus: Boolean) = value.customizeRenderer(this, list)
+                                     hasFocus: Boolean) {
+    when (value) {
+      is GERepositoryListItem.Repo -> {
+//        val user = value.user
+        val repo = value.repo
+
+        ipad.left = 10
+        toolTipText = repo.description
+//        append(if (repo.owner.login == user.login) repo.name else repo.fullName)
+        append("[ ${repo.namespace.type.lang} ] ${repo.humanName}")
+      }
+      is GERepositoryListItem.Error -> {
+        val error = value.error
+
+        ipad.left = 10
+        toolTipText = null
+        append(errorHandler.getPresentableText(error), SimpleTextAttributes.ERROR_ATTRIBUTES)
+        val action = errorHandler.getAction(value.account, error)
+        append(" ")
+        append(action.getName(), SimpleTextAttributes.LINK_ATTRIBUTES, action)
+      }
+    }
+  }
 
 
   private class AccountNameRenderer : CellRendererPanel() {
@@ -69,6 +97,11 @@ class GERepositoryListCellRenderer(private val accountsSupplier: () -> Collectio
       add(itemContent, BorderLayout.CENTER)
       return this
     }
+  }
+
+  interface ErrorHandler {
+    fun getPresentableText(error: Throwable): @Nls String
+    fun getAction(account: GiteeAccount, error: Throwable): Action
   }
 }
 

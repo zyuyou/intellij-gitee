@@ -5,11 +5,7 @@ import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GEAccountsHost.Companion.createAddAccountLink
-import com.gitee.i18n.GiteeBundle.message
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.layout.Row
-import com.intellij.ui.layout.applyToComponent
 
 internal class GEAccountsComboBoxModel(accounts: Set<GiteeAccount>, selection: GiteeAccount?) :
   CollectionComboBoxModel<GiteeAccount>(accounts.toMutableList(), selection),
@@ -22,36 +18,10 @@ internal class GEAccountsComboBoxModel(accounts: Set<GiteeAccount>, selection: G
     selectedItem = account
   }
 
+  override fun updateAccount(account: GiteeAccount, credentials: GECredentials) {
+    GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, credentials)
+  }
+
   override fun isAccountUnique(login: String, server: GiteeServerPath): Boolean =
     GiteeAuthenticationManager.getInstance().isAccountUnique(login, server)
-
-  companion object {
-    fun Row.accountSelector(model: CollectionComboBoxModel<GiteeAccount>, onChange: (() -> Unit)? = null) =
-      cell {
-        comboBox(model, { model.selected }, { })
-          .constraints(pushX, growX)
-          .withValidationOnApply { if (model.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
-          .applyToComponent {
-            if (onChange != null) addActionListener { onChange() }
-          }
-
-        if (model.size == 0) {
-          createAddAccountLink()().withLargeLeftGap()
-        }
-      }
-//    fun accountSelector(@Nls label: String, model: CollectionComboBoxModel<GiteeAccount>, onChange: (() -> Unit)? = null) = panel {
-//      row(label) {
-//        comboBox(model)
-//          .horizontalAlign(HorizontalAlign.FILL)
-//          .validationOnApply { if (model.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
-//          .applyToComponent { if (onChange != null) addActionListener { onChange() } }
-//      }
-//
-//      if (model.size == 0) {
-//        row {
-//          cell(createAddAccountLink())
-//        }
-//      }
-//    }
-  }
 }

@@ -3,33 +3,38 @@ package com.gitee.util
 
 import com.gitee.api.GERepositoryCoordinates
 import com.gitee.api.GiteeServerPath
+import git4idea.remote.GitRemoteUrlCoordinates
+import git4idea.remote.hosting.HostedGitRepositoryMapping
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitRepositoryMappingData
 
-class GEGitRepositoryMapping(val geRepositoryCoordinates: GERepositoryCoordinates, val gitRemoteUrlCoordinates: GitRemoteUrlCoordinates) : GitRepositoryMappingData {
+class GEGitRepositoryMapping(override val repository: GERepositoryCoordinates,
+                             override val remote: GitRemoteUrlCoordinates,
+) : GitRepositoryMappingData, HostedGitRepositoryMapping {
+
   override val gitRemote: GitRemote
-    get() = gitRemoteUrlCoordinates.remote
+    get() = remote.remote
   override val gitRepository: GitRepository
-    get() = gitRemoteUrlCoordinates.repository
+    get() = remote.repository
   override val repositoryPath: String
-    get() = geRepositoryCoordinates.repositoryPath.repository
+    get() = repository.repositoryPath.repository
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GEGitRepositoryMapping) return false
 
-    if (geRepositoryCoordinates != other.geRepositoryCoordinates) return false
+    if (repository != other.repository) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return geRepositoryCoordinates.hashCode()
+    return repository.hashCode()
   }
 
   override fun toString(): String {
-    return "(repository=$geRepositoryCoordinates, remote=$gitRemoteUrlCoordinates)"
+    return "(repository=$repository, remote=$repository)"
   }
 
   companion object {

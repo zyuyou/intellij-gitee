@@ -17,24 +17,24 @@ package com.gitee.ui
 
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
-import com.gitee.authentication.ui.GEAccountsDetailsLoader
+import com.gitee.authentication.ui.GEAccountsDetailsProvider
 import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.authentication.ui.GEAccountsListModel
+import com.gitee.authentication.ui.GEAccountsPanelActionsController
 import com.gitee.i18n.GiteeBundle
-import com.gitee.icons.GiteeIcons
 import com.gitee.util.GiteeSettings
 import com.gitee.util.GiteeUtil
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.ide.DataManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import kotlinx.coroutines.plus
 
 /**
  * @author Yuyou Chow
@@ -50,20 +50,17 @@ internal class GiteeSettingsConfigurable internal constructor(private val projec
     val accountManager = service<GEAccountManager>()
     val settings = GiteeSettings.getInstance()
 
-    val indicatorsProvider = ProgressIndicatorsProvider().also {
-      Disposer.register(disposable!!, it)
-    }
+    val scope = DisposingMainScope(disposable!!) + ModalityState.any().asContextElement()
+    val accountsModel = GEAccountsListModel()
+    val detailsProvider = GEAccountsDetailsProvider(scope, accountManager, accountsModel)
 
-    val accountsModel = GEAccountsListModel(project)
-
-    val detailsLoader = GEAccountsDetailsLoader(accountManager, indicatorsProvider, accountsModel)
-    val panelFactory = AccountsPanelFactory(accountManager, defaultAccountHolder, accountsModel, detailsLoader, disposable!!)
+    val panelFactory = AccountsPanelFactory(scope, accountManager, defaultAccountHolder, accountsModel)
+    val actionsController = GEAccountsPanelActionsController(project, accountsModel)
 
     return panel {
       row {
-        panelFactory.accountsPanelCell(this, true, GiteeIcons.DefaultAvatar)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+        panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
+          .align(Align.FILL)
           .also {
             DataManager.registerDataProvider(it.component) { key ->
               if (GEAccountsHost.KEY.`is`(key)) accountsModel

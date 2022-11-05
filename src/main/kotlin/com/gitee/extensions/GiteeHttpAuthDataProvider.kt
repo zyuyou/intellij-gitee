@@ -71,13 +71,13 @@ class GiteeHttpAuthDataProvider : GitHttpAuthDataProvider {
 
   override fun forgetPassword(project: Project, url: String, authData: AuthData) {
     if (authData is GiteeAccountAuthData) {
-      project.service<GitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
+      project.service<GEGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
     }
   }
 
   fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GiteeAccount> {
 
-    val authenticationFailureManager = project.service<GitAuthenticationFailureManager>()
+    val authenticationFailureManager = project.service<GEGitAuthenticationFailureManager>()
 
     var potentialAccounts = GiteeAuthenticationManager.getInstance().getAccounts()
       .filter { it.server.matches(url) }

@@ -18,7 +18,6 @@ package com.gitee.ui
 
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GEAccountsComboBoxModel
-import com.gitee.authentication.ui.GEAccountsComboBoxModel.Companion.accountSelector
 import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
@@ -57,7 +57,7 @@ class GiteeShareDialog(project: Project,
   private val privateCheckBox = JBCheckBox(message("share.dialog.private"), false)
 
   @NlsSafe
-  private val remoteName = if (existingRemotes.isEmpty()) "origin" else "github"
+  private val remoteName = if (existingRemotes.isEmpty()) "origin" else "gitee"
   private val remoteTextField = JBTextField(remoteName)
 
   private val descriptionTextArea = JTextArea()
@@ -91,11 +91,6 @@ class GiteeShareDialog(project: Project,
       }
     }
     catch (e: Exception) {
-//      accountInformationLoadingError = if (e is ProcessCanceledException) {
-//        ValidationInfo("Cannot load information for $account:\nProcess cancelled")
-//      }
-//      else ValidationInfo("Cannot load information for $account:\n$e")
-
       val errorText = message("share.dialog.account.info.load.error.prefix", account) +
         if (e is ProcessCanceledException) message("share.dialog.account.info.load.process.canceled")
         else e.message
@@ -108,64 +103,41 @@ class GiteeShareDialog(project: Project,
     }
   }
 
-//  override fun createCenterPanel(): JComponent? {
-//    val descriptionPane = JBScrollPane(descriptionTextArea).apply {
-//      minimumSize = JBDimension(150, 50)
-//      preferredSize = JBDimension(150, 50)
-//    }
-//
-//    val repository = JBBox.createHorizontalBox()
-//    repository.add(repositoryTextField)
-//    repository.add(JBBox.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)))
-//    repository.add(privateCheckBox)
-//    repository.add(JBBox.createRigidArea(JBUI.size(5, 0)))
-//
-//    return grid().resize()
-//      .add(panel(repository).withLabel("Repository name:"))
-//      .add(panel(remoteTextField).withLabel("Remote:"))
-//      .add(panel(descriptionPane).withLabel("Description:").anchorLabelOn(UI.Anchor.Top).resizeY(true))
-//      .apply {
-//        if (accountSelector.isEnabled) add(panel(accountSelector).withLabel("Share by:").resizeX(false))
-//      }
-//      .createPanel()
-//  }
-  override fun createCenterPanel() = com.intellij.ui.layout.panel {
+  override fun createCenterPanel() = panel {
     row(message("share.dialog.repo.name")) {
-      cell {
-        repositoryTextField(growX, pushX).withValidationOnApply { validateRepository() }
-        privateCheckBox()
-      }
+      cell(repositoryTextField)
+        .align(AlignX.FILL)
+        .validationOnApply { validateRepository() }
+        .resizableColumn()
+      cell(privateCheckBox)
     }
     row(message("share.dialog.remote")) {
-      remoteTextField(growX, pushX).withValidationOnApply { validateRemote() }
+      cell(remoteTextField)
+        .align(AlignX.FILL)
+        .validationOnApply { validateRemote() }
     }
     row(message("share.dialog.description")) {
-      scrollPane(descriptionTextArea)
-    }
+      label(message("share.dialog.description"))
+        .align(AlignY.TOP)
+      scrollCell(descriptionTextArea)
+        .align(Align.FILL)
+    }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+
     if (accountsModel.size != 1) {
       row(message("share.dialog.share.by")) {
-        accountSelector(accountsModel) { switchAccount(getAccount()) }
+        comboBox(accountsModel)
+          .align(AlignX.FILL)
+          .validationOnApply { if (accountsModel.selected == null) kotlin.error(message("dialog.message.account.cannot.be.empty")) else null }
+          .applyToComponent { addActionListener { switchAccount(getAccount()) } }
+          .resizableColumn()
+
+        if (accountsModel.size == 0) {
+          cell(GEAccountsHost.createAddAccountLink())
+        }
       }
     }
   }
 
-
-//  override fun doValidateAll(): List<ValidationInfo> {
-//    val repositoryNamePatternMatchValidator: Validator = {
-//      if (!GITEE_REPO_PATTERN.matcher(repositoryTextField.text).matches()) ValidationInfo(
-//        "Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores",
-//        repositoryTextField)
-//      else null
-//    }
-//
-//    return listOf({ accountInformationLoadingError },
-//                  chain({ notBlank(repositoryTextField, "No repository name selected") },
-//                        repositoryNamePatternMatchValidator,
-//                        existingRepoValidator),
-//                  chain({ notBlank(remoteTextField, "No remote name selected") },
-//                        existingRemoteValidator)
-//    ).mapNotNull { it() }
-//  }
   override fun doValidateAll(): List<ValidationInfo> {
     val uiErrors = super.doValidateAll()
     val loadingError = accountInformationLoadingError

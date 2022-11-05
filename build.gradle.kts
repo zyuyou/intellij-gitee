@@ -4,8 +4,8 @@ fun properties(key: String) = project.findProperty(key)?.toString()
 
 plugins {
   id("java")
-  id("org.jetbrains.kotlin.jvm") version "1.6.20"
-  id("org.jetbrains.intellij") version "1.6.0"
+  id("org.jetbrains.kotlin.jvm") version "1.7.20"
+  id("org.jetbrains.intellij") version "1.10.0-SNAPSHOT"
   id("org.jetbrains.changelog") version "1.3.1"
 }
 
@@ -17,8 +17,8 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 configurations {
@@ -31,7 +31,7 @@ intellij {
   version.set(properties("ideaVersion"))
 
   pluginName.set("intellij-gitee")
-  plugins.set(listOf("tasks", "git4idea"))
+  plugins.set(listOf("tasks", "Git4Idea"))
 
   downloadSources.set(!System.getenv("CI_BUILD").toBoolean())
 
@@ -57,11 +57,11 @@ tasks {
   }
 
   compileKotlin {
-    kotlinOptions.jvmTarget = "11"
+    kotlinOptions.jvmTarget = "17"
   }
 
   compileTestKotlin {
-    kotlinOptions.jvmTarget = "11"
+    kotlinOptions.jvmTarget = "17"
   }
 }
 

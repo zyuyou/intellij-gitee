@@ -44,8 +44,7 @@ internal class GEAccountAuthData(val account: GiteeAccount, login: String, val c
  */
 class GiteeAuthenticationManager internal constructor() {
 
-  private val accountManager: GEAccountManager
-    get() = service()
+  internal val accountManager: GEAccountManager get() = service()
 
   @CalledInAny
   fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()

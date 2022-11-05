@@ -7,9 +7,9 @@ import com.gitee.authentication.GECredentials
 import com.gitee.authentication.accounts.GEAccountsUtils
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
-import com.gitee.util.completionOnEdt
-import com.gitee.util.errorOnEdt
-import com.gitee.util.submitIOTask
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.LayoutBuilder
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -53,7 +54,7 @@ class GiteeLoginPanel(
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
-  var footer: LayoutBuilder.() -> Unit
+  var footer: Panel.() -> Unit
     get() = tokenUi.footer
     set(value) {
       oauthUi.footer = value

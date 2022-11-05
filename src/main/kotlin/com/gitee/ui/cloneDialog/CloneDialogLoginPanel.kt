@@ -6,9 +6,9 @@ import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeLoginPanel
 import com.gitee.i18n.GiteeBundle.message
-import com.gitee.util.completionOnEdt
-import com.gitee.util.errorOnEdt
-import com.gitee.util.successOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,7 +27,7 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI.Borders.empty
@@ -116,12 +116,14 @@ internal class CloneDialogLoginPanel(private val account: GiteeAccount?) :
     clearErrors()
   }
 
-  private fun LayoutBuilder.buttonPanel() =
+  private fun Panel.buttonPanel() =
     row("") {
-      cell {
-        loginButton()
-        backLink().withLargeLeftGap()
-      }
+//      cell {
+//        loginButton()
+//        backLink().withLargeLeftGap()
+//      }
+      cell(loginButton)
+      cell(backLink)
     }
 
   fun cancelLogin() {

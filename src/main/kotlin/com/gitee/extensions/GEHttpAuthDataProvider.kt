@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
+import git4idea.remote.hosting.GitHostingUrlUtil.match
 
 private val LOG = logger<GEHttpAuthDataProvider>()
 
@@ -49,7 +50,7 @@ internal class GEHttpAuthDataProvider : GitHttpAuthDataProvider {
       val authenticationFailureManager = project.service<GEGitAuthenticationFailureManager>()
       val authenticationManager = GiteeAuthenticationManager.getInstance()
       val potentialAccounts = authenticationManager.getAccounts()
-        .filter { it.server.matches(url) }
+        .filter { match(it.server.toURI(), url) }
         .filterNot { authenticationFailureManager.isAccountIgnored(url, it) }
         .filter { login == null || login == getAccountDetails(it)?.login }
 

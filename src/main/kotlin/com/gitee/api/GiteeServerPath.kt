@@ -17,13 +17,15 @@
 package com.gitee.api
 
 import com.gitee.exceptions.GiteeParseException
-import com.gitee.util.GiteeUrlUtil
 import com.intellij.collaboration.api.ServerPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
+import git4idea.remote.hosting.GitHostingUrlUtil
 import org.jetbrains.annotations.NotNull
+import java.net.URI
+import java.net.URISyntaxException
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -93,12 +95,13 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
   }
 
   fun matches(gitRemoteUrl: String): Boolean {
-    val url = GiteeUrlUtil.removePort(GiteeUrlUtil.removeProtocolPrefix(gitRemoteUrl))
-    return StringUtil.startsWithIgnoreCase(url, host + StringUtil.notNullize(suffix))
+//    val url = GiteeUrlUtil.removePort(GiteeUrlUtil.removeProtocolPrefix(gitRemoteUrl))
+//    return StringUtil.startsWithIgnoreCase(url, host + StringUtil.notNullize(suffix))
+    return GitHostingUrlUtil.match(toURI(), gitRemoteUrl)
   }
 
   fun toUrl(): String {
-    return getSchemaUrlPart() + host + getPortUrlPart() + StringUtil.notNullize(suffix)
+    return toUrl(true)
   }
 
   fun toHostUrl(): String {
@@ -143,6 +146,17 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
   override fun toString(): String {
     val schema = if (useHttp != null) getSchemaUrlPart() else ""
     return schema + host + getPortUrlPart() + StringUtil.notNullize(suffix)
+  }
+
+  override fun toURI(): URI {
+    val port = port ?: -1
+
+    return try {
+      URI(getSchema(), null, this.host, port, suffix, null, null)
+    } catch (e: URISyntaxException) {
+      // shouldn't happen, because we pre-validate the data
+      throw RuntimeException(e)
+    }
   }
 
   override fun equals(other: Any?): Boolean {

@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -43,6 +42,11 @@ object GEUIUtil {
       listener.invoke(component)
     })
     listener.invoke(component)
+  }
+
+  fun isFocusParent(component: JComponent): Boolean {
+    val focusOwner = IdeFocusManager.findInstanceByComponent(component).focusOwner ?: return false
+    return SwingUtilities.isDescendingFrom(focusOwner, component)
   }
 
   fun focusPanel(panel: JComponent) {
@@ -75,18 +79,6 @@ object GEUIUtil {
                          prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "
     return datePrefix + prettyDate
-  }
-
-  fun createNoteWithAction(action: () -> Unit): SimpleColoredComponent {
-    return SimpleColoredComponent().apply {
-      isFocusable = true
-      isOpaque = false
-
-      LinkMouseListenerBase.installSingleTagOn(this)
-      registerKeyboardAction({ action() },
-                             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                             JComponent.WHEN_FOCUSED)
-    }
   }
 
   fun <T> showChooserPopup(@NlsContexts.PopupTitle popupTitle: String, parentComponent: JComponent,
@@ -224,7 +216,7 @@ object GEUIUtil {
     class Users(private val iconsProvider: GEAvatarIconsProvider)
       : SelectionListCellRenderer<GEUser>() {
       override fun getText(value: GEUser) = value.login
-      override fun getIcon(value: GEUser) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GEUser) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
     }
 
     class Labels : SelectionListCellRenderer<GELabel>() {

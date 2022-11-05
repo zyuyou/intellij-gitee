@@ -15,6 +15,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.LayoutBuilder
 import java.net.UnknownHostException
 import javax.swing.JComponent
@@ -43,16 +45,19 @@ internal class GEPasswordCredentialsUi(
     passwordField.text = password
   }
 
-  override fun LayoutBuilder.centerPanel() {
-    row(message("credentials.server.field")) { serverTextField(pushX, growX) }
-    row(message("credentials.server.client.id.field")) { clientIdTextField(pushX, growX) }
-    row(message("credentials.server.client.secret.field")) { clientSecretTextField(pushX, growX) }
-    row(message("credentials.login.field")) { loginTextField(pushX, growX) }
+  override fun Panel.centerPanel() {
+    row(message("credentials.server.field")) { cell(serverTextField).align(Align.FILL) }
+    row(message("credentials.server.client.id.field")) { cell(clientIdTextField).align(Align.FILL) }
+    row(message("credentials.server.client.secret.field")) { cell(clientSecretTextField).align(Align.FILL) }
+    row(message("credentials.login.field")) { cell(loginTextField).align(Align.FILL) }
     row(message("credentials.password.field")) {
-      passwordField(
-        comment = message("credentials.password.not.saved"),
-        constraints = arrayOf(pushX, growX)
-      )
+//      passwordField(
+//        comment = message("credentials.password.not.saved"),
+//        constraints = arrayOf(pushX, growX)
+//      )
+      cell(passwordField)
+        .comment(message("credentials.password.not.saved"))
+        .align(Align.FILL)
     }
   }
 

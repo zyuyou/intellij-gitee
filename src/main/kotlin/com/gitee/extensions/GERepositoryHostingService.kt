@@ -1,32 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.extensions
 
-import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeApiRequestExecutorManager
-import com.gitee.api.GiteeApiRequests
-import com.gitee.api.data.GiteeRepo
-import com.gitee.api.util.GiteeApiPagesLoader.loadAll
-import com.gitee.authentication.GiteeAuthenticationManager
-import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.exceptions.GiteeAuthenticationException
-import com.gitee.exceptions.GiteeMissingTokenException
-import com.gitee.exceptions.GiteeStatusCodeException
 import com.gitee.extensions.GEHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
-import com.gitee.util.GiteeGitHelper
 import com.gitee.util.GiteeUtil
-import com.intellij.dvcs.hosting.RepositoryListLoader
-import com.intellij.dvcs.hosting.RepositoryListLoadingException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.remote.GitRepositoryHostingService
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
-import java.awt.Component
 
 internal class GERepositoryHostingService : GitRepositoryHostingService() {
   override fun getServiceDisplayName(): String = GiteeUtil.SERVICE_DISPLAY_NAME
 
-  override fun getRepositoryListLoader(project: Project): RepositoryListLoader = GHRepositoryListLoader(project)
+//  override fun getRepositoryListLoader(project: Project): RepositoryListLoader = GHRepositoryListLoader(project)
 
   @RequiresBackgroundThread
   override fun getInteractiveAuthDataProvider(project: Project, url: String): InteractiveGitHttpAuthDataProvider? =
@@ -43,72 +28,72 @@ internal class GERepositoryHostingService : GitRepositoryHostingService() {
   }
 }
 
-private class GHRepositoryListLoader(private val project: Project) : RepositoryListLoader {
-  private val authenticationManager get() = GiteeAuthenticationManager.getInstance()
-  private val executorManager get() = GiteeApiRequestExecutorManager.getInstance()
-  private val gitHelper get() = GiteeGitHelper.getInstance()
+//private class GHRepositoryListLoader(private val project: Project) : RepositoryListLoader {
+//  private val authenticationManager get() = GiteeAuthenticationManager.getInstance()
+//  private val executorManager get() = GiteeApiRequestExecutorManager.getInstance()
+//  private val gitHelper get() = GiteeGitHelper.getInstance()
+//
+//  private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor>()
+//
+//  override fun isEnabled(): Boolean {
+//    authenticationManager.getAccounts().forEach { account ->
+//      try {
+//        executors[account] = executorManager.getExecutor(account)
+//      }
+//      catch (ignored: GiteeMissingTokenException) {
+//      }
+//    }
+//    return executors.isNotEmpty()
+//  }
+//
+//  override fun enable(parentComponent: Component?): Boolean {
+//    if (!authenticationManager.ensureHasAccounts(project, parentComponent)) return false
+//
+//    var atLeastOneHasToken = false
+//    for (account in authenticationManager.getAccounts()) {
+//      val executor = executorManager.getExecutor(account, project) ?: continue
+//      executors[account] = executor
+//      atLeastOneHasToken = true
+//    }
+//    return atLeastOneHasToken
+//  }
+//
+//  override fun getAvailableRepositoriesFromMultipleSources(progressIndicator: ProgressIndicator): RepositoryListLoader.Result {
+//    val urls = mutableListOf<String>()
+//    val exceptions = mutableListOf<RepositoryListLoadingException>()
+//
+//    executors.forEach { (account, executor) ->
+//      try {
+//        val associatedRepos = account.loadAssociatedRepos(executor, progressIndicator)
+//        // We already can return something useful from getUserRepos, so let's ignore errors.
+//        // One of this may not exist in GitHub enterprise
+//        val watchedRepos = account.loadWatchedReposSkipErrors(executor, progressIndicator)
+//
+//        urls.addAll(
+//          (associatedRepos + watchedRepos)
+//            .sortedWith(compareBy({ repo -> repo.userName }, { repo -> repo.name }))
+//            .map { repo -> gitHelper.getRemoteUrl(account.server, repo.userName, repo.name) }
+//        )
+//      }
+//      catch (e: Exception) {
+//        exceptions.add(RepositoryListLoadingException("Cannot load repositories from GitHub", e))
+//      }
+//    }
+//
+//    return RepositoryListLoader.Result(urls, exceptions)
+//  }
+//}
 
-  private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor>()
-
-  override fun isEnabled(): Boolean {
-    authenticationManager.getAccounts().forEach { account ->
-      try {
-        executors[account] = executorManager.getExecutor(account)
-      }
-      catch (ignored: GiteeMissingTokenException) {
-      }
-    }
-    return executors.isNotEmpty()
-  }
-
-  override fun enable(parentComponent: Component?): Boolean {
-    if (!authenticationManager.ensureHasAccounts(project, parentComponent)) return false
-
-    var atLeastOneHasToken = false
-    for (account in authenticationManager.getAccounts()) {
-      val executor = executorManager.getExecutor(account, project) ?: continue
-      executors[account] = executor
-      atLeastOneHasToken = true
-    }
-    return atLeastOneHasToken
-  }
-
-  override fun getAvailableRepositoriesFromMultipleSources(progressIndicator: ProgressIndicator): RepositoryListLoader.Result {
-    val urls = mutableListOf<String>()
-    val exceptions = mutableListOf<RepositoryListLoadingException>()
-
-    executors.forEach { (account, executor) ->
-      try {
-        val associatedRepos = account.loadAssociatedRepos(executor, progressIndicator)
-        // We already can return something useful from getUserRepos, so let's ignore errors.
-        // One of this may not exist in GitHub enterprise
-        val watchedRepos = account.loadWatchedReposSkipErrors(executor, progressIndicator)
-
-        urls.addAll(
-          (associatedRepos + watchedRepos)
-            .sortedWith(compareBy({ repo -> repo.userName }, { repo -> repo.name }))
-            .map { repo -> gitHelper.getRemoteUrl(account.server, repo.userName, repo.name) }
-        )
-      }
-      catch (e: Exception) {
-        exceptions.add(RepositoryListLoadingException("Cannot load repositories from GitHub", e))
-      }
-    }
-
-    return RepositoryListLoader.Result(urls, exceptions)
-  }
-}
-
-private fun GiteeAccount.loadAssociatedRepos(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator): List<GiteeRepo> =
-  loadAll(executor, indicator, GiteeApiRequests.CurrentUser.Repos.pages(server))
-
-private fun GiteeAccount.loadWatchedReposSkipErrors(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator): List<GiteeRepo> =
-  try {
-    loadAll(executor, indicator, GiteeApiRequests.CurrentUser.RepoSubs.pages(server))
-  }
-  catch (e: GiteeAuthenticationException) {
-    emptyList()
-  }
-  catch (e: GiteeStatusCodeException) {
-    emptyList()
-  }
+//private fun GiteeAccount.loadAssociatedRepos(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator): List<GiteeRepo> =
+//  loadAll(executor, indicator, GiteeApiRequests.CurrentUser.Repos.pages(server))
+//
+//private fun GiteeAccount.loadWatchedReposSkipErrors(executor: GiteeApiRequestExecutor, indicator: ProgressIndicator): List<GiteeRepo> =
+//  try {
+//    loadAll(executor, indicator, GiteeApiRequests.CurrentUser.RepoSubs.pages(server))
+//  }
+//  catch (e: GiteeAuthenticationException) {
+//    emptyList()
+//  }
+//  catch (e: GiteeStatusCodeException) {
+//    emptyList()
+//  }

@@ -32,6 +32,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
+import git4idea.remote.hosting.HostedGitRepositoriesManagerKt;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -84,14 +86,15 @@ public class GiteeSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GEProjectRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GEProjectRepositoriesManager.class);
+    GEHostedRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GEHostedRepositoriesManager.class);
     if (ghRepositoriesManager == null) {
       LOG.warn("Unable to get the GHProjectRepositoriesManager service");
       return;
     }
 
-    GEGitRepositoryMapping originMapping = ContainerUtil.find(ghRepositoriesManager.getKnownRepositories(), mapping ->
-        mapping.getGitRemoteUrlCoordinates().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
+    Set<GEGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(ghRepositoriesManager);
+    GEGitRepositoryMapping originMapping = ContainerUtil.find(repositories, mapping ->
+        mapping.getRemote().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
     if (originMapping == null) {
       GiteeNotifications.showError(project,
           GiteeNotificationIdsHolder.REBASE_REMOTE_ORIGIN_NOT_FOUND,
@@ -101,7 +104,7 @@ public class GiteeSyncForkAction extends DumbAwareAction {
     }
 
     GiteeAuthenticationManager authManager = GiteeAuthenticationManager.getInstance();
-    GiteeServerPath serverPath = originMapping.getGeRepositoryCoordinates().getServerPath();
+    GiteeServerPath serverPath = originMapping.getRepository().getServerPath();
     GiteeAccount giteeAccount;
     List<GiteeAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
     if (accounts.size() == 0) {
@@ -141,18 +144,19 @@ public class GiteeSyncForkAction extends DumbAwareAction {
     }
 
     new SyncForkTask(project, executor, Git.getInstance(), giteeAccount.getServer(),
-        originMapping.getGitRemoteUrlCoordinates().getRepository(),
-        originMapping.getGeRepositoryCoordinates().getRepositoryPath()).queue();
+        originMapping.getRemote().getRepository(),
+        originMapping.getRepository().getRepositoryPath()).queue();
   }
 
   private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) return false;
 
-    GEProjectRepositoriesManager repositoriesManager = project.getServiceIfCreated(GEProjectRepositoriesManager.class);
+    GEHostedRepositoriesManager repositoriesManager = project.getServiceIfCreated(GEHostedRepositoriesManager.class);
     if (repositoriesManager == null) return false;
 
-    return !repositoriesManager.getKnownRepositories().isEmpty();
+    Set<GEGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(repositoriesManager);
+    return !repositories.isEmpty();
   }
 
   private static class SyncForkTask extends Task.Backgroundable {

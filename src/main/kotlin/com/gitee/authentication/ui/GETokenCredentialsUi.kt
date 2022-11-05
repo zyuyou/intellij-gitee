@@ -14,7 +14,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
 import java.net.UnknownHostException
 import javax.swing.JComponent
 
@@ -38,25 +39,29 @@ internal class GETokenCredentialsUi(
     refreshTokenTextField.text = token
   }
 
-  override fun LayoutBuilder.centerPanel() {
-    row(message("credentials.server.field")) {
-      serverTextField(pushX, growX)
-    }
+  override fun Panel.centerPanel() {
+    row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.access.token.field")) {
-      cell {
-        accessTokenTextField(
-          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
-          constraints = arrayOf(pushX, growX)
-        )
-      }
+//      cell {
+//        accessTokenTextField(
+//          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
+//          constraints = arrayOf(pushX, growX)
+//        )
+//      }
+      cell(accessTokenTextField)
+        .comment(message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE))
+        .align(AlignX.FILL)
     }
     row(message("credentials.refresh.token.field")) {
-      cell {
-        refreshTokenTextField(
-          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
-          constraints = arrayOf(pushX, growX)
-        )
-      }
+//      cell {
+//        refreshTokenTextField(
+//          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
+//          constraints = arrayOf(pushX, growX)
+//        )
+//      }
+      cell(refreshTokenTextField)
+        .comment(message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE))
+        .align(AlignX.FILL)
     }
   }
 

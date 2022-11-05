@@ -4,7 +4,7 @@ package com.gitee.actions
 import com.gitee.api.GERepositoryCoordinates
 import com.gitee.i18n.GiteeBundle
 import com.gitee.icons.GiteeIcons
-import com.gitee.util.GEProjectRepositoriesManager
+import com.gitee.util.GEHostedRepositoriesManager
 import com.gitee.util.GiteeNotificationIdsHolder
 import com.gitee.util.GiteeNotifications
 import com.gitee.util.GiteeUtil
@@ -26,12 +26,15 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
+import git4idea.remote.hosting.findKnownRepositories
+import git4idea.repo.GitRepository
 import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 
@@ -79,10 +82,10 @@ open class GiteeOpenInBrowserActionGroup
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(fileRevision.path) ?: return null
 
-    val accessibleRepositories = project.service<GEProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GEHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it.geRepositoryCoordinates, fileRevision.revisionNumber.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, fileRevision.revisionNumber.asString()) }
   }
 
   private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
@@ -95,10 +98,10 @@ open class GiteeOpenInBrowserActionGroup
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(commit.root) ?: return null
 
-    val accessibleRepositories = project.service<GEProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GEHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it.geRepositoryCoordinates, commit.hash.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, commit.hash.asString()) }
   }
 
   private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): List<Data>? {
@@ -106,7 +109,7 @@ open class GiteeOpenInBrowserActionGroup
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile) ?: return null
 
-    val accessibleRepositories = project.service<GEProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GEHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val changeListManager = ChangeListManager.getInstance(project)
@@ -114,7 +117,7 @@ open class GiteeOpenInBrowserActionGroup
 
     val change = changeListManager.getChange(virtualFile)
     return if (change != null && change.type == Change.Type.NEW) null
-    else accessibleRepositories.map { Data.File(project, it.geRepositoryCoordinates, repository.root, virtualFile) }
+    else accessibleRepositories.map { Data.File(project, it.repository, repository.root, virtualFile) }
   }
 
   protected sealed class Data(val project: Project) {
@@ -319,5 +322,51 @@ open class GiteeOpenInBrowserActionGroup
         return builder.toString()
       }
     }
+  }
+}
+
+object GEPathUtil {
+  fun getFileURL(repository: GitRepository,
+                 path: GERepositoryCoordinates,
+                 virtualFile: VirtualFile,
+                 editor: Editor?): String? {
+    val relativePath = VfsUtilCore.getRelativePath(virtualFile, repository.root)
+    if (relativePath == null) {
+      return null
+    }
+
+    val hash = repository.currentRevision
+    if (hash == null) {
+      return null
+    }
+
+    return makeUrlToOpen(editor, relativePath, hash, path)
+  }
+
+  fun makeUrlToOpen(editor: Editor?, relativePath: String, branch: String, path: GERepositoryCoordinates): String {
+    val builder = StringBuilder()
+
+    if (StringUtil.isEmptyOrSpaces(relativePath)) {
+      builder.append(path.toUrl()).append("/tree/").append(branch)
+    }
+    else {
+      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URLUtil.encodePath(relativePath))
+    }
+
+    if (editor != null && editor.document.lineCount >= 1) {
+      // lines are counted internally from 0, but from 1 on gitee
+      val selectionModel = editor.selectionModel
+      val begin = editor.document.getLineNumber(selectionModel.selectionStart) + 1
+      val selectionEnd = selectionModel.selectionEnd
+      var end = editor.document.getLineNumber(selectionEnd) + 1
+      if (editor.document.getLineStartOffset(end - 1) == selectionEnd) {
+        end -= 1
+      }
+      builder.append("#L").append(begin)
+      if (begin != end) {
+        builder.append("-L").append(end)
+      }
+    }
+    return builder.toString()
   }
 }

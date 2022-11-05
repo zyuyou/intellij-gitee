@@ -4,7 +4,7 @@ package com.gitee.extensions
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.i18n.GiteeBundle
-import com.gitee.util.GEProjectRepositoriesManager
+import com.gitee.util.GEHostedRepositoriesManager
 import com.gitee.util.GiteeProjectSettings
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import git4idea.config.GitSharedSettings
 import git4idea.fetch.GitFetchHandler
+import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 
@@ -61,11 +62,11 @@ internal class GEProtectedBranchRulesLoader : GitFetchHandler {
         val requestExecutor = GiteeApiRequestExecutorManager.getInstance().getExecutor(account)
 
         val giteeRepositoryMapping =
-          project.service<GEProjectRepositoriesManager>().findKnownRepositories(repository).find {
-            it.gitRemoteUrlCoordinates.remote == remote
+          project.service<GEHostedRepositoriesManager>().findKnownRepositories(repository).find {
+            it.remote.remote == remote
           } ?: continue
 
-        val repositoryCoordinates = giteeRepositoryMapping.geRepositoryCoordinates
+        val repositoryCoordinates = giteeRepositoryMapping.repository
 
 //        SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryCoordinates) })
 //          .loadAll(SensitiveProgressWrapper((indicator)))

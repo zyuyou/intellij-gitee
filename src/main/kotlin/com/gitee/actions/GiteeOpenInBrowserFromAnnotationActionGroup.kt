@@ -15,14 +15,15 @@
  */
 package com.gitee.actions
 
-import com.gitee.util.GEProjectRepositoriesManager
+import com.gitee.util.GEHostedRepositoriesManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
+import com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup
 import com.intellij.openapi.vcs.annotate.FileAnnotation
-import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
 import git4idea.annotate.GitFileAnnotation
+import git4idea.remote.hosting.findKnownRepositories
 
 
 /**
@@ -32,10 +33,10 @@ import git4idea.annotate.GitFileAnnotation
  * @author JetBrains s.r.o.
  */
 class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
-  : GiteeOpenInBrowserActionGroup(), UpToDateLineNumberListener {
-  private var myLineNumber = -1
+  : GiteeOpenInBrowserActionGroup() {
 
   override fun getData(dataContext: DataContext): List<Data>? {
+    val myLineNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(dataContext)
     if (myLineNumber < 0) return null
 
     if (annotation !is GitFileAnnotation) return null
@@ -45,15 +46,12 @@ class GiteeOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation
     val filePath = VcsUtil.getFilePath(virtualFile)
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
 
-    val accessibleRepositories = project.service<GEProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GEHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val revisionHash = annotation.getLineRevisionNumber(myLineNumber)?.asString() ?: return null
 
-    return accessibleRepositories.map { Data.Revision(project, it.geRepositoryCoordinates, revisionHash) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, revisionHash) }
   }
 
-  override fun consume(integer: Int) {
-    myLineNumber = integer
-  }
 }

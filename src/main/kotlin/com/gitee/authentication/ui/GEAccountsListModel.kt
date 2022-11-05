@@ -3,58 +3,26 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.GELoginRequest
-import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.intellij.collaboration.auth.ui.AccountsListModel
-import com.intellij.collaboration.auth.ui.AccountsListModelBase
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.ui.awt.RelativePoint
-import javax.swing.JComponent
+import com.intellij.collaboration.auth.ui.MutableAccountsListModel
 
-class GEAccountsListModel(private val project: Project)
-  : AccountsListModelBase<GiteeAccount, GECredentials>(),
-    AccountsListModel.WithDefault<GiteeAccount, GECredentials>,
-    GEAccountsHost {
-
-  private val actionManager = ActionManager.getInstance()
+class GEAccountsListModel : MutableAccountsListModel<GiteeAccount, GECredentials>(),
+  AccountsListModel.WithDefault<GiteeAccount, GECredentials>,
+  GEAccountsHost {
 
   override var defaultAccount: GiteeAccount? = null
 
-  override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
-    val group = actionManager.getAction("Gitee.Accounts.AddAccount") as ActionGroup
-    val popup = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group)
-
-    val actualPoint = point ?: RelativePoint.getCenterOf(parentComponent)
-    popup.setTargetComponent(parentComponent)
-    JBPopupMenu.showAt(actualPoint, popup.component)
-  }
-
-  override fun editAccount(parentComponent: JComponent, account: GiteeAccount) {
-    val authData = GiteeAuthenticationManager.getInstance().login(
-      project, parentComponent,
-      GELoginRequest(server = account.server, login = account.name)
-    ) ?: return
-
-    account.name = authData.login
-//    newCredentials[account] = authData.credentials
-//    notifyCredentialsChanged(account)
-    update(authData.account, authData.credentials)
-  }
-
   override fun addAccount(server: GiteeServerPath, login: String, credentials: GECredentials) {
     val account = GEAccountManager.createAccount(login, server)
-//    accountsListModel.add(account)
-//    newCredentials[account] = credentials
-//    notifyCredentialsChanged(account)
     add(account, credentials)
   }
 
+  override fun updateAccount(account: GiteeAccount, credentials: GECredentials) {
+    update(account, credentials)
+  }
+
   override fun isAccountUnique(login: String, server: GiteeServerPath): Boolean =
-    accountsListModel.items.none { it.name == login && it.server.equals(server, true) }
+    accountsListModel.items.none { it.name == login && server.equals(server, true) }
 }

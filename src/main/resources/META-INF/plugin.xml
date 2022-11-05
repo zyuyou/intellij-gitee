@@ -5,8 +5,8 @@
     <version>2021.2</version>
     <description>
         <![CDATA[
-      Allows working with <a href="http://gitee.com/" >码云 - Gitee</a>
-      There are some features just like the <a href="http://github.com/">GitHub</a> plugin.
+      Allows working with <a href="https://gitee.com/" >码云 - Gitee</a>
+      There are some features just like the <a href="https://github.com/">GitHub</a> plugin.
       ]]>
     </description>
 
@@ -47,13 +47,6 @@
                 implementation="com.gitee.ui.cloneDialog.GEECloneDialogExtension"/>
 
     </extensions>
-
-    <projectListeners>
-        <listener class="com.gitee.util.GEProjectRepositoriesManager$RemoteUrlsListener"
-                  topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
-        <listener class="com.gitee.util.GEProjectRepositoriesManager$RemoteUrlsListener"
-                  topic="git4idea.repo.GitRepositoryChangeListener"/>
-    </projectListeners>
 
     <extensions defaultExtensionNs="Git4Idea">
         <GitHttpAuthDataProvider implementation="com.gitee.extensions.GEHttpAuthDataProvider"/>
@@ -110,6 +103,14 @@
             <separator/>
             <action id="Gitee.Accounts.AddGEEAccount" class="com.gitee.authentication.ui.AddGEEAccountAction"/>
         </group>
+
+        <action id="GiteeCopyPathProvider" class="com.gitee.actions.GiteeCopyPathProvider" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
+            <add-to-group group-id="CopyFileReference"/>
+        </action>
+
+        <action id="Gitee.Copy.Link.To.Gitee" class="com.gitee.actions.GiteeCopyPathProvider" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
+            <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
+        </action>
 
     </actions>
 </idea-plugin>

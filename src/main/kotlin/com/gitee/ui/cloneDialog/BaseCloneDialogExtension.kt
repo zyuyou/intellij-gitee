@@ -29,8 +29,4 @@ abstract class BaseCloneDialogExtension : VcsCloneDialogExtension {
 
     return accounts.map { greyText(it.nameWithServer) }
   }
-
-  @Suppress("OverridingDeprecatedMember")
-  override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent =
-    throw AssertionError("Shouldn't be called")
 }
