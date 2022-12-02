@@ -4,12 +4,14 @@ package com.gitee.authentication.ui
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.accounts.GEAccountsUtils
+import com.gitee.authentication.GEAccountsUtil
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -20,7 +22,9 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.layout.LayoutBuilder
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPasswordField
@@ -36,8 +40,8 @@ class GiteeLoginPanel(
   private val serverTextField = ExtendableTextField(GiteeServerPath.DEFAULT_HOST, 0)
   private var tokenAcquisitionError: ValidationInfo? = null
 
-  private var clientIdTextField = JBTextField(GEAccountsUtils.APP_CLIENT_ID, 5)
-  private var clientSecretTextField = JPasswordField(GEAccountsUtils.APP_CLIENT_SECRET, 5)
+  private var clientIdTextField = JBTextField(GEAccountsUtil.APP_CLIENT_ID, 5)
+  private var clientSecretTextField = JPasswordField(GEAccountsUtil.APP_CLIENT_SECRET, 5)
 
   private lateinit var currentUi: GECredentialsUi
 
@@ -103,18 +107,36 @@ class GiteeLoginPanel(
     currentUi.setBusy(busy)
   }
 
-  fun acquireLoginAndToken(progressIndicator: ProgressIndicator): CompletableFuture<Pair<String, GECredentials>> {
-    setBusy(true)
-    tokenAcquisitionError = null
-
-    val server = getServer()
-    val executor = currentUi.createExecutor()
-
-    return service<ProgressManager>()
-      .submitIOTask(progressIndicator) { currentUi.acquireLoginAndToken(server, executor, it) }
-      .completionOnEdt(progressIndicator.modalityState) { setBusy(false) }
-      .errorOnEdt(progressIndicator.modalityState) { setError(it) }
-  }
+//  fun acquireLoginAndToken(progressIndicator: ProgressIndicator): CompletableFuture<Pair<String, GECredentials>> {
+//    setBusy(true)
+//    tokenAcquisitionError = null
+//
+//    val server = getServer()
+//    val executor = currentUi.createExecutor()
+//
+//    return service<ProgressManager>()
+//      .submitIOTask(progressIndicator) { currentUi.acquireLoginAndToken(server, executor, it) }
+//      .completionOnEdt(progressIndicator.modalityState) { setBusy(false) }
+//      .errorOnEdt(progressIndicator.modalityState) { setError(it) }
+//  }
+  suspend fun acquireLoginAndToken(): Pair<String, GECredentials> =
+    withContext(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
+      try {
+        setBusy(true)
+        tokenAcquisitionError = null
+        currentUi.login(getServer())
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (e: Exception) {
+        setError(e)
+        throw e
+      }
+      finally {
+        setBusy(false)
+      }
+    }
 
   fun getServer(): GiteeServerPath =
     GiteeServerPath.from(serverTextField.text.trim(), clientIdTextField.text.trim(), String(clientSecretTextField.password))

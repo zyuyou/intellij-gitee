@@ -8,12 +8,12 @@ import com.gitee.authentication.GEOAuthService
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.Validator
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.util.ui.UIUtil.getInactiveTextColor
+import com.intellij.util.ui.NamedColorUtil
+import kotlinx.coroutines.future.await
+import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 
 internal class GEOAuthCredentialsUi(
@@ -25,20 +25,26 @@ internal class GEOAuthCredentialsUi(
 
   override fun getValidator(): Validator = { null }
 
-  override fun createExecutor(): GiteeApiRequestExecutor = factory.create(GECredentials.EmptyCredentials)
-
-  override fun acquireLoginAndToken(
-    server: GiteeServerPath,
-    executor: GiteeApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, GECredentials> {
-    executor as GiteeApiRequestExecutor.WithCredentialsAuth
-
-    val credentials = acquireToken(indicator)
-    executor.credentials = credentials
-
-    val login = GETokenCredentialsUi.acquireLogin(server, executor, indicator, isAccountUnique, null)
-    return Pair(login, credentials)
+  //  override fun createExecutor(): GiteeApiRequestExecutor = factory.create(GECredentials.EmptyCredentials)
+//
+//  override fun acquireLoginAndToken(
+//    server: GiteeServerPath,
+//    executor: GiteeApiRequestExecutor,
+//    indicator: ProgressIndicator
+//  ): Pair<String, GECredentials> {
+//    executor as GiteeApiRequestExecutor.WithCredentialsAuth
+//
+//    val credentials = acquireToken(indicator)
+//    executor.credentials = credentials
+//
+//    val login = GETokenCredentialsUi.acquireLogin(server, executor, indicator, isAccountUnique, null)
+//    return Pair(login, credentials)
+//  }
+  override suspend fun login(server: GiteeServerPath): Pair<String, GECredentials> {
+    val credentials = acquireToken()
+    val executor = factory.create(credentials)
+    val login = GETokenCredentialsUi.acquireLogin(server, executor, isAccountUnique, null)
+    return login to credentials
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo = GETokenCredentialsUi.handleError(error)
@@ -49,20 +55,19 @@ internal class GEOAuthCredentialsUi(
     row {
       label(message("label.login.progress")).applyToComponent {
         icon = AnimatedIcon.Default()
-        foreground = getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
       }
     }
   }
 
-  private fun acquireToken(indicator: ProgressIndicator): GECredentials {
+  private suspend fun acquireToken(): GECredentials {
     val credentialsFuture = GEOAuthService.instance.authorize()
 
     try {
-      return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator)
-    }
-    catch (pce: ProcessCanceledException) {
-      credentialsFuture.completeExceptionally(pce)
-      throw pce
+      return credentialsFuture.await()
+    } catch (ce: CancellationException) {
+      credentialsFuture.completeExceptionally(ProcessCanceledException(ce))
+      throw ce
     }
   }
 }

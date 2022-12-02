@@ -3,13 +3,12 @@ package com.gitee.authentication
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.gitee.authentication.GEOAuthService.Companion.jacksonMapper
-import com.gitee.authentication.accounts.GEAccountsUtils
 import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
 import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
 import com.intellij.util.Url
 
 internal class GEOAuthCredentialsAcquirer(
-  private val giteeAppCred: GEAccountsUtils.GEAppCredentials,
+  private val giteeAppCred: GEAccountsUtil.GEAppCredentials,
   private val authorizationCodeUrl: Url
 ) : OAuthCredentialsAcquirer<GECredentials> {
 

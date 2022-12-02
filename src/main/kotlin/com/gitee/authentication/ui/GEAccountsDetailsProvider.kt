@@ -13,7 +13,6 @@ import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runUnderIndicator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +22,7 @@ import java.awt.Image
 
 internal class GEAccountsDetailsProvider(
   scope: CoroutineScope,
-  private val executorSupplier: (GiteeAccount) -> GiteeApiRequestExecutor?
+  private val executorSupplier: suspend (GiteeAccount) -> GiteeApiRequestExecutor?
 ) : LazyLoadingAccountsDetailsProvider<GiteeAccount, GiteeUserDetailed>(scope, GiteeIcons.DefaultAvatar) {
 
   constructor(scope: CoroutineScope, accountManager: GEAccountManager, accountsModel: GEAccountsListModel)
@@ -33,7 +32,7 @@ internal class GEAccountsDetailsProvider(
 
   constructor(scope: CoroutineScope, accountManager: GEAccountManager)
     : this(scope, { getExecutor(accountManager, it) }) {
-    cancelOnRemoval(scope, accountManager.dummyAccountsState)
+    cancelOnRemoval(scope, accountManager)
   }
 
   override suspend fun loadAvatar(account: GiteeAccount, url: String): Image? {
@@ -57,7 +56,7 @@ internal class GEAccountsDetailsProvider(
 
   private fun doLoadDetails(executor: GiteeApiRequestExecutor, account: GiteeAccount) : Result<GiteeAuthenticatedUser> {
     val (details, _) = try {
-      GESecurityUtil.loadCurrentUserWithScopes(executor, ProgressManager.getInstance().progressIndicator, account.server)
+      GESecurityUtil.loadCurrentUserWithScopes(executor, account.server)
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
@@ -71,19 +70,23 @@ internal class GEAccountsDetailsProvider(
   }
 
   companion object {
-    private fun getExecutor(accountManager: GEAccountManager, accountsModel: GEAccountsListModel, account: GiteeAccount)
+    private suspend fun getExecutor(accountManager: GEAccountManager, accountsModel: GEAccountsListModel, account: GiteeAccount)
       : GiteeApiRequestExecutor? {
       return accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
-      }?.let { token ->
-        service<GiteeApiRequestExecutor.Factory>().create(token)
+      }?.let { credentials ->
+        service<GiteeApiRequestExecutor.Factory>().create(credentials) {
+          newCredentials -> accountManager.updateAccount(account, newCredentials)
+        }
       }
     }
 
-    private fun getExecutor(accountManager: GEAccountManager, account: GiteeAccount)
+    private suspend fun getExecutor(accountManager: GEAccountManager, account: GiteeAccount)
       : GiteeApiRequestExecutor? {
       return accountManager.findCredentials(account)?.let { credentials ->
-        service<GiteeApiRequestExecutor.Factory>().create(credentials)
+        service<GiteeApiRequestExecutor.Factory>().create(credentials) {
+            newCredentials -> accountManager.updateAccount(account, newCredentials)
+        }
       }
     }
   }

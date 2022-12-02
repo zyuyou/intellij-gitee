@@ -7,21 +7,21 @@ import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.intellij.ui.CollectionComboBoxModel
 
-internal class GEAccountsComboBoxModel(accounts: Set<GiteeAccount>, selection: GiteeAccount?) :
-  CollectionComboBoxModel<GiteeAccount>(accounts.toMutableList(), selection),
-  GEAccountsHost {
-
-  override fun addAccount(server: GiteeServerPath, login: String, credentials: GECredentials) {
-    val account = GiteeAuthenticationManager.getInstance().registerAccount(login, server, credentials)
-
-    add(account)
-    selectedItem = account
-  }
-
-  override fun updateAccount(account: GiteeAccount, credentials: GECredentials) {
-    GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, credentials)
-  }
-
-  override fun isAccountUnique(login: String, server: GiteeServerPath): Boolean =
-    GiteeAuthenticationManager.getInstance().isAccountUnique(login, server)
-}
+//internal class GEAccountsComboBoxModel(accounts: Set<GiteeAccount>, selection: GiteeAccount?) :
+//  CollectionComboBoxModel<GiteeAccount>(accounts.toMutableList(), selection),
+//  GEAccountsHost {
+//
+//  override fun addAccount(server: GiteeServerPath, login: String, credentials: GECredentials) {
+//    val account = GiteeAuthenticationManager.getInstance().registerAccount(login, server, credentials)
+//
+//    add(account)
+//    selectedItem = account
+//  }
+//
+//  override fun updateAccount(account: GiteeAccount, credentials: GECredentials) {
+//    GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, credentials)
+//  }
+//
+//  override fun isAccountUnique(login: String, server: GiteeServerPath): Boolean =
+//    GiteeAuthenticationManager.getInstance().isAccountUnique(login, server)
+//}

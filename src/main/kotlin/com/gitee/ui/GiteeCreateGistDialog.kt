@@ -16,13 +16,14 @@
 
 package com.gitee.ui
 
+import com.gitee.authentication.GEAccountsUtil
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GEAccountsComboBoxModel
 import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.i18n.GiteeBundle.message
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
@@ -39,12 +40,10 @@ import javax.swing.JTextArea
  * @author JetBrains s.r.o.
  */
 class GiteeCreateGistDialog(project: Project,
-                            accounts: Set<GiteeAccount>,
-                            defaultAccount: GiteeAccount?,
-                            fileName: String?,
+                            @NlsSafe fileName: String?,
                             secret: Boolean,
                             openInBrowser: Boolean,
-                            copyLink: Boolean) : DialogWrapper(project, true), DataProvider {
+                            copyLink: Boolean) : DialogWrapper(project, true) {
 
   private val fileNameField: JBTextField? = fileName?.let { JBTextField(it) }
   private val descriptionField = JTextArea()
@@ -52,7 +51,13 @@ class GiteeCreateGistDialog(project: Project,
   private val browserCheckBox = JBCheckBox("Open in browser", openInBrowser)
   private val copyLinkCheckBox = JBCheckBox("Copy URL", copyLink)
 
-  private val accountsModel = GEAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
+//  private val accountsModel = GEAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
+  private val accounts = GEAccountsUtil.accounts
+
+  private val accountsModel = CollectionComboBoxModel(
+    accounts.toMutableList(),
+    GEAccountsUtil.getDefaultAccount(project) ?: accounts.firstOrNull()
+  )
 
   val fileName: String? get() = fileNameField?.text
   val description: String get() = descriptionField.text
@@ -101,8 +106,4 @@ class GiteeCreateGistDialog(project: Project,
   override fun getHelpId(): String = "gitee.create.gist.dialog"
   override fun getDimensionServiceKey(): String = "Gitee.CreateGistDialog"
   override fun getPreferredFocusedComponent(): JComponent = descriptionField
-
-  override fun getData(dataId: String): Any? =
-    if (GEAccountsHost.KEY.`is`(dataId)) accountsModel
-    else null
 }

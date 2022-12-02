@@ -96,14 +96,6 @@
 
         <action id="Gitee.Break.Api.Requests" class="com.gitee.api.GERequestExecutorBreaker$Action"/>
 
-        <group id="Gitee.Accounts.AddAccount">
-            <action id="Gitee.Accounts.AddGEAccount" class="com.gitee.authentication.ui.AddGEAccountAction"/>
-            <action id="Gitee.Accounts.AddGEAccountWithPassword" class="com.gitee.authentication.ui.AddGEAccountWithPasswordAction"/>
-            <action id="Gitee.Accounts.AddGEAccountWithTokens" class="com.gitee.authentication.ui.AddGEAccountWithTokensAction"/>
-            <separator/>
-            <action id="Gitee.Accounts.AddGEEAccount" class="com.gitee.authentication.ui.AddGEEAccountAction"/>
-        </group>
-
         <action id="GiteeCopyPathProvider" class="com.gitee.actions.GiteeCopyPathProvider" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
             <add-to-group group-id="CopyFileReference"/>
         </action>

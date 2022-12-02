@@ -4,36 +4,23 @@ package com.gitee.extensions
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.intellij.collaboration.async.disposingScope
-import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.auth.AccountUrlAuthenticationFailuresHolder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
+import com.intellij.openapi.util.Disposer
 
 internal class GEGitAuthenticationFailureManager : Disposable {
-  private val storeMap = ConcurrentHashMap<GiteeAccount, Set<String>>()
-
-  init {
-    disposingScope().launch {
-      val accountsState = service<GEAccountManager>().accountsState
-      val prev = accountsState.value
-      accountsState.collect {
-        prev.forEach { (acc, token) ->
-          if (it[acc] != token) {
-            storeMap.remove(acc)
-          }
-        }
-      }
-    }
+  private val holder = AccountUrlAuthenticationFailuresHolder(disposingScope()) {
+    service<GEAccountManager>()
+  }.also {
+    Disposer.register(this, it)
   }
 
   fun ignoreAccount(url: String, account: GiteeAccount) {
-    storeMap.compute(account) { _, current -> current?.plus(url) ?: setOf(url) }
+    holder.markFailed(account, url)
   }
 
-  fun isAccountIgnored(url: String, account: GiteeAccount): Boolean = storeMap[account]?.contains(url) ?: false
+  fun isAccountIgnored(url: String, account: GiteeAccount): Boolean = holder.isFailed(account, url)
 
-  override fun dispose() {
-    storeMap.clear()
-  }
+  override fun dispose() = Unit
 }

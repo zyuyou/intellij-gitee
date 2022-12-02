@@ -3,53 +3,50 @@ package com.gitee.util
 
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.accounts.GEAccountManager
-import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.disposingScope
-import com.intellij.collaboration.async.mapState
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.*
-import git4idea.repo.GitRepositoryManager
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 
 @Service
 class GEHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManager<GEGitRepositoryMapping>, Disposable {
 
-  override val knownRepositoriesState: StateFlow<Set<GEGitRepositoryMapping>>
+  @VisibleForTesting
+  internal val knownRepositoriesFlow = run {
+    val gitRemotesFlow = gitRemotesFlow(project).distinctUntilChanged()
 
-  init {
-    val scope = disposingScope()
+    val accountsServersFlow = service<GEAccountManager>().accountsState.map { accounts ->
+      mutableSetOf(GiteeServerPath.DEFAULT_SERVER) + accounts.map { it.server }
+    }.distinctUntilChanged()
 
-    val gitRemotesState = project.service<GitRepositoryManager>().trackRemotesState(scope)
-
-    val knownServersState = service<GEAccountManager>().accountsState.mapState(scope) { accountsMap ->
-      mutableSetOf(GiteeServerPath.DEFAULT_SERVER) + accountsMap.keys.map { it.server }
-    }
-
-    val discoveredServersState = gitRemotesState.discoverServers(scope, knownServersState) {
+    val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) {
       checkForDedicatedServer(it)
-    }
+    }.runningFold(emptySet<GiteeServerPath>()) { accumulator, value ->
+      accumulator + value
+    }.distinctUntilChanged()
 
-    val serversState = combineState(scope, knownServersState, discoveredServersState) { servers1, servers2 ->
+    val serversFlow = accountsServersFlow.combine(discoveredServersFlow) { servers1, servers2 ->
       servers1 + servers2
     }
 
-    knownRepositoriesState = gitRemotesState.mapToServers(scope, serversState) { server, remote ->
+    gitRemotesFlow.mapToServers(serversFlow) { server, remote ->
       GEGitRepositoryMapping.create(server, remote)
-    }
-
-    scope.launch {
-      knownRepositoriesState.collect {
-        LOG.debug("New list of known repos: $it")
-      }
+    }.onEach {
+      LOG.debug("New list of known repos: $it")
     }
   }
+
+
+  override val knownRepositoriesState: StateFlow<Set<GEGitRepositoryMapping>> =
+    knownRepositoriesFlow.stateIn(disposingScope(), getStateSharingStartConfig(), emptySet())
 
   private suspend fun checkForDedicatedServer(remote: GitRemoteUrlCoordinates): GiteeServerPath? {
     val uri = GitHostingUrlUtil.getUriFromRemoteUrl(remote.url)
@@ -82,5 +79,8 @@ class GEHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManag
 
   companion object {
     private val LOG = logger<GEHostedRepositoriesManager>()
+
+    private fun getStateSharingStartConfig() =
+      if (ApplicationManager.getApplication().isUnitTestMode) SharingStarted.Eagerly else SharingStarted.Lazily
   }
 }

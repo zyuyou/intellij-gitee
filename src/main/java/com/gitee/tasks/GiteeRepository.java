@@ -45,6 +45,8 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -407,7 +409,7 @@ public class GiteeRepository extends BaseRepository {
 
   @NotNull
   private GiteeApiRequestExecutor getExecutor() {
-    return GiteeApiRequestExecutor.Factory.getInstance().create(getDeserializeCredentials(), (credentials) -> {
+    return GiteeApiRequestExecutor.Factory.getInstance().create(getDeserializeCredentials(), (credentials, _continuation) -> {
       setSerializeCredentials(credentials);
       storeCredentials();
       return Unit.INSTANCE;

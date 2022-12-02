@@ -16,14 +16,18 @@
 
 package com.gitee.actions
 
+import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.data.request.GiteeRequestPagination
 import com.gitee.api.data.request.Type
 import com.gitee.api.util.GiteeApiPagesLoader
+import com.gitee.authentication.GEAccountsUtil
 import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
+import com.gitee.exceptions.GiteeMissingTokenException
 import com.gitee.i18n.GiteeBundle
 import com.gitee.icons.GiteeIcons
 import com.gitee.ui.GiteeShareDialog
@@ -35,7 +39,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -69,6 +72,7 @@ import git4idea.i18n.GitBundle
 import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
@@ -146,25 +150,52 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.projec
 
         @Throws(IOException::class)
         override fun invoke(account: GiteeAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
-          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent) ?: throw ProcessCanceledException()
+          loadEnsuringTokenExistsToken(account, parentComponent)
 
-          progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
-
-            val user = requestExecutor.execute(progressManager.progressIndicator, GiteeApiRequests.CurrentUser.get(account.server))
-
-            val names = GiteeApiPagesLoader.loadAll(
-              requestExecutor,
-              progressManager.progressIndicator,
-              GiteeApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER, pagination = GiteeRequestPagination.DEFAULT)
-            ).mapSmartSet { it.name }
-
-            user.canCreatePrivateRepo() to names
-          }, GiteeBundle.message("share.process.loading.account.info", account), true, project)
+//          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent) ?: throw ProcessCanceledException()
+//
+//          progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
+//
+//            val user = requestExecutor.execute(progressManager.progressIndicator, GiteeApiRequests.CurrentUser.get(account.server))
+//
+//            val names = GiteeApiPagesLoader.loadAll(
+//              requestExecutor,
+//              progressManager.progressIndicator,
+//              GiteeApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER, pagination = GiteeRequestPagination.DEFAULT)
+//            ).mapSmartSet { it.name }
+//
+//            user.canCreatePrivateRepo() to names
+//          }, GiteeBundle.message("share.process.loading.account.info", account), true, project)
         }
+
+        private fun loadEnsuringTokenExistsToken(account: GiteeAccount, comp: Component): Pair<Boolean, Set<String>> {
+          while (true) {
+            try {
+              return progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
+                val credentials = runBlocking {
+                  service<GEAccountManager>().findCredentials(account) ?: throw GiteeMissingTokenException(account)
+                }
+                val requestExecutor = GiteeApiRequestExecutor.Factory.getInstance().create(credentials)
+
+                val user = requestExecutor.execute(progressManager.progressIndicator, GiteeApiRequests.CurrentUser.get(account.server))
+                val names = GiteeApiPagesLoader
+                  .loadAll(
+                    requestExecutor,
+                    progressManager.progressIndicator,
+                    GiteeApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER, pagination = GiteeRequestPagination.DEFAULT))
+                  .mapSmartSet { it.name }
+                user.canCreatePrivateRepo() to names
+              }, GiteeBundle.message("share.process.loading.account.info", account), true, project)
+            }
+            catch (mte: GiteeMissingTokenException) {
+              GEAccountsUtil.requestNewCredentials(account, project, comp) ?: throw mte
+            }
+          }
+        }
+
       }
 
-      val shareDialog = GiteeShareDialog(project, authManager.getAccounts(), authManager.getDefaultAccount(project),
-        gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(), accountInformationLoader)
+      val shareDialog = GiteeShareDialog(project,gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(), accountInformationLoader)
 
       DialogManager.show(shareDialog)
       if (!shareDialog.isOK) {
@@ -177,12 +208,15 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.projec
       val description: String = shareDialog.getDescription()
       val account: GiteeAccount = shareDialog.getAccount()!!
 
-      val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
+//      val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
 
       object : Task.Backgroundable(project, GiteeBundle.message("share.process")) {
         private lateinit var url: String
 
         override fun run(indicator: ProgressIndicator) {
+          val credentials = GECompatibilityUtil.getOrRequestCredentials(account, project) ?: return
+          val requestExecutor = GiteeApiRequestExecutor.Factory.getInstance().create(credentials)
+
           // create Gitee repo (network)
           LOG.info("Creating Gitee repository")
 

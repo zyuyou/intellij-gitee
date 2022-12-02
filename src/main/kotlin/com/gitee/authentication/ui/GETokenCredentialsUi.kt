@@ -4,18 +4,22 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.accounts.GEAccountsUtils
+import com.gitee.authentication.GEAccountsUtil
+import com.gitee.authentication.util.GESecurityUtil
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeParseException
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.net.UnknownHostException
 import javax.swing.JComponent
 
@@ -42,25 +46,13 @@ internal class GETokenCredentialsUi(
   override fun Panel.centerPanel() {
     row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.access.token.field")) {
-//      cell {
-//        accessTokenTextField(
-//          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
-//          constraints = arrayOf(pushX, growX)
-//        )
-//      }
       cell(accessTokenTextField)
-        .comment(message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE))
+        .comment(message("login.insufficient.scopes", GEAccountsUtil.APP_CLIENT_SCOPE))
         .align(AlignX.FILL)
     }
     row(message("credentials.refresh.token.field")) {
-//      cell {
-//        refreshTokenTextField(
-//          comment = message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE),
-//          constraints = arrayOf(pushX, growX)
-//        )
-//      }
       cell(refreshTokenTextField)
-        .comment(message("login.insufficient.scopes", GEAccountsUtils.APP_CLIENT_SCOPE))
+        .comment(message("login.insufficient.scopes", GEAccountsUtil.APP_CLIENT_SCOPE))
         .align(AlignX.FILL)
     }
   }
@@ -68,25 +60,39 @@ internal class GETokenCredentialsUi(
   override fun getPreferredFocusableComponent(): JComponent = accessTokenTextField
 
   override fun getValidator(): Validator = {
-    notBlank(accessTokenTextField, message("login.token.cannot.be.empty")) ?: notBlank(refreshTokenTextField, message("login.token.cannot.be.empty"))
+    notBlank(accessTokenTextField, message("login.token.cannot.be.empty")) ?: notBlank(
+      refreshTokenTextField,
+      message("login.token.cannot.be.empty")
+    )
   }
 
-  override fun createExecutor() = factory.create(accessTokenTextField.text)
-
-  override fun acquireLoginAndToken(
-    server: GiteeServerPath,
-    executor: GiteeApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, GECredentials> {
-
-    val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
-
-    return Pair(login, fixedCredentials ?: GECredentials.createCredentials(accessTokenTextField.text, refreshTokenTextField.text))
-  }
+  //  override fun createExecutor() = factory.create(accessTokenTextField.text)
+//
+//  override fun acquireLoginAndToken(
+//    server: GiteeServerPath,
+//    executor: GiteeApiRequestExecutor,
+//    indicator: ProgressIndicator
+//  ): Pair<String, GECredentials> {
+//
+//    val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
+//
+//    return Pair(login, fixedCredentials ?: GECredentials.createCredentials(accessTokenTextField.text, refreshTokenTextField.text))
+//  }
+  override suspend fun login(server: GiteeServerPath): Pair<String, GECredentials> =
+    withContext(Dispatchers.Main.immediate) {
+      val token = accessTokenTextField.text
+      val executor = factory.create(token)
+      val login = acquireLogin(server, executor, isAccountUnique, fixedLogin)
+      Pair(login, fixedCredentials ?: GECredentials.createCredentials(accessTokenTextField.text, refreshTokenTextField.text))
+    }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =
     when (error) {
-      is GiteeParseException -> ValidationInfo(error.message ?: message("credentials.invalid.server.path"), serverTextField)
+      is GiteeParseException -> ValidationInfo(
+        error.message ?: message("credentials.invalid.server.path"),
+        serverTextField
+      )
+
       else -> handleError(error)
     }
 
@@ -101,23 +107,30 @@ internal class GETokenCredentialsUi(
   fun setFixedCredentials(credentials: GECredentials?) {
     fixedCredentials = credentials
 
-    credentials ?.let {
+    credentials?.let {
       setAccessToken(it.accessToken)
       setRefreshToken(it.refreshToken)
     }
   }
 
   companion object {
-    fun acquireLogin(
+    suspend fun acquireLogin(
       server: GiteeServerPath,
       executor: GiteeApiRequestExecutor,
-      indicator: ProgressIndicator,
       isAccountUnique: UniqueLoginPredicate,
       fixedLogin: String?
     ): String {
 
-      val login = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(server)).login
+//      val login = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(server)).login
+      val (details, _) = withContext(Dispatchers.IO) {
+        runUnderIndicator {
+          GESecurityUtil.loadCurrentUserWithScopes(executor, server)
+        }
+      }
+//      if (scopes == null || !GESecurityUtil.isEnoughScopes(scopes))
+//        throw GiteeAuthenticationException("Insufficient scopes granted to token.")
 
+      val login = details.login
       if (fixedLogin != null && fixedLogin != login) throw GiteeAuthenticationException("Token should match username \"$fixedLogin\"")
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
@@ -126,9 +139,18 @@ internal class GETokenCredentialsUi(
 
     fun handleError(error: Throwable): ValidationInfo =
       when (error) {
-        is LoginNotUniqueException -> ValidationInfo(message("login.account.already.added", error.login)).withOKEnabled()
+        is LoginNotUniqueException -> ValidationInfo(
+          message(
+            "login.account.already.added",
+            error.login
+          )
+        ).withOKEnabled()
+
         is UnknownHostException -> ValidationInfo(message("server.unreachable")).withOKEnabled()
-        is GiteeAuthenticationException -> ValidationInfo(message("credentials.incorrect", error.message.orEmpty())).withOKEnabled()
+        is GiteeAuthenticationException -> ValidationInfo(
+          message("credentials.incorrect", error.message.orEmpty())
+        ).withOKEnabled()
+
         else -> ValidationInfo(message("credentials.invalid.auth.data", error.message.orEmpty())).withOKEnabled()
       }
   }

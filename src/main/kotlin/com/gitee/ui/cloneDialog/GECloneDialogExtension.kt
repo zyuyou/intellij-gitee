@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui.cloneDialog
 
-import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.GiteeServerPath
-import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.GEAccountsUtil
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.isGEAccount
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.util.GiteeUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -33,7 +33,7 @@ import javax.swing.JPanel
 class GECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getName() = GiteeUtil.SERVICE_DISPLAY_NAME
 
-  override fun getAccounts(): Collection<GiteeAccount> = GiteeAuthenticationManager.getInstance().getAccounts().filter { it.isGEAccount }
+  override fun getAccounts(): Collection<GiteeAccount> = GEAccountsUtil.accounts.filter { it.isGEAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
     GECloneDialogExtensionComponent(project, modalityState)
@@ -42,8 +42,7 @@ class GECloneDialogExtension : BaseCloneDialogExtension() {
 private class GECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GECloneDialogExtensionComponentBase(
   project,
   modalityState,
-  GiteeAuthenticationManager.getInstance(),
-  GiteeApiRequestExecutorManager.getInstance()
+  accountManager = service(),
 ) {
 
   override fun isAccountHandled(account: GiteeAccount): Boolean = account.isGEAccount
@@ -69,7 +68,7 @@ private class GECloneDialogExtensionComponent(project: Project, modalityState: M
       message("login.via.gitee.action"),
       {
         switchToLogin(account)
-        getLoginPanel()?.setPrimaryLoginUi()
+        getLoginPanel()?.setOAuthLoginUi()
       },
       showSeparatorAbove = !isExistingAccount
     )
@@ -112,22 +111,23 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
     JPanel(HorizontalLayout(0)).apply {
       border = JBEmptyBorder(getRegularPanelInsets())
 
-      val loginViaGHButton = JButton(message("login.via.gitee.action")).apply {
-        addActionListener { setPrimaryLoginUi() }
+      val loginViaGEButton = JButton(message("login.via.gitee.action")).apply {
+        addActionListener { setOAuthLoginUi() }
       }
       val usePasswordLink = ActionLink(message("link.label.use.password")) { setPasswordUi() }
       val useTokenLink = ActionLink(message("link.label.use.tokens")) { setTokenUi() }
 
-      add(loginViaGHButton)
+      add(loginViaGEButton)
       add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
       add(usePasswordLink)
       add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
       add(useTokenLink)
     }
-  val loginPanel = CloneDialogLoginPanel(account).apply {
-    Disposer.register(this@GECloneDialogLoginPanel, this)
 
+  val loginPanel = CloneDialogLoginPanel(account).apply {
     setServer(GiteeServerPath.DEFAULT_HOST, false)
+  }.also {
+    Disposer.register(this, it)
   }
 
   init {
@@ -139,8 +139,6 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
 
   fun setChooseLoginUi() = setContent(chooseLoginUiPanel)
 
-  fun setPrimaryLoginUi() = setOAuthUi()
-
   fun setTokenUi() {
     setContent(loginPanel)
     loginPanel.setTokenUi() // after `loginPanel` is set as content to ensure correct focus behavior
@@ -151,7 +149,7 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
     loginPanel.setPasswordUi() // after `loginPanel` is set as content to ensure correct focus behavior
   }
 
-  fun setOAuthUi() {
+  fun setOAuthLoginUi() {
     setContent(loginPanel)
     loginPanel.setOAuthUi() // after `loginPanel` is set as content to ensure correct focus behavior
   }
@@ -163,5 +161,5 @@ private class GECloneDialogLoginPanel(account: GiteeAccount?) :
     repaint()
   }
 
-  override fun dispose() = loginPanel.cancelLogin()
+  override fun dispose() = Unit
 }

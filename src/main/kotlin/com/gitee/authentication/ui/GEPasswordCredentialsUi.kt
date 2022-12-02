@@ -3,6 +3,7 @@ package com.gitee.authentication.ui
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
+import com.gitee.authentication.util.GESecurityUtil
 import com.gitee.authentication.util.GiteeCredentialsCreator
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeLoginException
@@ -11,13 +12,14 @@ import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.layout.LayoutBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.net.UnknownHostException
 import javax.swing.JComponent
 import javax.swing.JPasswordField
@@ -25,7 +27,7 @@ import javax.swing.JTextField
 
 internal class GEPasswordCredentialsUi(
   private val serverTextField: ExtendableTextField,
-  private val executorFactory: GiteeApiRequestExecutor.Factory,
+  private val factory: GiteeApiRequestExecutor.Factory,
   private val isAccountUnique: UniqueLoginPredicate,
   private val clientIdTextField: JBTextField,
   private val clientSecretTextField: JPasswordField) : GECredentialsUi() {
@@ -51,10 +53,6 @@ internal class GEPasswordCredentialsUi(
     row(message("credentials.server.client.secret.field")) { cell(clientSecretTextField).align(Align.FILL) }
     row(message("credentials.login.field")) { cell(loginTextField).align(Align.FILL) }
     row(message("credentials.password.field")) {
-//      passwordField(
-//        comment = message("credentials.password.not.saved"),
-//        constraints = arrayOf(pushX, growX)
-//      )
       cell(passwordField)
         .comment(message("credentials.password.not.saved"))
         .align(Align.FILL)
@@ -71,19 +69,50 @@ internal class GEPasswordCredentialsUi(
       { notBlank(passwordField, message("credentials.password.cannot.be.empty")) }
     )
 
-  override fun createExecutor(): GiteeApiRequestExecutor.NoAuth = executorFactory.create()
+//  override fun createExecutor(): GiteeApiRequestExecutor.NoAuth = executorFactory.create()
+//
+//  override fun acquireLoginAndToken(
+//    server: GiteeServerPath,
+//    executor: GiteeApiRequestExecutor,
+//    indicator: ProgressIndicator
+//  ): Pair<String, GECredentials> {
+//    val login = loginTextField.text.trim()
+//    if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
+//
+//    val credentials = GiteeCredentialsCreator(server, executor, indicator).create(loginTextField.text, passwordField.password)
+//    return Pair(loginTextField.text, credentials)
+//  }
 
-  override fun acquireLoginAndToken(
-    server: GiteeServerPath,
-    executor: GiteeApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, GECredentials> {
-    val login = loginTextField.text.trim()
-    if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
+  override suspend fun login(server: GiteeServerPath): Pair<String, GECredentials> =
+    withContext(Dispatchers.Main.immediate) {
+      val executor = factory.create()
 
-    val credentials = GiteeCredentialsCreator(server, executor, indicator).create(loginTextField.text, passwordField.password)
-    return Pair(loginTextField.text, credentials)
-  }
+      val login = loginTextField.text.trim()
+      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
+
+//      val credentials = withContext(Dispatchers.IO) {
+//        runUnderIndicator {
+//          GiteeCredentialsCreator(server, executor).create(loginTextField.text, passwordField.password)
+//        }
+//      }
+//
+//      val (details, _) = withContext(Dispatchers.IO) {
+//        runUnderIndicator {
+//          GESecurityUtil.loadCurrentUserWithScopes(factory.create(credentials), server)
+//        }
+//      }
+//
+//      Pair(details.login, credentials)
+      withContext(Dispatchers.IO) {
+        runUnderIndicator {
+          val credentials = GiteeCredentialsCreator(server, executor).create(loginTextField.text, passwordField.password)
+
+          val (details, _) = GESecurityUtil.loadCurrentUserWithScopes(factory.create(credentials), server)
+
+          details.login to credentials
+        }
+      }
+    }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =
     when (error) {

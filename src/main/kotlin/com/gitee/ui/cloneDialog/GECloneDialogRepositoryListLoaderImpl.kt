@@ -1,11 +1,12 @@
 package com.gitee.ui.cloneDialog
 
-import com.gitee.api.GiteeApiRequestExecutorManager
+import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.data.GiteeRepo
 import com.gitee.api.data.request.Affiliation
 import com.gitee.api.data.request.GiteeRequestPagination
 import com.gitee.api.util.GiteeApiPagesLoader
+import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.exceptions.GiteeMissingTokenException
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
@@ -14,16 +15,16 @@ import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.ui.SingleSelectionModel
 import com.intellij.util.EventDispatcher
+import kotlinx.coroutines.runBlocking
 import javax.swing.ListSelectionModel
 
-internal class GECloneDialogRepositoryListLoaderImpl(
-  private val executorManager: GiteeApiRequestExecutorManager
-) : GECloneDialogRepositoryListLoader, Disposable {
+internal class GECloneDialogRepositoryListLoaderImpl : GECloneDialogRepositoryListLoader, Disposable {
 
   private val indicatorsMap = mutableMapOf<GiteeAccount, ProgressIndicator>()
   private val loadingEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
@@ -37,24 +38,18 @@ internal class GECloneDialogRepositoryListLoaderImpl(
   override fun loadRepositories(account: GiteeAccount) {
     if (indicatorsMap.containsKey(account)) return
 
-    val executor = try {
-      executorManager.getExecutor(account)
-    }
-    catch (e: GiteeMissingTokenException) {
-      listModel.setError(account, e)
-      return
-    }
-
     val indicator = EmptyProgressIndicator()
     indicatorsMap[account] = indicator
     loadingEventDispatcher.multicaster.eventOccurred()
 
     ProgressManager.getInstance().submitIOTask(indicator) {
+      val credentials = runBlocking { service<GEAccountManager>().findCredentials(account) }?: throw GiteeMissingTokenException(account)
+      val executor = service<GiteeApiRequestExecutor.Factory>().create(credentials)
+
       val details = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server))
 
       val repoPagesRequest = GiteeApiRequests.CurrentUser.Repos.pages(account.server,
-        affiliation = Affiliation.combine(Affiliation.OWNER,
-          Affiliation.COLLABORATOR),
+        affiliation = Affiliation.combine(Affiliation.OWNER, Affiliation.COLLABORATOR),
         pagination = GiteeRequestPagination.DEFAULT)
       val pageItemsConsumer: (List<GiteeRepo>) -> Unit = {
         indicator.checkCanceled()

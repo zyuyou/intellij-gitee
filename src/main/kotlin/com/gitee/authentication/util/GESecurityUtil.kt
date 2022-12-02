@@ -5,6 +5,7 @@ import com.gitee.api.*
 import com.gitee.api.data.GiteeAuthenticatedUser
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.Url
 import com.intellij.util.Urls.newUrl
 
@@ -20,10 +21,10 @@ object GESecurityUtil {
 
   @JvmStatic
   internal fun loadCurrentUserWithScopes(executor: GiteeApiRequestExecutor,
-                                         progressIndicator: ProgressIndicator,
                                          server: GiteeServerPath): Pair<GiteeAuthenticatedUser, String?> {
     var scopes: String? = null
-    val details = executor.execute(progressIndicator,
+    val indicator = ProgressManager.getInstance().progressIndicator
+    val details = executor.execute(indicator,
                                    object : GiteeApiRequest.Get.Json<GiteeAuthenticatedUser>(
                                      GiteeApiRequests.getUrl(server, GiteeApiRequests.CurrentUser.urlSuffix),
                                      GiteeAuthenticatedUser::class.java) {

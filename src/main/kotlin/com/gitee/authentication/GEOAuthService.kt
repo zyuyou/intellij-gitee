@@ -4,17 +4,19 @@ package com.gitee.authentication
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.gitee.authentication.accounts.GEAccountsUtils
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
-import com.intellij.collaboration.auth.services.OAuthServiceBase
-import com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
+import com.intellij.collaboration.auth.credentials.Credentials
+import com.intellij.collaboration.auth.services.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.Url
+import com.intellij.util.Urls
 import com.intellij.util.Urls.newFromEncoded
+import org.jetbrains.ide.BuiltInServerManager
+import org.jetbrains.ide.RestService
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @Service
@@ -22,8 +24,39 @@ internal class GEOAuthService : OAuthServiceBase<GECredentials>(), OAuthServiceW
   override val name: String get() = SERVICE_NAME
 
   fun authorize(): CompletableFuture<GECredentials> {
-    val request = getGEOAuthRequest()
-    return authorize(request)
+    return authorize(GEOAuthRequest(GEAccountsUtil.getDefaultGEAppCredentials()))
+  }
+
+  override fun revokeToken(token: String) {
+    TODO("Not yet implemented")
+  }
+
+  private class GEOAuthRequest(giteeAppCred: GEAccountsUtil.GEAppCredentials) : OAuthRequest<GECredentials> {
+    private val port: Int get() = BuiltInServerManager.getInstance().port
+
+    private val codeVerifier = PkceUtils.generateCodeVerifier()
+
+    private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, Base64.getEncoder())
+
+    override val authorizationCodeUrl: Url
+      get() = newFromEncoded("http://127.0.0.1:$port/${RestService.PREFIX}/$SERVICE_NAME/authorization_code")
+
+    override val credentialsAcquirer: OAuthCredentialsAcquirer<GECredentials> =
+      GEOAuthCredentialsAcquirer(giteeAppCred, authorizationCodeUrl)
+
+    override val authUrlWithParameters: Url = AUTHORIZE_URL.addParameters(
+      mapOf(
+        "client_id" to giteeAppCred.clientId,
+        "scope" to GEAccountsUtil.APP_CLIENT_SCOPE,
+        "redirect_uri" to authorizationCodeUrl.toExternalForm(),
+        "response_type" to "code",
+      )
+    )
+
+    companion object {
+      private val AUTHORIZE_URL: Url
+        get() = SERVICE_URL.resolve("authorize")
+    }
   }
 
   // TODO: fix case when some updateAccessToken are started or auth flow is started before
@@ -33,7 +66,7 @@ internal class GEOAuthService : OAuthServiceBase<GECredentials>(), OAuthServiceW
       val response = OAuthCredentialsAcquirerHttp.requestToken(refreshTokenRequest.refreshTokenUrlWithParameters)
 
       if (response.statusCode() == 200) {
-        val responseData = with(GEAccountsUtils.jacksonMapper) {
+        val responseData = with(GEAccountsUtil.jacksonMapper) {
           propertyNamingStrategy = PropertyNamingStrategies.SnakeCaseStrategy()
           readValue(response.body(), RefreshResponseData::class.java)
         }
@@ -51,10 +84,6 @@ internal class GEOAuthService : OAuthServiceBase<GECredentials>(), OAuthServiceW
         throw RuntimeException(response.body().ifEmpty { "No token provided" })
       }
     }
-
-  override fun revokeToken(token: String) {
-    TODO("Not yet implemented")
-  }
 
   companion object {
     private const val SERVICE_NAME = "gitee/oauth"

@@ -16,19 +16,15 @@
 package com.gitee.actions;
 
 import com.gitee.api.GiteeApiRequestExecutor;
-import com.gitee.api.GiteeApiRequestExecutorManager;
 import com.gitee.api.GiteeApiRequests;
 import com.gitee.api.GiteeServerPath;
 import com.gitee.api.data.request.GiteeGistRequest.FileContent;
-import com.gitee.authentication.GiteeAuthenticationManager;
+import com.gitee.authentication.GECredentials;
 import com.gitee.authentication.accounts.GiteeAccount;
 import com.gitee.i18n.GiteeBundle;
 import com.gitee.icons.GiteeIcons;
 import com.gitee.ui.GiteeCreateGistDialog;
-import com.gitee.util.GiteeNotificationIdsHolder;
-import com.gitee.util.GiteeNotifications;
-import com.gitee.util.GiteeSettings;
-import com.gitee.util.GiteeUtil;
+import com.gitee.util.*;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -123,16 +119,14 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 																			 @Nullable final VirtualFile file,
 																			 final VirtualFile @Nullable [] files) {
 
-		GiteeAuthenticationManager authManager = GiteeAuthenticationManager.getInstance();
 		GiteeSettings settings = GiteeSettings.getInstance();
 		// Ask for description and other params
 		GiteeCreateGistDialog dialog = new GiteeCreateGistDialog(project,
-				authManager.getAccounts(),
-				authManager.getDefaultAccount(project),
 				getFileName(editor, files),
 				settings.isPrivateGist(),
 				settings.isOpenInBrowserGist(),
 				settings.isCopyURLGist());
+
 		if (!dialog.showAndGet()) {
 			return;
 		}
@@ -141,13 +135,16 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 		settings.setCopyURLGist(dialog.isCopyURL());
 
 		GiteeAccount account = requireNonNull(dialog.getAccount());
-		GiteeApiRequestExecutor requestExecutor = GiteeApiRequestExecutorManager.getInstance().getExecutor(account, project);
-		if (requestExecutor == null) return;
 
 		final Ref<String> url = new Ref<>();
 		new Task.Backgroundable(project, GiteeBundle.message("create.gist.process")) {
 			@Override
 			public void run(@NotNull ProgressIndicator indicator) {
+				GECredentials credentials = GECompatibilityUtil.getOrRequestCredentials(account, project);
+				if (credentials == null) return;
+
+				GiteeApiRequestExecutor requestExecutor = GiteeApiRequestExecutor.Factory.getInstance().create(credentials);
+
 				List<FileContent> contents = collectContents(project, editor, file, files);
 				if (contents.isEmpty()) return;
 

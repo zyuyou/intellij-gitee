@@ -103,7 +103,7 @@ class GiteeChooseAccountDialog @JvmOverloads constructor(project: Project?, pare
   val setDefault: Boolean
     get() = setDefaultCheckBox?.isSelected ?: false
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     return JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
       .apply { description?.run(::addToTop) }
       .addToCenter(JBScrollPane(accountsList).apply {

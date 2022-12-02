@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui.cloneDialog
 
-import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.isGEAccount
@@ -9,6 +8,7 @@ import com.gitee.i18n.GiteeBundle.message
 import com.gitee.util.GiteeUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -36,8 +36,7 @@ class GEECloneDialogExtension : BaseCloneDialogExtension() {
 private class GEECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GECloneDialogExtensionComponentBase(
   project,
   modalityState,
-  GiteeAuthenticationManager.getInstance(),
-  GiteeApiRequestExecutorManager.getInstance(),
+  accountManager = service(),
 ) {
 
   override fun isAccountHandled(account: GiteeAccount): Boolean = account.isGEEAccount

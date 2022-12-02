@@ -1,3 +1,4 @@
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.date
 
 fun properties(key: String) = project.findProperty(key)?.toString()
@@ -5,8 +6,8 @@ fun properties(key: String) = project.findProperty(key)?.toString()
 plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm") version "1.7.20"
-  id("org.jetbrains.intellij") version "1.10.0-SNAPSHOT"
-  id("org.jetbrains.changelog") version "1.3.1"
+  id("org.jetbrains.intellij") version "1.10.0"
+  id("org.jetbrains.changelog") version "2.0.0"
 }
 
 group = "com.gitee"
@@ -52,7 +53,12 @@ tasks {
     sinceBuild.set(properties("ideaBuildVersion"))
     untilBuild.set("${properties("ideaBuildVersion")}.*")
     changeNotes.set(
-      provider { changelog.getOrNull("${project.version}")?.toHTML() ?: changelog.getLatest().toHTML() }
+      provider {
+        changelog.renderItem(
+          changelog.getOrNull("${project.version}")?.withHeader(false) ?: changelog.getLatest().withHeader(false),
+          Changelog.OutputType.HTML
+        )
+      }
     )
   }
 

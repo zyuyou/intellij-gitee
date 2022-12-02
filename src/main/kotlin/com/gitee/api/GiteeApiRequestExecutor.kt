@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2019 码云 - Gitee
+ *  Copyright 2016-2022 码云 - Gitee
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,16 +25,14 @@ import com.gitee.util.GiteeSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.DumbProgressIndicator
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -77,7 +75,7 @@ sealed class GiteeApiRequestExecutor {
     }, disposable)
 
   class WithCreateOrUpdateCredentialsAuth internal constructor(giteeSettings: GiteeSettings, credentials: GECredentials,
-                                                               private val authDataChangedSupplier: (credentials: GECredentials) -> Unit) : Base(giteeSettings) {
+                                                               private val authDataChangedSupplier: suspend (credentials: GECredentials) -> Unit) : Base(giteeSettings) {
 
     @Volatile
     internal var credentials: GECredentials = credentials
@@ -104,19 +102,21 @@ sealed class GiteeApiRequestExecutor {
       } catch (e: GiteeAccessTokenExpiredException) {
         if (credentials.refreshToken == "") throw e
 
-        // 这里需要重新判断下是否过期, 后台运行refresk_token可能被多次刷新
+        // 这里需要重新判断下是否过期, 后台运行refresh_token可能被多次刷新
         if(!credentials.isAccessTokenValid()) {
           try {
             GiteeCredentialsCreator(
               from(request.url.substringBefore('?')),
               getInstance().create(),
-              DumbProgressIndicator()
             ).refresh(credentials.refreshToken)
           } catch (ie: GiteeAuthenticationException) {
             null
           }?.let {
             credentials = it
-            authDataChangedSupplier(credentials)
+
+            runBlocking {
+              authDataChangedSupplier(credentials)
+            }
           }
         }
 
@@ -323,7 +323,7 @@ sealed class GiteeApiRequestExecutor {
   class Factory {
 
     @CalledInAny
-    fun create(credentials: GECredentials, authDataChangedSupplier: (credentials: GECredentials) -> Unit): WithCreateOrUpdateCredentialsAuth {
+    fun create(credentials: GECredentials, authDataChangedSupplier: suspend (credentials: GECredentials) -> Unit): WithCreateOrUpdateCredentialsAuth {
       return WithCreateOrUpdateCredentialsAuth(GiteeSettings.getInstance(), credentials, authDataChangedSupplier)
     }
 

@@ -1,19 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.actions;
 
-import com.gitee.api.*;
+import com.gitee.api.GERepositoryPath;
+import com.gitee.api.GiteeApiRequestExecutor;
+import com.gitee.api.GiteeApiRequests;
+import com.gitee.api.GiteeServerPath;
 import com.gitee.api.data.GiteeRepo;
 import com.gitee.api.data.GiteeRepoDetailed;
-import com.gitee.authentication.GiteeAuthenticationManager;
+import com.gitee.authentication.GECredentials;
+import com.gitee.authentication.accounts.GEAccountManager;
 import com.gitee.authentication.accounts.GiteeAccount;
 import com.gitee.authentication.ui.GiteeChooseAccountDialog;
 import com.gitee.i18n.GiteeBundle;
 import com.gitee.icons.GiteeIcons;
 import com.gitee.util.*;
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,6 +38,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
+import git4idea.remote.hosting.GitHostingUrlUtil;
 import git4idea.remote.hosting.HostedGitRepositoriesManagerKt;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -59,6 +66,11 @@ public class GiteeSyncForkAction extends DumbAwareAction {
     super(GiteeBundle.messagePointer("rebase.action"),
         GiteeBundle.messagePointer("rebase.action.description"),
         GiteeIcons.Gitee_icon);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -103,12 +115,16 @@ public class GiteeSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GiteeAuthenticationManager authManager = GiteeAuthenticationManager.getInstance();
+    GEAccountManager accountManager = ApplicationManager.getApplication().getService(GEAccountManager.class);
     GiteeServerPath serverPath = originMapping.getRepository().getServerPath();
     GiteeAccount giteeAccount;
-    List<GiteeAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
+
+    List<GiteeAccount> accounts = ContainerUtil.filter(
+        accountManager.getAccountsState().getValue(),
+        account -> serverPath.equals(account.getServer())
+    );
     if (accounts.size() == 0) {
-      giteeAccount = authManager.requestNewAccountForServer(serverPath, project);
+      giteeAccount = GECompatibilityUtil.requestNewAccountForServer(serverPath, project);
     } else if (accounts.size() == 1) {
       giteeAccount = accounts.get(0);
     } else {
@@ -137,13 +153,13 @@ public class GiteeSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GiteeApiRequestExecutor executor = GiteeApiRequestExecutorManager.getInstance().getExecutor(giteeAccount, project);
-    if (executor == null) {
-      LOG.warn("Unable to perform the Gitee Sync Fork action. Unable to get GiteeApiRequestExecutor");
-      return;
-    }
+//    GiteeApiRequestExecutor executor = GiteeApiRequestExecutorManager.getInstance().getExecutor(giteeAccount, project);
+//    if (executor == null) {
+//      LOG.warn("Unable to perform the Gitee Sync Fork action. Unable to get GiteeApiRequestExecutor");
+//      return;
+//    }
 
-    new SyncForkTask(project, executor, Git.getInstance(), giteeAccount.getServer(),
+    new SyncForkTask(project, Git.getInstance(), giteeAccount,
         originMapping.getRemote().getRepository(),
         originMapping.getRepository().getRepositoryPath()).queue();
   }
@@ -161,35 +177,35 @@ public class GiteeSyncForkAction extends DumbAwareAction {
 
   private static class SyncForkTask extends Task.Backgroundable {
     @NotNull
-    private final GiteeApiRequestExecutor myRequestExecutor;
-    @NotNull
     private final Git myGit;
     @NotNull
-    private final GiteeServerPath myServer;
+    private final GiteeAccount myAccount;
     @NotNull
     private final GitRepository myRepository;
     @NotNull
     private final GERepositoryPath myRepoPath;
 
     SyncForkTask(@NotNull Project project,
-                 @NotNull GiteeApiRequestExecutor requestExecutor,
                  @NotNull Git git,
-                 @NotNull GiteeServerPath server,
+                 @NotNull GiteeAccount account,
                  @NotNull GitRepository repository,
                  @NotNull GERepositoryPath repoPath) {
       super(project, GiteeBundle.message("rebase.process"));
-      myRequestExecutor = requestExecutor;
       myGit = git;
-      myServer = server;
+      myAccount = account;
       myRepository = repository;
       myRepoPath = repoPath;
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      GECredentials credentials = GECompatibilityUtil.getOrRequestCredentials(myAccount, myProject);
+      if (credentials == null) return;
+      GiteeApiRequestExecutor executor = GiteeApiRequestExecutor.Factory.getInstance().create(credentials);
+
       myRepository.update();
 
-      GiteeRepo parentRepo = validateRepoAndLoadParent(indicator);
+      GiteeRepo parentRepo = validateRepoAndLoadParent(executor, indicator);
       if (parentRepo == null) return;
 
       GitRemote parentRemote = configureParentRemote(indicator, parentRepo.getFullPath());
@@ -212,10 +228,10 @@ public class GiteeSyncForkAction extends DumbAwareAction {
     }
 
     @Nullable
-    private GiteeRepo validateRepoAndLoadParent(@NotNull ProgressIndicator indicator) {
+    private GiteeRepo validateRepoAndLoadParent(@NotNull GiteeApiRequestExecutor executor, @NotNull ProgressIndicator indicator) {
       try {
         GiteeRepoDetailed repositoryInfo =
-            myRequestExecutor.execute(indicator, GiteeApiRequests.Repos.get(myServer, myRepoPath.getOwner(), myRepoPath.getRepository()));
+            executor.execute(indicator, GiteeApiRequests.Repos.get(myAccount.getServer(), myRepoPath.getOwner(), myRepoPath.getRepository()));
         if (repositoryInfo == null) {
           GiteeNotifications.showError(myProject,
               GiteeNotificationIdsHolder.REBASE_REPO_NOT_FOUND,
@@ -256,7 +272,7 @@ public class GiteeSyncForkAction extends DumbAwareAction {
 
       LOG.info("Adding Gitee parent as a remote host");
       indicator.setText(GiteeBundle.message("rebase.process.adding.gitee.parent.as.remote.host"));
-      String parentRepoUrl = GiteeGitHelper.getInstance().getRemoteUrl(myServer, parentRepoPath);
+      String parentRepoUrl = GiteeGitHelper.getInstance().getRemoteUrl(myAccount.getServer(), parentRepoPath);
       try {
         myGit.addRemote(myRepository, UPSTREAM_REMOTE_NAME, parentRepoUrl).throwOnError();
       } catch (VcsException e) {
@@ -281,7 +297,7 @@ public class GiteeSyncForkAction extends DumbAwareAction {
     private GitRemote findRemote(@NotNull GERepositoryPath repoPath) {
       return ContainerUtil.find(myRepository.getRemotes(), remote -> {
         String url = remote.getFirstUrl();
-        if (url == null || !myServer.matches(url)) return false;
+        if (url == null || !GitHostingUrlUtil.match(myAccount.getServer().toURI(), url)) return false;
 
         GERepositoryPath remotePath = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
         return repoPath.equals(remotePath);

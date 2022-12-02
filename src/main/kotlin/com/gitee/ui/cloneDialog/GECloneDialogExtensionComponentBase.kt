@@ -2,7 +2,7 @@
 package com.gitee.ui.cloneDialog
 
 import com.gitee.api.*
-import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GEAccountsDetailsProvider
 import com.gitee.exceptions.GiteeAuthenticationException
@@ -41,7 +41,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Action
@@ -51,6 +50,9 @@ import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.jetbrains.annotations.Nls
@@ -65,8 +67,7 @@ import kotlin.properties.Delegates
 internal abstract class GECloneDialogExtensionComponentBase(
   private val project: Project,
   private val modalityState: ModalityState,
-  private val authenticationManager: GiteeAuthenticationManager,
-  private val executorManager: GiteeApiRequestExecutorManager
+  private val accountManager: GEAccountManager
 ) : VcsCloneDialogExtensionComponent() {
 
   private val LOG = GiteeUtil.LOG
@@ -97,7 +98,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
   )
 
   // state
-  private val loader = GECloneDialogRepositoryListLoaderImpl(executorManager)
+  private val loader = GECloneDialogRepositoryListLoaderImpl()
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 
@@ -143,7 +144,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
     val parentDisposable: Disposable = this
     Disposer.register(parentDisposable, loader)
 
-    val accountDetailsProvider = GEAccountsDetailsProvider(cs, authenticationManager.accountManager)
+    val accountDetailsProvider = GEAccountsDetailsProvider(cs, accountManager)
 
     val accountsPanel = CompactAccountsPanelFactory(accountListModel)
       .create(accountDetailsProvider, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
@@ -365,30 +366,30 @@ internal abstract class GECloneDialogExtensionComponentBase(
   }
 
   private fun createAccountsModel(): ListModel<GiteeAccount> {
-    val accountsState = authenticationManager.accountManager.accountsState
-    val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
+    val model = CollectionListModel<GiteeAccount>()
 
     cs.launch(Dispatchers.Main.immediate) {
-      val prev = accountsState.value.filterKeys(::isAccountHandled)
-
-      accountsState.collect {
-        val new = it.filterKeys(::isAccountHandled)
-
-        new.forEach { (acc, token) ->
-          if (!prev.containsKey(acc)) {
-            model.add(acc)
+      accountManager.accountsState
+        .map { it.filter(::isAccountHandled).toSet() }
+        .collectLatest { accounts ->
+          val currentAccounts = model.items
+          accounts.forEach {
+            if (!currentAccounts.contains(it)) {
+              model.add(it)
+              async {
+                accountManager.getCredentialsFlow(it).collect { _ ->
+                  model.contentsChanged(it)
+                }
+              }
+            }
           }
-          else if (prev[acc] != token) {
-            model.contentsChanged(acc)
+
+          currentAccounts.forEach {
+            if (!accounts.contains(it)) {
+              model.remove(it)
+            }
           }
         }
-
-        prev.forEach { (acc, _) ->
-          if (!new.containsKey(acc)) {
-            model.remove(acc)
-          }
-        }
-      }
     }
     return model
   }

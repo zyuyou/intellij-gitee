@@ -2,10 +2,10 @@
 package com.gitee.extensions
 
 import com.gitee.authentication.GEAccountAuthData
-import com.gitee.authentication.GiteeAuthenticationManager
+import com.gitee.authentication.GEAccountsUtil
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeChooseAccountDialog
-import com.gitee.extensions.GECreateAccountHttpAuthDataProvider.Companion.getOrRequestCredentials
 import com.gitee.i18n.GiteeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
@@ -17,14 +17,18 @@ import java.awt.Component
 
 internal class GESelectAccountHttpAuthDataProvider(
   private val project: Project,
-  private val potentialAccounts: Collection<GiteeAccount>
+  private val potentialAccounts: Map<GiteeAccount, GECredentials?>
 ) : InteractiveGitHttpAuthDataProvider {
 
   @RequiresEdt
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val (account, setDefault) = chooseAccount(parentComponent) ?: return null
-    val credentials = getOrRequestCredentials(account, project, parentComponent) ?: return null
-    if (setDefault) GiteeAuthenticationManager.getInstance().setDefaultAccount(project, account)
+    val credentials = potentialAccounts[account]
+      ?: GEAccountsUtil.requestNewCredentials(account, project, parentComponent)
+      ?: return null
+    if (setDefault) {
+      GEAccountsUtil.setDefaultAccount(project, account)
+    }
 
     return GEAccountAuthData(account, account.name, credentials)
   }
@@ -32,7 +36,7 @@ internal class GESelectAccountHttpAuthDataProvider(
   private fun chooseAccount(parentComponent: Component?): Pair<GiteeAccount, Boolean>? {
     val dialog = GiteeChooseAccountDialog(
       project, parentComponent,
-      potentialAccounts, null, false, true,
+      potentialAccounts.keys, null, false, true,
       GiteeBundle.message("account.choose.title"), GitBundle.message("login.dialog.button.login")
     )
     DialogManager.show(dialog)

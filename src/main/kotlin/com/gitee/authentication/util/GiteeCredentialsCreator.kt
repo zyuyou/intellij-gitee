@@ -19,9 +19,10 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.GECredentials
-import com.gitee.authentication.accounts.GEAccountsUtils
+import com.gitee.authentication.GEAccountsUtil
 import com.gitee.exceptions.GiteeStatusCodeException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import java.io.IOException
 
 /**
@@ -33,8 +34,7 @@ import java.io.IOException
  * @author JetBrains s.r.o.
  */
 class GiteeCredentialsCreator(private val server: GiteeServerPath,
-                              private val executor: GiteeApiRequestExecutor,
-                              private val indicator: ProgressIndicator) {
+                              private val executor: GiteeApiRequestExecutor) {
 
   @Throws(IOException::class)
   fun create(login: String, password: CharArray): GECredentials {
@@ -49,9 +49,10 @@ class GiteeCredentialsCreator(private val server: GiteeServerPath,
   @Throws(IOException::class)
   private fun safeCreate(login: String, password: CharArray): GECredentials {
     try {
-      return executor.execute(indicator, GiteeApiRequests.Auth.create(server, GEAccountsUtils.APP_CLIENT_SCOPE, login, password))
+      val indicator = ProgressManager.getInstance().progressIndicator
+      return executor.execute(indicator, GiteeApiRequests.Auth.create(server, GEAccountsUtil.APP_CLIENT_SCOPE, login, password))
     } catch (e: GiteeStatusCodeException) {
-      e.setDetails("Can't create token: scopes - ${GEAccountsUtils.APP_CLIENT_SCOPE}")
+      e.setDetails("Can't create token: scopes - ${GEAccountsUtil.APP_CLIENT_SCOPE}")
       throw e
     }
   }
@@ -59,9 +60,10 @@ class GiteeCredentialsCreator(private val server: GiteeServerPath,
   @Throws(IOException::class)
   private fun safeUpdate(refreshToken: String): GECredentials {
     try {
+      val indicator = ProgressManager.getInstance().progressIndicator
       return executor.execute(indicator, GiteeApiRequests.Auth.update(server, refreshToken))
     } catch (e: GiteeStatusCodeException) {
-      e.setDetails("Can't update token: scopes - ${GEAccountsUtils.APP_CLIENT_SCOPE}")
+      e.setDetails("Can't update token: scopes - ${GEAccountsUtil.APP_CLIENT_SCOPE}")
       throw e
     }
   }

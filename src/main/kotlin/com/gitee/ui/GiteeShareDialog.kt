@@ -16,8 +16,8 @@
 
 package com.gitee.ui
 
+import com.gitee.authentication.GEAccountsUtil
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GEAccountsComboBoxModel
 import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
@@ -45,8 +46,6 @@ import javax.swing.JTextArea
  * @author JetBrains s.r.o.
  */
 class GiteeShareDialog(project: Project,
-                       accounts: Set<GiteeAccount>,
-                       defaultAccount: GiteeAccount?,
                        existingRemotes: Set<String>,
                        private val accountInformationSupplier: (GiteeAccount, Component) -> Pair<Boolean, Set<String>>)
   : DialogWrapper(project), DataProvider {
@@ -68,8 +67,16 @@ class GiteeShareDialog(project: Project,
 
   private var accountInformationLoadingError: ValidationInfo? = null
 
-  //  private val accountSelector = GiteeAccountCombobox(accounts, defaultAccount) { switchAccount(it) }
-  private val accountsModel = GEAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
+  private val accounts = GEAccountsUtil.accounts
+
+//  private val accountsModel = GEAccountsComboBoxModel(
+//    accounts,
+//    GEAccountsUtil.getDefaultAccount(project) ?: accounts.firstOrNull()
+//  )
+  private val accountsModel = CollectionComboBoxModel(
+    accounts.toMutableList(),
+    GEAccountsUtil.getDefaultAccount(project) ?: accounts.firstOrNull()
+  )
 
   init {
     title = message("share.on.gitee")

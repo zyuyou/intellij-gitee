@@ -26,23 +26,23 @@ import java.awt.event.ItemEvent
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/ui/GithubAccountCombobox.kt
  * @author JetBrains s.r.o.
  */
-class GiteeAccountCombobox(accounts: Set<GiteeAccount>,
-                           defaultAccount: GiteeAccount?,
-                           onChange: ((GiteeAccount) -> Unit)? = null) : ComboBox<GiteeAccount>() {
-
-  init {
-    val accountList = accounts.toList()
-
-    model = CollectionComboBoxModel(accountList)
-
-    if (defaultAccount != null) {
-      selectedItem = defaultAccount
-    } else {
-      selectedIndex = 0
-    }
-
-    if (onChange != null) addItemListener { if (it.stateChange == ItemEvent.SELECTED) onChange(model.selectedItem as GiteeAccount) }
-
-    isEnabled = accounts.size > 1
-  }
-}
+//class GiteeAccountCombobox(accounts: Set<GiteeAccount>,
+//                           defaultAccount: GiteeAccount?,
+//                           onChange: ((GiteeAccount) -> Unit)? = null) : ComboBox<GiteeAccount>() {
+//
+//  init {
+//    val accountList = accounts.toList()
+//
+//    model = CollectionComboBoxModel(accountList)
+//
+//    if (defaultAccount != null) {
+//      selectedItem = defaultAccount
+//    } else {
+//      selectedIndex = 0
+//    }
+//
+//    if (onChange != null) addItemListener { if (it.stateChange == ItemEvent.SELECTED) onChange(model.selectedItem as GiteeAccount) }
+//
+//    isEnabled = accounts.size > 1
+//  }
+//}

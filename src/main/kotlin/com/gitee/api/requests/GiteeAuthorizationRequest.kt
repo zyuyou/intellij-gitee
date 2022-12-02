@@ -15,7 +15,7 @@
  */
 package com.gitee.api.requests
 
-import com.gitee.authentication.accounts.GEAccountsUtils
+import com.gitee.authentication.GEAccountsUtil
 import org.jetbrains.io.mandatory.Mandatory
 import java.net.URLEncoder
 
@@ -39,8 +39,8 @@ sealed class GiteeAuthorizationRequest {
 data class AuthorizationCreateRequest(private val scope: String,
                                       private val username: String,
                                       private val password: String,
-                                      private val clientId: String? = GEAccountsUtils.APP_CLIENT_ID,
-                                      private val clientSecret: String? = GEAccountsUtils.APP_CLIENT_SECRET) : GiteeAuthorizationRequest() {
+                                      private val clientId: String? = GEAccountsUtil.APP_CLIENT_ID,
+                                      private val clientSecret: String? = GEAccountsUtil.APP_CLIENT_SECRET) : GiteeAuthorizationRequest() {
 
   override fun toString(): String {
     return listOf(

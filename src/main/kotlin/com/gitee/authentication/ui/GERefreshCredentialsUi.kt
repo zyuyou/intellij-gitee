@@ -9,10 +9,13 @@ import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.Validator
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.UIUtil.getInactiveTextColor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 
 internal class GERefreshCredentialsUi(
@@ -28,24 +31,41 @@ internal class GERefreshCredentialsUi(
 
   override fun getValidator(): Validator = { null }
 
-  override fun createExecutor(): GiteeApiRequestExecutor = factory.create(fixedCredentials)
+//  override fun createExecutor(): GiteeApiRequestExecutor = factory.create(fixedCredentials)
+//
+//  override fun acquireLoginAndToken(
+//    server: GiteeServerPath,
+//    executor: GiteeApiRequestExecutor,
+//    indicator: ProgressIndicator
+//  ): Pair<String, GECredentials> {
+//    LOG.info("fixedCredentials: ${fixedCredentials.accessToken}, ${fixedCredentials.refreshToken}, ${fixedCredentials.createdAt}")
+//    val credentials = GiteeCredentialsCreator(server, executor, indicator).refresh(fixedCredentials.refreshToken)
+//
+//    LOG.info("credentials: ${credentials.accessToken}, ${credentials.refreshToken}, ${credentials.createdAt}")
+//    executor as GiteeApiRequestExecutor.WithCredentialsAuth
+//    executor.credentials = credentials
+//
+//    val login = GETokenCredentialsUi.acquireLogin(server, executor, indicator, isAccountUnique, null)
+//    LOG.warn("login: $login")
+//    return Pair(login, credentials)
+//  }
 
-  override fun acquireLoginAndToken(
-    server: GiteeServerPath,
-    executor: GiteeApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, GECredentials> {
-    LOG.info("fixedCredentials: ${fixedCredentials.accessToken}, ${fixedCredentials.refreshToken}, ${fixedCredentials.createdAt}")
-    val credentials = GiteeCredentialsCreator(server, executor, indicator).refresh(fixedCredentials.refreshToken)
+  override suspend fun login(server: GiteeServerPath): Pair<String, GECredentials> =
+    withContext(Dispatchers.Main.immediate) {
+      val executor = factory.create(fixedCredentials)
 
-    LOG.info("credentials: ${credentials.accessToken}, ${credentials.refreshToken}, ${credentials.createdAt}")
-    executor as GiteeApiRequestExecutor.WithCredentialsAuth
-    executor.credentials = credentials
+      val credentials = withContext(Dispatchers.IO) {
+        runUnderIndicator {
+          GiteeCredentialsCreator(server, executor).refresh(fixedCredentials.refreshToken)
+        }
+      }
 
-    val login = GETokenCredentialsUi.acquireLogin(server, executor, indicator, isAccountUnique, null)
-    LOG.warn("login: $login")
-    return Pair(login, credentials)
-  }
+      executor.credentials = credentials
+
+      val login = GETokenCredentialsUi.acquireLogin(server, executor, isAccountUnique, null)
+
+      login to credentials
+    }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo = GETokenCredentialsUi.handleError(error)
 
