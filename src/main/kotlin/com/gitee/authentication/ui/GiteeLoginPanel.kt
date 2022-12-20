@@ -3,18 +3,12 @@ package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeServerPath
-import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GEAccountsUtil
+import com.gitee.authentication.GECredentials
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBTextField
@@ -25,7 +19,6 @@ import com.intellij.ui.dsl.builder.Panel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPasswordField
 import javax.swing.JTextField

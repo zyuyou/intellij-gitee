@@ -31,9 +31,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
  */
 @Deprecated("Use com.gitee.api.GiteeApiRequestExecutor.Factory.Companion directly")
 class GiteeApiRequestExecutorManager {
-
-  private val executors = mutableMapOf<GiteeAccount, GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth>()
-
   companion object {
     @JvmStatic
     fun getInstance(): GiteeApiRequestExecutorManager = service()
@@ -45,39 +42,4 @@ class GiteeApiRequestExecutorManager {
     val credentials = GECompatibilityUtil.getOrRequestCredentials(account, project) ?: return null
     return GiteeApiRequestExecutor.Factory.getInstance().create(credentials)
   }
-
-//  @RequiresEdt
-//  fun getExecutor(account: GiteeAccount, project: Project): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth? {
-//    return getOrTryToCreateExecutor(account) {
-//      GiteeAuthenticationManager.getInstance().requestNewCredentials(account, project)
-//    }
-//  }
-//
-//  @RequiresEdt
-//  fun getExecutor(account: GiteeAccount, parentComponent: Component): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth? {
-//    return getOrTryToCreateExecutor(account) {
-//      GiteeAuthenticationManager.getInstance().requestNewCredentials(account, null, parentComponent)
-//    }
-//  }
-//
-//  @RequiresEdt
-//  @Throws(GiteeMissingTokenException::class)
-//  fun getExecutor(account: GiteeAccount): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth {
-//    return getOrTryToCreateExecutor(account) { throw GiteeMissingTokenException(account) }!!
-//  }
-//
-//  private fun getOrTryToCreateExecutor(account: GiteeAccount,
-//                                       missingTokensHandler: () -> GECredentials?): GiteeApiRequestExecutor.WithCreateOrUpdateCredentialsAuth? {
-//
-//    // 先从本地credential系统取, 如果没有 => missingTokensHandler弹窗请求输入
-//    // 如果本地credential取到, 创建附带刷新回调的executor
-//    return executors.getOrPut(account) {
-//      (GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account) ?: missingTokensHandler())
-//        ?.let { credentials ->
-//          GiteeApiRequestExecutor.Factory.getInstance().create(credentials) { newCredentials ->
-//            GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, newCredentials)
-//          }
-//        } ?: return null
-//    }
-//  }
 }

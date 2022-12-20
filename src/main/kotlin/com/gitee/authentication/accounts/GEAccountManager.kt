@@ -3,8 +3,8 @@ package com.gitee.authentication.accounts
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.gitee.api.GiteeServerPath
-import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GEAccountsUtil.jacksonMapper
+import com.gitee.authentication.GECredentials
 import com.gitee.util.GiteeUtil
 import com.intellij.collaboration.auth.AccountManagerBase
 import com.intellij.collaboration.auth.PasswordSafeCredentialsRepository
@@ -24,16 +24,6 @@ internal class GEAccountManager
 
   override fun accountsRepository() = service<GEPersistentAccounts>()
 
-//  override fun serializeCredentials(credentials: GECredentials): String =
-//    jacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(credentials)
-//
-//  override fun deserializeCredentials(credentials: String): GECredentials {
-//    return try {
-//      jacksonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(credentials, GECredentials::class.java)
-//    } catch (ignore: Exception) {
-//      GECredentials.EmptyCredentials
-//    }
-//  }
   override fun credentialsRepository() =
     PasswordSafeCredentialsRepository<GiteeAccount, GECredentials>(GiteeUtil.SERVICE_DISPLAY_NAME,
       object : PasswordSafeCredentialsRepository.CredentialsMapper<GECredentials> {

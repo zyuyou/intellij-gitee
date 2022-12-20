@@ -275,6 +275,8 @@ sealed class GiteeApiRequestExecutor {
               GiteeAccessTokenExpiredException(jsonError.message)
             jsonError?.containsErrorMessage("invalid_grant") == true ->
               GiteeAuthenticationException(jsonError.presentableError)
+            statusLine.contains("401 Unauthorized") ->
+              GiteeAuthenticationException(statusLine)
             else ->
               GiteeAuthenticationException("Request response: " + (jsonError?.presentableError?: if (errorText != "") errorText else statusLine))
           }

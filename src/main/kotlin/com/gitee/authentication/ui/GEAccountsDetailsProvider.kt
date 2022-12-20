@@ -62,9 +62,6 @@ internal class GEAccountsDetailsProvider(
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
       return Result.Error(errorMessage, false)
     }
-//    if (!GESecurityUtil.isEnoughScopes(scopes.orEmpty())) {
-//      return Result.Error(GiteeBundle.message("account.scopes.insufficient"), true)
-//    }
 
     return Result.Success(details)
   }

@@ -5,14 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.collaboration.auth.services.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.Url
-import com.intellij.util.Urls
 import com.intellij.util.Urls.newFromEncoded
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService

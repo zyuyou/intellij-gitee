@@ -4,7 +4,6 @@ package com.gitee.authentication.util
 import com.gitee.api.*
 import com.gitee.api.data.GiteeAuthenticatedUser
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.Url
 import com.intellij.util.Urls.newUrl

@@ -17,13 +17,11 @@
 package com.gitee.actions
 
 import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeApiRequestExecutorManager
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.data.request.GiteeRequestPagination
 import com.gitee.api.data.request.Type
 import com.gitee.api.util.GiteeApiPagesLoader
 import com.gitee.authentication.GEAccountsUtil
-import com.gitee.authentication.GiteeAuthenticationManager
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
@@ -33,6 +31,7 @@ import com.gitee.icons.GiteeIcons
 import com.gitee.ui.GiteeShareDialog
 import com.gitee.util.*
 import com.intellij.CommonBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -91,6 +90,9 @@ import javax.swing.JPanel
  * @author JetBrains s.r.o.
  */
 class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.project.title"), GiteeBundle.message("gitee.share.project.desc"), GiteeIcons.Gitee_icon) {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
@@ -138,9 +140,7 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.projec
         }
       }
 
-      val authManager = service<GiteeAuthenticationManager>()
       val progressManager = service<ProgressManager>()
-      val requestExecutorManager = service<GiteeApiRequestExecutorManager>()
       val accountInformationProvider = service<GiteeAccountInformationProvider>()
       val gitHelper = service<GiteeGitHelper>()
       val git = service<Git>()
@@ -151,21 +151,6 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.projec
         @Throws(IOException::class)
         override fun invoke(account: GiteeAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
           loadEnsuringTokenExistsToken(account, parentComponent)
-
-//          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent) ?: throw ProcessCanceledException()
-//
-//          progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
-//
-//            val user = requestExecutor.execute(progressManager.progressIndicator, GiteeApiRequests.CurrentUser.get(account.server))
-//
-//            val names = GiteeApiPagesLoader.loadAll(
-//              requestExecutor,
-//              progressManager.progressIndicator,
-//              GiteeApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER, pagination = GiteeRequestPagination.DEFAULT)
-//            ).mapSmartSet { it.name }
-//
-//            user.canCreatePrivateRepo() to names
-//          }, GiteeBundle.message("share.process.loading.account.info", account), true, project)
         }
 
         private fun loadEnsuringTokenExistsToken(account: GiteeAccount, comp: Component): Pair<Boolean, Set<String>> {

@@ -69,20 +69,6 @@ internal class GEPasswordCredentialsUi(
       { notBlank(passwordField, message("credentials.password.cannot.be.empty")) }
     )
 
-//  override fun createExecutor(): GiteeApiRequestExecutor.NoAuth = executorFactory.create()
-//
-//  override fun acquireLoginAndToken(
-//    server: GiteeServerPath,
-//    executor: GiteeApiRequestExecutor,
-//    indicator: ProgressIndicator
-//  ): Pair<String, GECredentials> {
-//    val login = loginTextField.text.trim()
-//    if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-//
-//    val credentials = GiteeCredentialsCreator(server, executor, indicator).create(loginTextField.text, passwordField.password)
-//    return Pair(loginTextField.text, credentials)
-//  }
-
   override suspend fun login(server: GiteeServerPath): Pair<String, GECredentials> =
     withContext(Dispatchers.Main.immediate) {
       val executor = factory.create()
@@ -90,19 +76,6 @@ internal class GEPasswordCredentialsUi(
       val login = loginTextField.text.trim()
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
-//      val credentials = withContext(Dispatchers.IO) {
-//        runUnderIndicator {
-//          GiteeCredentialsCreator(server, executor).create(loginTextField.text, passwordField.password)
-//        }
-//      }
-//
-//      val (details, _) = withContext(Dispatchers.IO) {
-//        runUnderIndicator {
-//          GESecurityUtil.loadCurrentUserWithScopes(factory.create(credentials), server)
-//        }
-//      }
-//
-//      Pair(details.login, credentials)
       withContext(Dispatchers.IO) {
         runUnderIndicator {
           val credentials = GiteeCredentialsCreator(server, executor).create(loginTextField.text, passwordField.password)

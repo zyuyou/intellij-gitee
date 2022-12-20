@@ -62,21 +62,6 @@ internal sealed class GELoginDialog(
   override fun doValidateAll(): List<ValidationInfo> = loginPanel.doValidateAll()
 
   override fun doOKAction() {
-//    val modalityState = ModalityState.stateForComponent(loginPanel)
-//    val emptyProgressIndicator = EmptyProgressIndicator(modalityState)
-//    Disposer.register(disposable) { emptyProgressIndicator.cancel() }
-//
-//    loginPanel.acquireLoginAndToken(emptyProgressIndicator)
-//      .successOnEdt(modalityState) { (login, credentials) ->
-//
-//        _login = login
-//        _credentials = credentials
-//
-//        close(OK_EXIT_CODE, true)
-//      }
-//      .errorOnEdt(modalityState) {
-//        if (!CompletableFutureUtil.isCancellation(it)) startTrackingValidation()
-//      }
     cs.launch(Dispatchers.Main.immediate + ModalityState.stateForComponent(rootPane).asContextElement()) {
       try {
         val (login, credentials) = loginPanel.acquireLoginAndToken()

@@ -5,9 +5,7 @@ import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.isGEAccount
 import com.gitee.i18n.GiteeBundle
 import com.gitee.icons.GiteeIcons
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
-import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine.Companion.greyText
 import javax.swing.Icon

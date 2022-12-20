@@ -1,17 +1,15 @@
 package com.gitee.authentication.ui
 
 import com.gitee.api.GiteeApiRequestExecutor
-import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
-import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GEAccountsUtil
+import com.gitee.authentication.GECredentials
 import com.gitee.authentication.util.GESecurityUtil
 import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeParseException
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
@@ -66,18 +64,6 @@ internal class GETokenCredentialsUi(
     )
   }
 
-  //  override fun createExecutor() = factory.create(accessTokenTextField.text)
-//
-//  override fun acquireLoginAndToken(
-//    server: GiteeServerPath,
-//    executor: GiteeApiRequestExecutor,
-//    indicator: ProgressIndicator
-//  ): Pair<String, GECredentials> {
-//
-//    val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
-//
-//    return Pair(login, fixedCredentials ?: GECredentials.createCredentials(accessTokenTextField.text, refreshTokenTextField.text))
-//  }
   override suspend fun login(server: GiteeServerPath): Pair<String, GECredentials> =
     withContext(Dispatchers.Main.immediate) {
       val token = accessTokenTextField.text
@@ -139,19 +125,18 @@ internal class GETokenCredentialsUi(
 
     fun handleError(error: Throwable): ValidationInfo =
       when (error) {
-        is LoginNotUniqueException -> ValidationInfo(
-          message(
-            "login.account.already.added",
-            error.login
-          )
-        ).withOKEnabled()
-
-        is UnknownHostException -> ValidationInfo(message("server.unreachable")).withOKEnabled()
-        is GiteeAuthenticationException -> ValidationInfo(
-          message("credentials.incorrect", error.message.orEmpty())
-        ).withOKEnabled()
-
-        else -> ValidationInfo(message("credentials.invalid.auth.data", error.message.orEmpty())).withOKEnabled()
+        is LoginNotUniqueException ->
+          ValidationInfo(
+            message("login.account.already.added", error.login)
+          ).withOKEnabled()
+        is UnknownHostException ->
+          ValidationInfo(message("server.unreachable")).withOKEnabled()
+        is GiteeAuthenticationException ->
+          ValidationInfo(
+            message("credentials.incorrect", error.message.orEmpty())
+          ).withOKEnabled()
+        else ->
+          ValidationInfo(message("credentials.invalid.auth.data", error.message.orEmpty())).withOKEnabled()
       }
   }
 

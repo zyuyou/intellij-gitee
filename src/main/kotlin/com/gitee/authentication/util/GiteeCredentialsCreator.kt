@@ -18,10 +18,10 @@ package com.gitee.authentication.util
 import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.api.GiteeApiRequests
 import com.gitee.api.GiteeServerPath
-import com.gitee.authentication.GECredentials
 import com.gitee.authentication.GEAccountsUtil
+import com.gitee.authentication.GECredentials
+import com.gitee.exceptions.GiteeAuthenticationException
 import com.gitee.exceptions.GiteeStatusCodeException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import java.io.IOException
 
@@ -50,7 +50,10 @@ class GiteeCredentialsCreator(private val server: GiteeServerPath,
   private fun safeCreate(login: String, password: CharArray): GECredentials {
     try {
       val indicator = ProgressManager.getInstance().progressIndicator
-      return executor.execute(indicator, GiteeApiRequests.Auth.create(server, GEAccountsUtil.APP_CLIENT_SCOPE, login, password))
+      return executor.execute(
+        indicator,
+        GiteeApiRequests.Auth.create(server, GEAccountsUtil.APP_CLIENT_SCOPE, login, password)
+      )
     } catch (e: GiteeStatusCodeException) {
       e.setDetails("Can't create token: scopes - ${GEAccountsUtil.APP_CLIENT_SCOPE}")
       throw e
@@ -64,6 +67,8 @@ class GiteeCredentialsCreator(private val server: GiteeServerPath,
       return executor.execute(indicator, GiteeApiRequests.Auth.update(server, refreshToken))
     } catch (e: GiteeStatusCodeException) {
       e.setDetails("Can't update token: scopes - ${GEAccountsUtil.APP_CLIENT_SCOPE}")
+      throw e
+    } catch (e: GiteeAuthenticationException) {
       throw e
     }
   }

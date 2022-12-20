@@ -7,14 +7,12 @@ import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.i18n.GiteeBundle
 import com.gitee.util.GEHostedRepositoriesManager
 import com.gitee.util.GiteeProjectSettings
-import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.util.PatternUtil
 import git4idea.config.GitSharedSettings
 import git4idea.fetch.GitFetchHandler
 import git4idea.remote.hosting.findKnownRepositories
@@ -81,7 +79,8 @@ internal class GEProtectedBranchRulesLoader : GitFetchHandler {
 
 
         val token = runBlocking { accountManager.findCredentials(account) } ?: continue
-        val requestExecutor = service<GiteeApiRequestExecutor.Factory>().create(token)
+//        val _requestExecutor = service<GiteeApiRequestExecutor.Factory>().create(token)
+        service<GiteeApiRequestExecutor.Factory>().create(token)
 
 //        SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryMapping.repository) })
 //          .loadAll(SensitiveProgressWrapper((indicator)))

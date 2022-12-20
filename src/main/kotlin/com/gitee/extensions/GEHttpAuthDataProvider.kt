@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2019 码云 - Gitee
+ *  Copyright 2016-2022 码云 - Gitee
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.accounts.GiteeAccountInformationProvider
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
+import com.gitee.exceptions.GiteeAccessTokenExpiredException
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -85,74 +86,10 @@ internal class GEHttpAuthDataProvider : GitHttpAuthDataProvider {
     }.singleOrNull()
   }
 
-//  override fun getAuthData(project: Project, url: String): GiteeAccountAuthData? {
-//    return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
-//      try {
-//        val credentials = GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account) ?: return null
-//
-//        val username = service<GiteeAccountInformationProvider>().getInformation(
-//          GiteeApiRequestExecutor.Factory.getInstance().create(credentials) {
-//            newCredentials -> GiteeAuthenticationManager.getInstance().updateAccountCredentials(account, newCredentials)
-//          },
-//          DumbProgressIndicator(),
-//          account
-//        ).login
-//
-//        GiteeAccountAuthData(account, username, credentials)
-//      } catch (e: IOException) {
-//        LOG.info("Cannot load username for $account", e)
-//        null
-//      }
-//    }
-//  }
-
-//  override fun getAuthData(project: Project, url: String, login: String): GiteeAccountAuthData? {
-//    return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
-//      return GiteeAuthenticationManager.getInstance().getCredentialsForAccount(account)?.let {
-//        GiteeAccountAuthData(account, login, it)
-//      }
-//    }
-//  }
-
-  //  override fun forgetPassword(project: Project, url: String, authData: AuthData) {
-//    if (authData is GiteeAccountAuthData) {
-//      project.service<GEGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
-//    }
-//  }
   override fun forgetPassword(project: Project, url: String, authData: AuthData) {
     if (authData !is GEAccountAuthData) return
     project.service<GEGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
   }
-
-//  fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GiteeAccount> {
-//
-//    val authenticationFailureManager = project.service<GEGitAuthenticationFailureManager>()
-//
-//    var potentialAccounts = GiteeAuthenticationManager.getInstance().getAccounts()
-//      .filter { it.server.matches(url) }
-//      .filter { !authenticationFailureManager.isAccountIgnored(url, it) }
-//
-//    if (login != null) {
-//      potentialAccounts = potentialAccounts.filter {
-//        try {
-//          service<GiteeAccountInformationProvider>().getInformation(
-//            GiteeApiRequestExecutorManager.getInstance().getExecutor(it),
-//            DumbProgressIndicator(),
-//            it).login == login
-//
-//        } catch (e: IOException) {
-//          LOG.info("Cannot load username for $it", e)
-//          false
-//        }
-//      }
-//    }
-//
-//    val defaultAccount = GiteeAuthenticationManager.getInstance().getDefaultAccount(project)
-//
-//    if (defaultAccount != null && potentialAccounts.contains(defaultAccount)) return setOf(defaultAccount)
-//
-//    return potentialAccounts.toSet()
-//  }
 
   companion object {
     private suspend fun getDefaultAccountData(project: Project, url: String): GEAccountAuthData? {
@@ -183,10 +120,14 @@ internal class GEHttpAuthDataProvider : GitHttpAuthDataProvider {
 
     suspend fun getAccountDetails(account: GiteeAccount, credentials: GECredentials): GiteeAuthenticatedUser? =
       try {
+        if (!credentials.isAccessTokenValid())
+          throw GiteeAccessTokenExpiredException("Account: ${account}'s credentials expire time: ${credentials.createdAt + credentials.expiresIn}")
+
         val executor = GiteeApiRequestExecutor.Factory.getInstance().create(credentials)
         withContext(Dispatchers.IO) {
           service<GiteeAccountInformationProvider>().getInformation(executor, DumbProgressIndicator(), account)
         }
+        throw(GiteeAccessTokenExpiredException("test"))
       } catch (e: Exception) {
         if (e !is ProcessCanceledException) LOG.info("Cannot load details for $account", e)
         null

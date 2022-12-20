@@ -22,7 +22,6 @@ import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.DialogManager
 import git4idea.i18n.GitBundle
-import io.ktor.util.reflect.*
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -152,13 +151,14 @@ object GEAccountsUtil {
   @JvmStatic
   fun requestReLogin(
     account: GiteeAccount,
+    credentials: GECredentials?,
     project: Project?,
     parentComponent: Component? = null,
     authType: AuthorizationType = AuthorizationType.UNDEFINED
   ): GEAccountAuthData? {
     val model = AccountManagerLoginModel(account)
     login(
-      model, GELoginRequest(server = account.server, login = account.name, authType = authType),
+      model, GELoginRequest(server = account.server, login = account.name, authType = authType, credentials = credentials),
       project, parentComponent)
     return model.authData
   }
@@ -209,6 +209,7 @@ private fun GELoginRequest.configure(dialog: GELoginDialog) {
   error?.let { dialog.setError(it) }
   server?.let { dialog.setServer(it.toString(), isServerEditable) }
   login?.let { dialog.setLogin(it, isLoginEditable) }
+  credentials?.let { dialog.setCredentials(it) }
 }
 
 private fun GELoginRequest.loginWithOAuth(model: GELoginModel, project: Project?, parentComponent: Component?) {
