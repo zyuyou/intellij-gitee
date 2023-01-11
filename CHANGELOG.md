@@ -2,6 +2,9 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2022.3.4]
+- Add `PrivateToken` support for tokens credentials.
+
 ## [2022.3.3]
 - Fix Bug - `AccessToken` always refresh when `git push`.
 
