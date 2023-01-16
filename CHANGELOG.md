@@ -2,6 +2,9 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2022.3.5]
+- Fix Bug - `PrivateToken` expired.
+
 ## [2022.3.4]
 - Add `PrivateToken` support for tokens credentials.
 

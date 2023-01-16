@@ -24,8 +24,9 @@ class GECredentials(
 
     fun createCredentials(accessToken: String, refreshToken: String, isPrivateToken: Boolean = false) =
       if (isPrivateToken)
-        GECredentials(accessToken, refreshToken, 86400, "bearer", GEAccountsUtil.APP_CLIENT_SCOPE, System.currentTimeMillis() / 1000)
-      else
         GECredentials(accessToken, "", 0, "private", GEAccountsUtil.APP_CLIENT_SCOPE, System.currentTimeMillis() / 1000)
+      else
+        GECredentials(accessToken, refreshToken, 86400, "bearer", GEAccountsUtil.APP_CLIENT_SCOPE, System.currentTimeMillis() / 1000)
+
   }
 }
