@@ -49,7 +49,12 @@ internal class GECloneDialogRepositoryListLoaderImpl : GECloneDialogRepositoryLi
       val details = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(account.server))
 
       val repoPagesRequest = GiteeApiRequests.CurrentUser.Repos.pages(account.server,
-        affiliation = Affiliation.combine(Affiliation.OWNER, Affiliation.COLLABORATOR),
+        affiliation = Affiliation.combine(
+          Affiliation.OWNER,
+          Affiliation.COLLABORATOR,
+          Affiliation.ORG_MEMBER,
+          Affiliation.ENTERPRISE_MEMBER,
+        ),
         pagination = GiteeRequestPagination.DEFAULT)
       val pageItemsConsumer: (List<GiteeRepo>) -> Unit = {
         indicator.checkCanceled()
