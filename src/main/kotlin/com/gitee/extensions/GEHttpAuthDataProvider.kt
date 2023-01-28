@@ -127,7 +127,6 @@ internal class GEHttpAuthDataProvider : GitHttpAuthDataProvider {
         withContext(Dispatchers.IO) {
           service<GiteeAccountInformationProvider>().getInformation(executor, DumbProgressIndicator(), account)
         }
-        throw(GiteeAccessTokenExpiredException("test"))
       } catch (e: Exception) {
         if (e !is ProcessCanceledException) LOG.info("Cannot load details for $account", e)
         null

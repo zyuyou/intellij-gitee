@@ -12,6 +12,7 @@ import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
 import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.AlignX
@@ -29,6 +30,7 @@ internal class GETokenCredentialsUi(
 
   private val accessTokenTextField = JBTextField()
   private val refreshTokenTextField = JBTextField()
+  private val isPrivateTokenCheckBox = JBCheckBox(message("credentials.is.private.token.field"), false)
 
   private var fixedLogin: String? = null
   private var fixedCredentials: GECredentials? = null
@@ -50,7 +52,10 @@ internal class GETokenCredentialsUi(
     }
     row(message("credentials.refresh.token.field")) {
       cell(refreshTokenTextField)
-        .comment(message("login.insufficient.scopes", GEAccountsUtil.APP_CLIENT_SCOPE))
+        .align(AlignX.FILL)
+    }
+    row("") {
+      cell(isPrivateTokenCheckBox)
         .align(AlignX.FILL)
     }
   }
@@ -58,10 +63,8 @@ internal class GETokenCredentialsUi(
   override fun getPreferredFocusableComponent(): JComponent = accessTokenTextField
 
   override fun getValidator(): Validator = {
-    notBlank(accessTokenTextField, message("login.token.cannot.be.empty")) ?: notBlank(
-      refreshTokenTextField,
-      message("login.token.cannot.be.empty")
-    )
+    notBlank(accessTokenTextField, message("login.token.cannot.be.empty"))
+      ?: if(isPrivateTokenCheckBox.isSelected) null else notBlank(refreshTokenTextField, message("login.token.cannot.be.empty"))
   }
 
   override suspend fun login(server: GiteeServerPath): Pair<String, GECredentials> =
@@ -69,7 +72,7 @@ internal class GETokenCredentialsUi(
       val token = accessTokenTextField.text
       val executor = factory.create(token)
       val login = acquireLogin(server, executor, isAccountUnique, fixedLogin)
-      Pair(login, fixedCredentials ?: GECredentials.createCredentials(accessTokenTextField.text, refreshTokenTextField.text))
+      Pair(login, fixedCredentials ?: GECredentials.createCredentials(accessTokenTextField.text, refreshTokenTextField.text, isPrivateTokenCheckBox.isSelected))
     }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =

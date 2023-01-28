@@ -85,12 +85,12 @@ internal class GECloneDialogRepositoryListModel : AbstractListModel<GERepository
       if (isNew) {
         toAdd.add(item)
       }
-      else {
-        val idx = items.indexOf(item)
-        items.removeAt(idx)
-        fireIntervalRemoved(this, startOffset + idx, startOffset + idx)
-        endOffset--
-      }
+//      else {
+//        val idx = items.indexOf(item)
+//        items.removeAt(idx)
+//        fireIntervalRemoved(this, startOffset + idx, startOffset + idx)
+//        endOffset--
+//      }
     }
     items.addAll(toAdd)
     fireIntervalAdded(this, endOffset, endOffset + toAdd.size)

@@ -2,6 +2,18 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2022.3.6]
+- Fix Bug - `Clone Repo List` Do not remove duplicate repository.
+
+## [2022.3.5]
+- Fix Bug - `PrivateToken` expired.
+
+## [2022.3.4]
+- Add `PrivateToken` support for tokens credentials.
+
+## [2022.3.3]
+- Fix Bug - `AccessToken` always refresh when `git push`.
+
 ## [2022.3.2]
 - Compatible with idea-2022.3
 - Remove deprecated files
