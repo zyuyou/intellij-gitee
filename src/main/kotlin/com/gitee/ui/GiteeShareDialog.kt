@@ -18,11 +18,9 @@ package com.gitee.ui
 
 import com.gitee.authentication.GEAccountsUtil
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.RecordUniqueValidator
 import com.gitee.ui.util.DialogValidationUtils.notBlank
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -32,6 +30,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
@@ -45,10 +44,10 @@ import javax.swing.JTextArea
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubShareDialog.kt
  * @author JetBrains s.r.o.
  */
-class GiteeShareDialog(project: Project,
+class GiteeShareDialog(private val project: Project,
                        existingRemotes: Set<String>,
                        private val accountInformationSupplier: (GiteeAccount, Component) -> Pair<Boolean, Set<String>>)
-  : DialogWrapper(project), DataProvider {
+  : DialogWrapper(project) {
 
   private val GITEE_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
@@ -139,10 +138,12 @@ class GiteeShareDialog(project: Project,
           .resizableColumn()
 
         if (accountsModel.size == 0) {
-          cell(GEAccountsHost.createAddAccountLink())
+          cell(GEAccountsUtil.createAddAccountLink(project, accountsModel))
         }
       }
     }
+  }.apply {
+    preferredSize = JBUI.size(500, 250)
   }
 
   override fun doValidateAll(): List<ValidationInfo> {
@@ -168,10 +169,6 @@ class GiteeShareDialog(project: Project,
   override fun getHelpId(): String = "gitee.share"
   override fun getDimensionServiceKey(): String = "Gitee.ShareDialog"
   override fun getPreferredFocusedComponent(): JBTextField = repositoryTextField
-
-  override fun getData(dataId: String): Any? =
-    if (GEAccountsHost.KEY.`is`(dataId)) accountsModel
-    else null
 
   fun getRepositoryName(): String = repositoryTextField.text
   fun getRemoteName(): String = remoteTextField.text

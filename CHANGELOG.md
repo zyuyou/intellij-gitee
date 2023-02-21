@@ -2,6 +2,9 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2022.3.7]
+- Fix Bug - Can not `add accounts` on `share dialog` and `create gist dialog`.
+
 ## [2022.3.6]
 - Fix Bug - `Clone Repo List` Do not remove duplicate repository.
 

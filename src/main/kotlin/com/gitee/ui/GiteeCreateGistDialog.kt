@@ -18,7 +18,6 @@ package com.gitee.ui
 
 import com.gitee.authentication.GEAccountsUtil
 import com.gitee.authentication.accounts.GiteeAccount
-import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.i18n.GiteeBundle.message
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -39,7 +38,7 @@ import javax.swing.JTextArea
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/ui/GithubCreateGistDialog.java
  * @author JetBrains s.r.o.
  */
-class GiteeCreateGistDialog(project: Project,
+class GiteeCreateGistDialog(private val project: Project,
                             @NlsSafe fileName: String?,
                             secret: Boolean,
                             openInBrowser: Boolean,
@@ -97,7 +96,7 @@ class GiteeCreateGistDialog(project: Project,
           .resizableColumn()
 
         if (accountsModel.size == 0) {
-          cell(GEAccountsHost.createAddAccountLink())
+          cell(GEAccountsUtil.createAddAccountLink(project, accountsModel))
         }
       }
     }

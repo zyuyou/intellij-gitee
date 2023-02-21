@@ -9,6 +9,7 @@ import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.authentication.ui.GELoginDialog
 import com.gitee.authentication.ui.GELoginModel
 import com.gitee.i18n.GiteeBundle
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
@@ -17,12 +18,18 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.components.DropDownLink
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.DialogManager
 import git4idea.i18n.GitBundle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.Component
+import javax.swing.JButton
 import javax.swing.JComponent
 
 private val accountManager: GEAccountManager get() = service()
@@ -59,6 +66,29 @@ object GEAccountsUtil {
   @JvmStatic
   fun getSingleOrDefaultAccount(project: Project): GiteeAccount? =
     getDefaultAccount(project) ?: accounts.singleOrNull()
+
+  fun createAddAccountLink(project: Project, accountSelectionModel: CollectionComboBoxModel<GiteeAccount>): JButton {
+    val model = object : GELoginModel {
+      override fun isAccountUnique(server: GiteeServerPath, login: String): Boolean =
+        accountSelectionModel.items.none { it.name == login && it.server.equals(server, true) }
+
+      override suspend fun saveLogin(server: GiteeServerPath, login: String, credentials: GECredentials) {
+        val account = GEAccountManager.createAccount(login, server)
+        accountManager.updateAccount(account, credentials)
+        withContext(Dispatchers.Main.immediate) {
+          accountSelectionModel.add(account)
+          accountSelectionModel.selectedItem = account
+        }
+      }
+    }
+
+    return DropDownLink(GiteeBundle.message("accounts.add.dropdown.link")) {
+      val group = createAddAccountActionGroup(model, project, it)
+      JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(it),
+          JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+    }
+  }
 
   internal fun createAddAccountActionGroup(model: GELoginModel, project: Project, parentComponent: JComponent): ActionGroup {
     val group = DefaultActionGroup()

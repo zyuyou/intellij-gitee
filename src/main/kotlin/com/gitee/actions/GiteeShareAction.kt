@@ -160,7 +160,9 @@ class GiteeShareAction : DumbAwareAction(GiteeBundle.message("gitee.share.projec
                 val credentials = runBlocking {
                   service<GEAccountManager>().findCredentials(account) ?: throw GiteeMissingTokenException(account)
                 }
-                val requestExecutor = GiteeApiRequestExecutor.Factory.getInstance().create(credentials)
+                val requestExecutor = GiteeApiRequestExecutor.Factory.getInstance().create(credentials) {
+                    newCredentials -> service<GEAccountManager>().updateAccount(account, newCredentials)
+                }
 
                 val user = requestExecutor.execute(progressManager.progressIndicator, GiteeApiRequests.CurrentUser.get(account.server))
                 val names = GiteeApiPagesLoader
