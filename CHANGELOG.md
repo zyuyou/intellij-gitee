@@ -2,6 +2,9 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2022.3.8]
+- Fix Buf - refresh tokens error when multi accounts exist.
+
 ## [2022.3.7]
 - Fix Bug - Can not `add accounts` on `share dialog` and `create gist dialog`.
 
