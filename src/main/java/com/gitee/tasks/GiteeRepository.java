@@ -309,17 +309,11 @@ public class GiteeRepository extends BaseRepository {
 
   @Override
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    boolean isOpen;
-    switch (state) {
-      case OPEN:
-        isOpen = true;
-        break;
-      case RESOLVED:
-        isOpen = false;
-        break;
-      default:
-        throw new IllegalStateException("Unknown state: " + state);
-    }
+    boolean isOpen = switch (state) {
+      case OPEN -> true;
+      case RESOLVED -> false;
+      default -> throw new IllegalStateException("Unknown state: " + state);
+    };
     GiteeApiRequestExecutor executor = getExecutor();
     GiteeServerPath server = getServer();
     String repoAuthor = getRepoAuthor();

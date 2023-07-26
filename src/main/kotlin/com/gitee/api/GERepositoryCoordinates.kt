@@ -1,6 +1,8 @@
 package com.gitee.api
 
+import com.intellij.collaboration.util.resolveRelative
 import git4idea.remote.hosting.HostedRepositoryCoordinates
+import java.net.URI
 
 data class GERepositoryCoordinates(override val serverPath: GiteeServerPath,
                                    val repositoryPath: GERepositoryPath)
@@ -9,6 +11,8 @@ data class GERepositoryCoordinates(override val serverPath: GiteeServerPath,
   fun toUrl(): String {
     return serverPath.toUrl() + "/" + repositoryPath
   }
+
+  override fun getWebURI(): URI = serverPath.toURI().resolveRelative(repositoryPath.toString())
 
   override fun toString(): String {
     return "$serverPath/$repositoryPath"
