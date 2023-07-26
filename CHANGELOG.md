@@ -2,6 +2,11 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2023.1.0]
+- Compatible with idea-2023.1
+- Remove some deprecated api
+- Upgrade `intellij-gradle-plugin`
+
 ## [2022.3.8]
 - Fix Buf - refresh tokens error when multi accounts exist.
 

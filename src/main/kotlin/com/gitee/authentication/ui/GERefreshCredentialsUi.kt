@@ -7,6 +7,7 @@ import com.gitee.authentication.GECredentials
 import com.gitee.authentication.util.GiteeCredentialsCreator
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.Validator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
@@ -32,7 +33,7 @@ internal class GERefreshCredentialsUi(
       val executor = factory.create(fixedCredentials)
 
       val credentials = withContext(Dispatchers.IO) {
-        runUnderIndicator {
+        coroutineToIndicator {
           GiteeCredentialsCreator(server, executor).refresh(fixedCredentials.refreshToken)
         }
       }

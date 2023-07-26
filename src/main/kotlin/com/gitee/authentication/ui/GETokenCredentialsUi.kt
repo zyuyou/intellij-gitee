@@ -10,6 +10,7 @@ import com.gitee.exceptions.GiteeParseException
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBCheckBox
@@ -112,7 +113,7 @@ internal class GETokenCredentialsUi(
 
 //      val login = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(server)).login
       val (details, _) = withContext(Dispatchers.IO) {
-        runUnderIndicator {
+        coroutineToIndicator {
           GESecurityUtil.loadCurrentUserWithScopes(executor, server)
         }
       }

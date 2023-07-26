@@ -13,6 +13,7 @@ import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runUnderIndicator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +49,7 @@ internal class GEAccountsDetailsProvider(
       null
     } ?: return Result.Error(GiteeBundle.message("account.credentials.missing"), true)
     return withContext(Dispatchers.IO) {
-      runUnderIndicator {
+      coroutineToIndicator {
         doLoadDetails(executor, account)
       }
     }
