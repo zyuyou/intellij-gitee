@@ -35,7 +35,7 @@ import java.awt.Component
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/GiteeAuthenticationManager.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/GithubAuthenticationManager.kt
  * @author JetBrains s.r.o.
  */
 @Deprecated("deprecated in favor of GHAccountsUtil")

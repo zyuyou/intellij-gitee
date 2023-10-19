@@ -33,7 +33,7 @@ import git4idea.repo.GitRepository
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GiteeGitHelper.java
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GithubGitHelper.kt
  * @author JetBrains s.r.o.
  */
 @Service

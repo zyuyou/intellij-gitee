@@ -33,7 +33,7 @@ import java.awt.Image
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiRequests.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequests.kt
  * @author JetBrains s.r.o.
  */
 object GiteeApiRequests {

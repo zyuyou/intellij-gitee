@@ -26,7 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiRequestExecutorManager.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequestExecutorManager.kt
  * @author JetBrains s.r.o.
  */
 @Deprecated("Use com.gitee.api.GiteeApiRequestExecutor.Factory.Companion directly")

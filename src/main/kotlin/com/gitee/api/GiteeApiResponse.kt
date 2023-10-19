@@ -24,7 +24,7 @@ import java.io.Reader
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiResponse.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiResponse.kt
  * @author JetBrains s.r.o.
  */
 interface GiteeApiResponse {

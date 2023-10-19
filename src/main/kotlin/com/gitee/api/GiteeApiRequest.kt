@@ -30,7 +30,7 @@ import java.io.IOException
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GiteeApiRequest.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/GithubApiRequest.kt
  * @author JetBrains s.r.o.
  */
 sealed class GiteeApiRequest<out T>(val url: String) {
