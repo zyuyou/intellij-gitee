@@ -2,6 +2,11 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2023.3.0]
+- Compatible with idea-2023.3
+- Fix no `Open on Gitee` options
+- Remove some deprecated api
+
 ## [2023.2.0]
 - Compatible with idea-2023.2
 - Remove some deprecated api

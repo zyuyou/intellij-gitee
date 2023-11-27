@@ -299,11 +299,11 @@ internal abstract class GECloneDialogExtensionComponentBase(
       selectedUrl = null
       return
     }
-    val githubRepoPath = getGiteeRepoPath(searchField.text)
-    if (githubRepoPath != null) {
-      selectedUrl = githeeGitHelper.getRemoteUrl(githubRepoPath.serverPath,
-                                                 githubRepoPath.repositoryPath.owner,
-                                                 githubRepoPath.repositoryPath.repository)
+    val giteeRepoPath = getGiteeRepoPath(searchField.text)
+    if (giteeRepoPath != null) {
+      selectedUrl = githeeGitHelper.getRemoteUrl(giteeRepoPath.serverPath,
+                                                 giteeRepoPath.repositoryPath.owner,
+                                                 giteeRepoPath.repositoryPath.repository)
       repositoryList.emptyText.appendText(GiteeBundle.message("clone.dialog.text", selectedUrl!!))
       return
     }
@@ -329,8 +329,8 @@ internal abstract class GECloneDialogExtensionComponentBase(
       var serverPath = GiteeServerPath.from(url)
       serverPath = GiteeServerPath.from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: ""))
 
-      val githubFullPath = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url) ?: return null
-      return GERepositoryCoordinates(serverPath, githubFullPath)
+      val giteeFullPath = GiteeUrlUtil.getUserAndRepositoryFromRemoteUrl(url) ?: return null
+      return GERepositoryCoordinates(serverPath, giteeFullPath)
     }
     catch (e: Throwable) {
       return null

@@ -15,7 +15,7 @@
  */
 package com.gitee.extensions;
 
-import com.gitee.actions.GiteeOpenInBrowserFromAnnotationActionGroup;
+import com.gitee.actions.GEOpenInBrowserFromAnnotationActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -28,12 +28,12 @@ import org.jetbrains.annotations.NotNull;
  * @author JetBrains s.r.o.
  * @author Kirill Likhodedov
  */
-public class GiteeAnnotationGutterActionProvider implements AnnotationGutterActionProvider {
+public class GEAnnotationGutterActionProvider implements AnnotationGutterActionProvider {
 
   @NotNull
   @Override
   public AnAction createAction(@NotNull FileAnnotation annotation) {
-    return new GiteeOpenInBrowserFromAnnotationActionGroup(annotation);
+    return new GEOpenInBrowserFromAnnotationActionGroup(annotation);
   }
 
 }
