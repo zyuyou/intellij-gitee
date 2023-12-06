@@ -55,7 +55,7 @@
     </extensions>
 
     <actions>
-        <action id="Gitee.Share" class="com.gitee.actions.GiteeShareAction">
+        <action id="Gitee.Share" class="com.gitee.actions.GiteeShareAction" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
             <add-to-group group-id="Vcs.Import"/>
             <add-to-group group-id="Vcs.ToolbarWidget.ShareProject" relative-to-action="Start.Use.Vcs" anchor="before"/>
             <override-text place="Vcs.Toolbar.Widget"/>
