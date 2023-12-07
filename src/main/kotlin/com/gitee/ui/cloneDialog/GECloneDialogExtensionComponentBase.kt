@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.gitee.ui.cloneDialog
 
-import com.gitee.api.*
+import com.gitee.api.GERepositoryCoordinates
+import com.gitee.api.GiteeServerPath
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GEAccountsDetailsProvider
@@ -11,6 +12,7 @@ import com.gitee.i18n.GiteeBundle
 import com.gitee.util.*
 import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.dvcs.repo.ClonePathProvider
@@ -34,7 +36,9 @@ import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Align
@@ -58,7 +62,10 @@ import kotlinx.coroutines.plus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import java.nio.file.Paths
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.JComponent
+import javax.swing.JSeparator
+import javax.swing.ListModel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -165,7 +172,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
           .align(Align.FILL)
       }.resizableRow()
 
-      row(GiteeBundle.message("clone.dialog.directory.field")) {
+      row(CollaborationToolsBundle.message("clone.dialog.directory.to.clone.label.text")) {
         cell(directoryField)
           .align(AlignX.FILL)
           .validationOnApply {
@@ -257,8 +264,8 @@ internal abstract class GECloneDialogExtensionComponentBase(
       LOG.error("Unable to create destination directory", destinationValidation.message)
       GiteeNotifications.showError(project,
                                     GiteeNotificationIdsHolder.CLONE_UNABLE_TO_CREATE_DESTINATION_DIR,
-                                    GiteeBundle.message("clone.dialog.clone.failed"),
-                                    GiteeBundle.message("clone.error.unable.to.create.dest.dir"))
+                                    CollaborationToolsBundle.message("clone.dialog.clone.failed"),
+                                    CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory"))
       return
     }
 
@@ -271,8 +278,8 @@ internal abstract class GECloneDialogExtensionComponentBase(
       LOG.error("Clone Failed. Destination doesn't exist")
       GiteeNotifications.showError(project,
                                     GiteeNotificationIdsHolder.CLONE_UNABLE_TO_FIND_DESTINATION,
-                                    GiteeBundle.message("clone.dialog.clone.failed"),
-                                    GiteeBundle.message("clone.error.unable.to.find.dest"))
+                                    CollaborationToolsBundle.message("clone.dialog.clone.failed"),
+                                    CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory"))
       return
     }
     val directoryName = Paths.get(directoryField.text).fileName.toString()
@@ -282,7 +289,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
   }
 
   override fun onComponentSelected() {
-    dialogStateListener.onOkActionNameChanged(GiteeBundle.message("clone.button"))
+    dialogStateListener.onOkActionNameChanged(message("clone.button"))
     updateSelectedUrl()
 
     val focusManager = IdeFocusManager.getInstance(project)
@@ -304,7 +311,7 @@ internal abstract class GECloneDialogExtensionComponentBase(
       selectedUrl = githeeGitHelper.getRemoteUrl(giteeRepoPath.serverPath,
                                                  giteeRepoPath.repositoryPath.owner,
                                                  giteeRepoPath.repositoryPath.repository)
-      repositoryList.emptyText.appendText(GiteeBundle.message("clone.dialog.text", selectedUrl!!))
+      repositoryList.emptyText.appendText(CollaborationToolsBundle.message("clone.dialog.repository.url.text", selectedUrl!!))
       return
     }
     val selectedValue = repositoryList.selectedValue
@@ -397,9 +404,9 @@ internal abstract class GECloneDialogExtensionComponentBase(
   private inner class ErrorHandler : GERepositoryListCellRenderer.ErrorHandler {
 
     override fun getPresentableText(error: Throwable): @Nls String = when (error) {
-      is GiteeMissingTokenException -> GiteeBundle.message("account.token.missing")
+      is GiteeMissingTokenException -> CollaborationToolsBundle.message("account.token.missing")
       is GiteeAuthenticationException -> GiteeBundle.message("credentials.invalid.auth.data", "")
-      else -> GiteeBundle.message("clone.error.load.repositories")
+      else -> CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
     }
 
     override fun getAction(account: GiteeAccount, error: Throwable) = when (error) {

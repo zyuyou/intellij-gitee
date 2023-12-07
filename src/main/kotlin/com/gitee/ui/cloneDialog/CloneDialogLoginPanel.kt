@@ -5,8 +5,8 @@ import com.gitee.api.GiteeApiRequestExecutor
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeAccount
 import com.gitee.authentication.ui.GiteeLoginPanel
-import com.gitee.i18n.GiteeBundle.message
 import com.intellij.collaboration.async.disposingMainScope
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -56,7 +56,7 @@ internal class CloneDialogLoginPanel(private val account: GiteeAccount?) :
     } else true
   }
   private val inlineCancelPanel = simplePanel()
-  private val loginButton = JButton(message("button.login.mnemonic"))
+  private val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic"))
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply {
     verticalAlignment = SwingConstants.CENTER
   }
