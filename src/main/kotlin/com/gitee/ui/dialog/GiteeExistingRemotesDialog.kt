@@ -17,7 +17,7 @@ import javax.swing.JPanel
 
 class GiteeExistingRemotesDialog(project: Project, private val remotes: List<String>) : DialogWrapper(project) {
   init {
-    title = GiteeBundle.message("gitee.project.is.already.on.text")
+    title = GiteeBundle.message("share.error.project.is.on.gitee")
     setOKButtonText(GiteeBundle.message("share.anyway.button"))
     init()
   }
