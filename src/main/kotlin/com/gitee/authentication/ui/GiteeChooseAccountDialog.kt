@@ -16,6 +16,7 @@
 package com.gitee.authentication.ui
 
 import com.gitee.authentication.accounts.GiteeAccount
+import com.gitee.i18n.GiteeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -81,7 +82,7 @@ class GiteeChooseAccountDialog @JvmOverloads constructor(project: Project?, pare
       }
     }
   }
-  private val setDefaultCheckBox: JBCheckBox? = if (allowDefault) JBCheckBox("Set as default account for current project") else null
+  private val setDefaultCheckBox: JBCheckBox? = if (allowDefault) JBCheckBox(GiteeBundle.message("account.choose.as.default")) else null
 
   init {
     this.title = title
@@ -94,7 +95,7 @@ class GiteeChooseAccountDialog @JvmOverloads constructor(project: Project?, pare
   override fun getDimensionServiceKey() = "Gitee.Dialog.Accounts.Choose"
 
   override fun doValidate(): ValidationInfo? {
-    return if (accountsList.selectedValue == null) ValidationInfo("Account is not selected", accountsList) else null
+    return if (accountsList.selectedValue == null) ValidationInfo(GiteeBundle.message("account.choose.not.selected"), accountsList) else null
   }
 
   val account: GiteeAccount

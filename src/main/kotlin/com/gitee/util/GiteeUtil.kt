@@ -35,7 +35,7 @@ import kotlin.reflect.KProperty
  *
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GiteeUtil.java
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/util/GithubUtil.kt
  * @author JetBrains s.r.o.
  */
 object GiteeUtil {

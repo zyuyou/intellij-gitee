@@ -10,7 +10,8 @@ import com.gitee.exceptions.GiteeParseException
 import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
@@ -47,8 +48,9 @@ internal class GETokenCredentialsUi(
     row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.access.token.field")) {
       cell(accessTokenTextField)
-        .comment(message("login.insufficient.scopes", GEAccountsUtil.APP_CLIENT_SCOPE))
+        .comment(CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GEAccountsUtil.APP_CLIENT_SCOPE))
         .align(AlignX.FILL)
+        .resizableColumn()
     }
     row(message("credentials.refresh.token.field")) {
       cell(refreshTokenTextField)
@@ -112,7 +114,7 @@ internal class GETokenCredentialsUi(
 
 //      val login = executor.execute(indicator, GiteeApiRequests.CurrentUser.get(server)).login
       val (details, _) = withContext(Dispatchers.IO) {
-        runUnderIndicator {
+        coroutineToIndicator {
           GESecurityUtil.loadCurrentUserWithScopes(executor, server)
         }
       }

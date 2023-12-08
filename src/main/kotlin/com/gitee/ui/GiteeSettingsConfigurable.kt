@@ -18,7 +18,6 @@ package com.gitee.ui
 import com.gitee.authentication.accounts.GEAccountManager
 import com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder
 import com.gitee.authentication.ui.GEAccountsDetailsProvider
-import com.gitee.authentication.ui.GEAccountsHost
 import com.gitee.authentication.ui.GEAccountsListModel
 import com.gitee.authentication.ui.GEAccountsPanelActionsController
 import com.gitee.i18n.GiteeBundle
@@ -26,7 +25,6 @@ import com.gitee.util.GiteeSettings
 import com.gitee.util.GiteeUtil
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -61,12 +59,6 @@ internal class GiteeSettingsConfigurable internal constructor(private val projec
       row {
         panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .align(Align.FILL)
-          .also {
-            DataManager.registerDataProvider(it.component) { key ->
-              if (GEAccountsHost.KEY.`is`(key)) accountsModel
-              else null
-            }
-          }
       }.resizableRow()
 
       row {

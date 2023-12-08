@@ -25,7 +25,7 @@ import java.util.function.Predicate
 /**
  * @author Yuyou Chow
  *
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/util/GiteeApiPagesLoader.kt
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/api/util/GithubApiPagesLoader.kt
  * @author JetBrains s.r.o.
  */
 object GiteeApiPagesLoader {

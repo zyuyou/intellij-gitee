@@ -26,6 +26,7 @@ import com.gitee.icons.GiteeIcons;
 import com.gitee.ui.GiteeCreateGistDialog;
 import com.gitee.util.*;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -70,6 +71,11 @@ public class GiteeCreateGistAction extends DumbAwareAction {
 		super(GiteeBundle.messagePointer("create.gist.action.title"),
 				GiteeBundle.messagePointer("create.gist.action.description"),
 				GiteeIcons.Gitee_icon);
+	}
+
+	@Override
+	public @NotNull ActionUpdateThread getActionUpdateThread() {
+		return ActionUpdateThread.BGT;
 	}
 
 	@Override

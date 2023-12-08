@@ -38,7 +38,7 @@ import java.awt.*;
 import static com.gitee.i18n.GiteeBundle.message;
 
 /**
- * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/tasks/GiteeRepositoryEditor.java
+ * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/tasks/GithubRepositoryEditor.java
  * @author Dennis.Ushakov
  */
 public class GiteeRepositoryEditor extends BaseRepositoryEditor<GiteeRepository> {

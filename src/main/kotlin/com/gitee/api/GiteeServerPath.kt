@@ -69,7 +69,7 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
       if (!matcher.matches()) throw GiteeParseException("Not a valid URL")
 
       val schema: String? = matcher.group(1)
-      val httpSchema: Boolean? = if (schema == null || schema.isEmpty()) null else schema.equals("http://", true)
+      val httpSchema: Boolean? = if (schema.isNullOrEmpty()) null else schema.equals("http://", true)
 
       val host: String = matcher.group(2) ?: throw GiteeParseException("Empty host")
 
@@ -95,8 +95,6 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
   }
 
   fun matches(gitRemoteUrl: String): Boolean {
-//    val url = GiteeUrlUtil.removePort(GiteeUrlUtil.removeProtocolPrefix(gitRemoteUrl))
-//    return StringUtil.startsWithIgnoreCase(url, host + StringUtil.notNullize(suffix))
     return GitHostingUrlUtil.match(toURI(), gitRemoteUrl)
   }
 
@@ -160,15 +158,6 @@ data class GiteeServerPath @JvmOverloads constructor(@field:Attribute("useHttp")
   }
 
   override fun equals(other: Any?): Boolean {
-//    if (this === other) return true
-//    if (other !is GiteeServerPath) return false
-//
-//    val path = other as GiteeServerPath?
-//
-//    return useHttp == path!!.useHttp
-//      && host == path.host
-//      && port == path.port
-//      && suffix == path.suffix
     return equals(other, false);
   }
 

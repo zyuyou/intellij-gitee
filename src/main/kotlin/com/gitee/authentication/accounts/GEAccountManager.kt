@@ -7,6 +7,7 @@ import com.gitee.authentication.GEAccountsUtil.jacksonMapper
 import com.gitee.authentication.GECredentials
 import com.gitee.util.GiteeUtil
 import com.intellij.collaboration.auth.AccountManagerBase
+import com.intellij.collaboration.auth.AccountsRepository
 import com.intellij.collaboration.auth.PasswordSafeCredentialsRepository
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -22,7 +23,7 @@ internal val GiteeAccount.isGEAccount: Boolean get() = server.isGiteeDotCom()
 internal class GEAccountManager
   : AccountManagerBase<GiteeAccount, GECredentials>(logger<GEAccountManager>()), Disposable {
 
-  override fun accountsRepository() = service<GEPersistentAccounts>()
+  override fun accountsRepository(): AccountsRepository<GiteeAccount> = service<GEPersistentAccounts>()
 
   override fun credentialsRepository() =
     PasswordSafeCredentialsRepository<GiteeAccount, GECredentials>(GiteeUtil.SERVICE_DISPLAY_NAME,

@@ -12,6 +12,7 @@ import com.gitee.i18n.GiteeBundle.message
 import com.gitee.ui.util.DialogValidationUtils
 import com.gitee.ui.util.DialogValidationUtils.notBlank
 import com.gitee.ui.util.Validator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
@@ -77,8 +78,9 @@ internal class GEPasswordCredentialsUi(
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
       withContext(Dispatchers.IO) {
-        runUnderIndicator {
-          val credentials = GiteeCredentialsCreator(server, executor).create(loginTextField.text, passwordField.password)
+        coroutineToIndicator {
+          val credentials =
+            GiteeCredentialsCreator(server, executor).create(loginTextField.text, passwordField.password)
 
           val (details, _) = GESecurityUtil.loadCurrentUserWithScopes(factory.create(credentials), server)
 

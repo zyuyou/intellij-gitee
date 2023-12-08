@@ -10,8 +10,8 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitRepositoryMappingData
 
 class GEGitRepositoryMapping(override val repository: GERepositoryCoordinates,
-                             override val remote: GitRemoteUrlCoordinates,
-) : GitRepositoryMappingData, HostedGitRepositoryMapping {
+                             override val remote: GitRemoteUrlCoordinates)
+  : GitRepositoryMappingData, HostedGitRepositoryMapping {
 
   override val gitRemote: GitRemote
     get() = remote.remote

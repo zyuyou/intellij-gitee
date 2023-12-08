@@ -21,9 +21,12 @@ import com.gitee.api.data.GiteeAuthenticatedUser
 import com.google.common.cache.CacheBuilder
 import com.intellij.collaboration.async.disposingScope
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -37,14 +40,15 @@ import java.util.concurrent.TimeUnit
  * Based on https://github.com/JetBrains/intellij-community/blob/master/plugins/github/src/org/jetbrains/plugins/github/authentication/accounts/GithubAccountInformationProvider.kt
  * @author JetBrains s.r.o.
  */
-class GiteeAccountInformationProvider : Disposable {
+@Service(Service.Level.APP)
+class GiteeAccountInformationProvider(cs: CoroutineScope) : Disposable {
 
   private val informationCache = CacheBuilder.newBuilder()
     .expireAfterAccess(30, TimeUnit.MINUTES)
     .build<GiteeAccount, GiteeAuthenticatedUser>()
 
   init {
-    disposingScope().launch {
+    cs.childScope().launch {
       service<GEAccountManager>().accountsState.collect {
         informationCache.invalidateAll()
       }

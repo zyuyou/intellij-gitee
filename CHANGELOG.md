@@ -2,6 +2,26 @@
 - Optimized the storage of account login credentials.
 - Add Web OAuth for Gitee login.
 
+## [2023.3.0]
+- Compatible with idea-2023.3
+- Fix no `Open on Gitee` options
+- Remove some deprecated api
+
+## [2023.2.0]
+- Compatible with idea-2023.2
+- Remove some deprecated api
+
+## [2023.1.0]
+- Compatible with idea-2023.1
+- Remove some deprecated api
+- Upgrade `intellij-gradle-plugin`
+
+## [2022.3.8]
+- Fix Buf - refresh tokens error when multi accounts exist.
+
+## [2022.3.7]
+- Fix Bug - Can not `add accounts` on `share dialog` and `create gist dialog`.
+
 ## [2022.3.6]
 - Fix Bug - `Clone Repo List` Do not remove duplicate repository.
 

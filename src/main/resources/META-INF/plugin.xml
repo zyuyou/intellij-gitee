@@ -27,16 +27,13 @@
         <applicationService serviceImplementation="com.gitee.authentication.GiteeAuthenticationManager"/>
         <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutor$Factory"/>
         <applicationService serviceImplementation="com.gitee.api.GiteeApiRequestExecutorManager"/>
-        <applicationService serviceImplementation="com.gitee.authentication.accounts.GiteeAccountInformationProvider"/>
         <applicationService serviceImplementation="com.gitee.util.CachingGEUserAvatarLoader"/>
 
-
-        <projectService serviceImplementation="com.gitee.extensions.GEGitAuthenticationFailureManager"/>
         <projectService serviceImplementation="com.gitee.util.GiteeProjectSettings"/>
         <projectService serviceImplementation="com.gitee.util.GiteeSharedProjectSettings"/>
         <projectService serviceImplementation="com.gitee.authentication.accounts.GiteeProjectDefaultAccountHolder"/>
 
-        <vcsAnnotationGutterActionProvider implementation="com.gitee.extensions.GiteeAnnotationGutterActionProvider"/>
+        <vcsAnnotationGutterActionProvider implementation="com.gitee.extensions.GEAnnotationGutterActionProvider"/>
 
         <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                              instance="com.gitee.ui.GiteeSettingsConfigurable"/>
@@ -58,25 +55,30 @@
     </extensions>
 
     <actions>
-        <action id="Gitee.Share" class="com.gitee.actions.GiteeShareAction">
+        <action id="Gitee.Share" class="com.gitee.actions.GiteeShareAction" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
             <add-to-group group-id="Vcs.Import"/>
             <add-to-group group-id="Vcs.ToolbarWidget.ShareProject" relative-to-action="Start.Use.Vcs" anchor="before"/>
             <override-text place="Vcs.Toolbar.Widget"/>
         </action>
 
-        <action id="Gitee.Sync.Fork" class="com.gitee.actions.GiteeSyncForkAction">
+        <action id="Gitee.Sync.Fork"
+                class="com.gitee.actions.GiteeSyncForkAction"
+                icon="com.gitee.icons.GiteeIcons.Gitee_icon">
             <add-to-group group-id="Git.Menu"/>
         </action>
 
-        <action id="Gitee.Open.In.Browser" class="com.gitee.actions.GiteeOpenInBrowserActionGroup">
-            <add-to-group group-id="EditorPopupMenu"/>
-            <add-to-group group-id="ProjectViewPopupMenu"/>
-            <add-to-group group-id="EditorTabPopupMenu"/>
-            <add-to-group group-id="Git.LogContextMenu"/>
-            <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
-            <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
-            <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
-        </action>
+        <group id="Gitee.Open.In.Browser" class="com.gitee.actions.GEOpenInBrowserActionGroup">
+            <override-text place="EditorTabPopup"/>
+            <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
+            <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
+            <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+            <add-to-group group-id="Git.Hosting.Open.In.Browser.Group"/>
+        </group>
+        <group id="Gitee.Copy.Link" class="com.gitee.actions.GECopyLinkActionGroup"
+               icon="com.gitee.icons.GiteeIcons.Gitee_icon">
+            <override-text place="CopyReferencePopup"/>
+            <add-to-group group-id="Git.Hosting.Copy.Link.Group"/>
+        </group>
 
         <action id="Gitee.Create.Gist" class="com.gitee.actions.GiteeCreateGistAction">
             <add-to-group group-id="EditorPopupMenu"/>
@@ -95,14 +97,5 @@
         </group>
 
         <action id="Gitee.Break.Api.Requests" class="com.gitee.api.GERequestExecutorBreaker$Action"/>
-
-        <action id="GiteeCopyPathProvider" class="com.gitee.actions.GiteeCopyPathProvider" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
-            <add-to-group group-id="CopyFileReference"/>
-        </action>
-
-        <action id="Gitee.Copy.Link.To.Gitee" class="com.gitee.actions.GiteeCopyPathProvider" icon="com.gitee.icons.GiteeIcons.Gitee_icon">
-            <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
-        </action>
-
     </actions>
 </idea-plugin>

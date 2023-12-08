@@ -15,8 +15,8 @@
  */
 package com.gitee.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.ThreeState;
@@ -57,7 +57,7 @@ public class GiteeSettings implements PersistentStateComponent<GiteeSettings.Sta
 	}
 
 	public static GiteeSettings getInstance() {
-		return ServiceManager.getService(GiteeSettings.class);
+		return ApplicationManager.getApplication().getService(GiteeSettings.class);
 	}
 
 	public boolean isOpenInBrowserGist() {
